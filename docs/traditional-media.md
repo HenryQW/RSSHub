@@ -36,7 +36,7 @@ pageClass: routes
 
 ### 新闻
 
-<Route author="oppilate" example="/chicagotribune/nation-world" path="/chicagotribune/:category/:subcategory?" :paramsDesc="['目录分类'，'子分类']">
+<Route author="oppilate" example="/chicagotribune/nation-world" path="/chicagotribune/:category/:subcategory?" :paramsDesc="['目录分类','子分类']">
 
 相比官方 RSS，多提供全文。
 目录分类[见其网站](https://www.chicagotribune.com/about/ct-chicago-tribune-rss-feeds-htmlstory.html)。例如，`https://www.chicagotribune.com/arcio/rss/category/nation-world/` 对应的 RSSHub 路由是 `/chicagotribune/nation-world`。由于官方源的部分路由有两级，因此这里也相应需要填写子分类。
@@ -183,8 +183,6 @@ Category 列表:
 
 <Route author="saury" example="/eastday/sh" path="/eastday/sh" />
 
-</Route>
-
 ## 端传媒
 
 ### 端传媒
@@ -295,15 +293,47 @@ category 对应的关键词有
 
 ### 标签
 
-<Route author="Naiqus" example="/wired/tag/bitcoin" path="/wired/tag/:tag" :paramsDesc="['标签']">
-
-</Route>
+<Route author="Naiqus" example="/wired/tag/bitcoin" path="/wired/tag/:tag" :paramsDesc="['标签']"/>
 
 ## 路透社
 
 ### 实时资讯
 
-<Route author="black-desk" example="/reuters/theWire" path="/reuters/theWire">
+<Route author="black-desk" example="/reuters/theWire" path="/reuters/theWire" />
+
+### 频道
+
+<Route author="HenryQW" example="/reuters/channel/cn/analyses" path="/reuters/:lang/:channel" :paramsDesc="['语言，支持的分站列表如下','频道名，请注意大小写需与如下表格中一致。']">
+
+支持语言列表
+
+-   中国分站 `cn`：
+
+    -   主频道:
+
+    | 深度分析 | 时事要闻    | 生活 | 投资      |
+    | -------- | ----------- | ---- | --------- |
+    | analyses | generalnews | life | investing |
+
+    -   资讯子频道:
+
+    | 中国财经 | 国际财经              | 新闻人物  | 财经视点 |
+    | -------- | --------------------- | --------- | -------- |
+    | china    | internationalbusiness | newsmaker | opinions |
+
+    -   专栏子频道:
+
+    | 中国财经专栏 | 国际财经专栏 | 大宗商品专栏 |
+    | ------------ | ------------ | ------------ |
+    | CnColumn     | IntColumn    | ComColumn    |
+
+-   英国分站 `uk`：
+
+    -   主频道:
+
+    | Business | World | UK  | Tech       | Money           | Breakingviews | Life      |
+    | -------- | ----- | --- | ---------- | --------------- | ------------- | --------- |
+    | business | world | uk  | technology | personalFinance | breakingviews | lifestyle |
 
 </Route>
 

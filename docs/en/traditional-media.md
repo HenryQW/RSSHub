@@ -30,7 +30,7 @@ Support major channels, refer to [BBC RSS feeds](https://www.bbc.co.uk/news/1062
 
 ### News
 
-<RouteEn author="oppilate" example="/chicagotribune/nation-world" path="/chicagotribune/:category/:subcategory?" :paramsDesc="['Category'，'Subcategory']">
+<RouteEn author="oppilate" example="/chicagotribune/nation-world" path="/chicagotribune/:category/:subcategory?" :paramsDesc="['Category','Subcategory']">
 
 Generates full-text that the official feed doesn't provide.
 Refer to [Chicago Tribune's feed page](https://www.chicagotribune.com/about/ct-chicago-tribune-rss-feeds-htmlstory.html) for categories. For instance, `https://www.chicagotribune.com/arcio/rss/category/nation-world/` corresponds to `/chicagotribune/nation-world`.
@@ -76,6 +76,23 @@ Refer to [Chicago Tribune's feed page](https://www.chicagotribune.com/about/ct-c
 ### News Web Easy
 
 <RouteEn author="Andiedie" example="/nhk/news_web_easy" path="/nhk/news_web_easy"/>
+
+## Reuters
+
+### Channel
+
+<RouteEn author="HenryQW" example="/reuters/channel/uk/personalFinance" path="/reuters/:lang/:channel" :paramsDesc="['sub-site, see the supported list below','channel, please note it\'s case-sensitive']">
+
+Supported sub-sites:
+
+-   中国分站 `cn`：
+    See [路透社中国分站](../traditional-media.html#lu-tou-she)
+-   UK site `uk`：
+    | Business | World | UK | Tech | Money | Breakingviews | Life |
+    | -------- | ----- | --- | ---------- | --------------- | ------------- | --------- |
+    | business | world | uk | technology | personalFinance | breakingviews | lifestyle |
+
+</RouteEn>
 
 ## RTHK
 
