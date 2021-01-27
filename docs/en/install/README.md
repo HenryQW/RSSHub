@@ -347,8 +347,6 @@ RSSHub supports two caching methods: memory and redis
 
 `REDIS_URL`: Redis target address（invalid when `CACHE_TYPE` is set to memory）, default to `redis://localhost:6379/`
 
-`REDIS_PASSWORD`: Redis password（invalid when `CACHE_TYPE` is set to memory)
-
 ### Proxy Configurations
 
 Partial routes have a strict anti-crawler policy, and can be configured to use proxy
@@ -423,7 +421,7 @@ See the relation between access key/code and white/blacklisting.
 
 `REQUEST_RETRY`: retries allowed for failed requests, default to `2`
 
-`DEBUG_INFO`: display route information on homepage for debugging purpose, default to `false`
+`DEBUG_INFO`: display route information on homepage for debugging purpose. When set to neither `true` nor `false`, use parameter `debug` to enable display, eg: <https://rsshub.app/?debug=value_of_DEBUG_INFO> . Default to `true`
 
 `NODE_ENV`: display error message on pages for authentication failing, default to `production` (i.e. no display)
 
@@ -522,3 +520,15 @@ See docs of specified route and `lib/config.js` for detail information.
 -   Sci-hub for scientific journal routes:
 
     -   `SCIHUB_HOST`: The Sci-hub mirror address that is accssible from your location, default to `https://sci-hub.se`.
+
+-   Wordpress:
+    -   `WORDPRESS_CDN`: Proxy http image link with https link. Consider using:
+
+        | url                                      | backbone     |
+        | ---------------------------------------- | ------------ |
+        | https://imageproxy.pimg.tw/resize?url=   | akamai       |
+        | https://images.weserv.nl/?url=           | cloudflare   |
+        | https://pic1.xuehuaimg.com/proxy/        | cloudflare   |
+        | https://cors.netnr.workers.dev/          | cloudflare   |
+        | https://netnr-proxy.openode.io/          | digitalocean |
+
