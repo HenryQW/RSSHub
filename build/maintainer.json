@@ -1,6 +1,80 @@
 {
+    "/2047/:category?/:sort?": [
+        "nczitzk"
+    ],
+    "/2048/:id?": [
+        "nczitzk"
+    ],
+    "/18comic/album/:id": [
+        "nczitzk"
+    ],
+    "/18comic/blogs/:category?": [
+        "nczitzk"
+    ],
+    "/18comic/search/:option?/:category?/:time?/:order?/:keyword?": [
+        "nczitzk"
+    ],
+    "/18comic/:category?/:time?/:order?/:keyword?": [
+        "nczitzk"
+    ],
+    "/8world/:category?": [
+        "nczitzk"
+    ],
     "/aamacau/aamacau/:category?/:id?": [
         "nczitzk"
+    ],
+    "/ash-maurya/ash-maurya": [
+        "james-tindal"
+    ],
+    "/bandcamp/live": [
+        "nczitzk"
+    ],
+    "/biodiscover/:channel?": [
+        "aidistan"
+    ],
+    "/bit/rszhaopin": [
+        "nczitzk"
+    ],
+    "/bnu/bs/:category?": [
+        "nczitzk"
+    ],
+    "/bse/:category?/:keyword?": [
+        "nczitzk"
+    ],
+    "/btzj/:category?": [
+        "nczitzk"
+    ],
+    "/bupt/rczp": [
+        "nczitzk"
+    ],
+    "/ccac/news/:type/:lang?": [
+        "linbuxiao"
+    ],
+    "/cebbank/quotation/all": [
+        "linbuxiao"
+    ],
+    "/cebbank/quotation/history/:type": [
+        "linbuxiao"
+    ],
+    "/csc/notice/:type?": [
+        "Derekmini"
+    ],
+    "/distill/": [
+        "nczitzk"
+    ],
+    "/eastday/find": [
+        "nczitzk"
+    ],
+    "/eastday/portrait": [
+        "nczitzk"
+    ],
+    "/elsevier/:journal/latest": [
+        "Derekmini",
+        "sunwolf-swb"
+    ],
+    "/elsevier/:journal/vol/:id": [
+        "Derekmini",
+        "sunwolf-swb"
     ],
     "/epicgames/epicgames/:collection": [
         "DIYgod",
@@ -11,6 +85,12 @@
     "/eprice/:region?": [
         "TonyRL"
     ],
+    "/fisher-spb/news": [
+        "denis-ya"
+    ],
+    "/focustaiwan/:category?": [
+        "nczitzk"
+    ],
     "/furstar/characters/:lang?": [
         "NeverBehave"
     ],
@@ -20,12 +100,266 @@
     "/furstar/archive/:lang?": [
         "NeverBehave"
     ],
+    "/gameapps/": [
+        "TonyRL"
+    ],
+    "/getdr/": [
+        "nczitzk"
+    ],
+    "/gf-cn/news/:category?": [
+        "nczitzk"
+    ],
+    "/hbr/topic/:topic?/:type?": [
+        "nczitzk"
+    ],
+    "/heu/yjsy/list/:id": [
+        "Derekmini"
+    ],
+    "/heu/job/bigemploy": [
+        "Derekmini"
+    ],
+    "/heu/job/calendar": [
+        "Derekmini"
+    ],
+    "/heu/job/list/:id": [
+        "Derekmini"
+    ],
+    "/heu/gx/:type/:colume/:id?": [
+        "Derekmini"
+    ],
+    "/heu/uae/list/:id": [
+        "Derekmini"
+    ],
+    "/hkej/:category?": [
+        "TonyRL"
+    ],
+    "/hket/:category?": [
+        "TonyRL"
+    ],
+    "/hkjunkcall/": [
+        "nczitzk"
+    ],
+    "/hongkong/dh/:language?": [
+        "nczitzk"
+    ],
+    "/hongkong/chp/:category?/:language?": [
+        "nczitzk"
+    ],
+    "/hotchina/": [
+        "nczitzk"
+    ],
+    "/hotchina/category/:id?": [
+        "nczitzk"
+    ],
+    "/hotchina/tag/:id?": [
+        "nczitzk"
+    ],
+    "/hotukdeals/:type": [
+        "DIYgod"
+    ],
+    "/icac/news/:lang?": [
+        "linbuxiao, TonyRL"
+    ],
+    "/ieee/:journal/latest/date/:sortType?": [
+        "Derekmini",
+        "auto-bot-ty"
+    ],
+    "/ieee/:journal/latest/vol/:sortType?": [
+        "Derekmini",
+        "auto-bot-ty"
+    ],
+    "/independent/ps5-stock-uk": [
+        "DIYgod"
+    ],
+    "/ithome/zt/:id": [
+        "nczitzk"
+    ],
+    "/jasa/latest": [
+        "Derekmini",
+        "auto-bot-ty"
+    ],
+    "/jasa/section/:id": [
+        "Derekmini"
+    ],
+    "/javdb/home/:category?/:sort?/:filter?": [
+        "nczitzk"
+    ],
+    "/javdb/search/:keyword?/:filter?": [
+        "nczitzk"
+    ],
+    "/javdb/tags/:query?/:category?": [
+        "nczitzk"
+    ],
+    "/javdb/actors/:id/:filter?": [
+        "nczitzk"
+    ],
+    "/javdb/makers/:id/:filter?": [
+        "nczitzk"
+    ],
+    "/javdb/series/:id/:filter?": [
+        "nczitzk"
+    ],
+    "/javdb/rankings/:category?/:time?": [
+        "nczitzk"
+    ],
+    "/javdb/:category?/:sort?/:filter?": [
+        "nczitzk"
+    ],
+    "/jisilu/:category?/:sort?/:day?": [
+        "nczitzk"
+    ],
+    "/jump/discount/:platform/:filter?/:countries?": [
+        "zytomorrow"
+    ],
+    "/lfsyd/home": [
+        "auto-bot-ty"
+    ],
+    "/lfsyd/old_home": [
+        "auto-bot-ty"
+    ],
+    "/lfsyd/user/:id?": [
+        "auto-bot-ty"
+    ],
+    "/lfsyd/tag/:tagId?": [
+        "auto-bot-ty"
+    ],
+    "/literotica/new": [
+        "nczitzk"
+    ],
+    "/literotica/category/:category": [
+        "nczitzk"
+    ],
+    "/mingpao/:type?/:category?": [
+        "TonyRL"
+    ],
+    "/mohw/clarification": [
+        "nczitzk"
+    ],
+    "/mox/:category?": [
+        "nczitzk"
+    ],
+    "/mvm/:category?": [
+        "nczitzk"
+    ],
+    "/mydrivers/:type?/:id?": [
+        "nczitzk"
+    ],
+    "/mygopen/:label?": [
+        "nczitzk"
+    ],
+    "/netease/renjian/:category?": [
+        "nczitzk"
+    ],
+    "/netease/news/rank/:category?/:type?/:time?": [
+        "nczitzk"
+    ],
+    "/news/whxw": [
+        "nczitzk"
+    ],
+    "/newsmarket/:category?": [
+        "nczitzk"
+    ],
+    "/ngocn2/:category?": [
+        "nczitzk"
+    ],
+    "/nsfc/news/:type?": [
+        "Derekmini"
+    ],
+    "/people/liuyan/:id/:state?": [
+        "nczitzk"
+    ],
+    "/pku/hr/:category?": [
+        "nczitzk"
+    ],
+    "/pts/dailynews": [
+        "nczitzk"
+    ],
+    "/qm120/news/:category?": [
+        "nczitzk"
+    ],
+    "/qq/live/:id": [
+        "nczitzk"
+    ],
+    "/rfi/news": [
+        "nczitzk"
+    ],
+    "/ruancan/ruancan": [
+        "nczitzk"
+    ],
+    "/ruancan/ruancan/sort/:sort?": [
+        "nczitzk"
+    ],
+    "/ruancan/ruancan/tag/:tag": [
+        "nczitzk"
+    ],
+    "/ruancan/ruancan/search/:keyword?": [
+        "nczitzk"
+    ],
+    "/ruc/hr/:category?": [
+        "nczitzk"
+    ],
+    "/sciencedirect/journal/:id": [
+        "nczitzk"
+    ],
+    "/secnews/index": [
+        "kaiili"
+    ],
+    "/shopback/:store": [
+        "nczitzk"
+    ],
+    "/sicau/zsjy/:category?": [
+        "nczitzk"
+    ],
+    "/solidot/:type?": [
+        "sgqy",
+        "hang333",
+        "TonyRL"
+    ],
+    "/startuplatte/:category?": [
+        "nczitzk"
+    ],
+    "/subhd/sub/:category?": [
+        "nczitzk"
+    ],
+    "/subhd/zu/:category?": [
+        "nczitzk"
+    ],
+    "/swissinfo/:language?/:category?": [
+        "nczitzk"
+    ],
+    "/szse/rule": [
+        "nczitzk"
+    ],
     "/test/:id": [
         "DIYgod",
         "NeverBehave"
     ],
+    "/timednews/news/:type?": [
+        "linbuxiao"
+    ],
     "/trow/portal": [
         "shiningdracon"
+    ],
+    "/uibe/hr/:category?/:type?": [
+        "nczitzk"
+    ],
+    "/wangqiutiyu/anchor/:id": [
+        "nczitzk"
+    ],
+    "/watchout/": [
+        "nczitzk"
+    ],
+    "/wechat/feeddd/:id": [
+        "TonyRL"
+    ],
+    "/wsyu/news/:type?": [
+        "Derekmini"
+    ],
+    "/wzu/news/:type?": [
+        "Chandler-Lu"
+    ],
+    "/yaohuo/": [
+        "nczitzk"
     ],
     "/rsshub/rss": [],
     "/rsshub/routes": [],
@@ -96,6 +430,7 @@
     "/ncm/user/playlist/:uid": [],
     "/ncm/artist/:id": [],
     "/ncm/djradio/:id": [],
+    "/ncm/user/playrecords/:uid/:type?": [],
     "/juejin/category/:category": [],
     "/juejin/tag/:tag": [],
     "/juejin/trending/:category/:type": [],
@@ -170,8 +505,6 @@
     "/dapenti/tugua": [],
     "/dapenti/subject/:id": [],
     "/dockone/weekly": [],
-    "/toutiao/today": [],
-    "/toutiao/user/:id": [],
     "/zcfy": [],
     "/zcfy/index": [],
     "/zcfy/hot": [],
@@ -181,8 +514,9 @@
     "/twitter/list/:id/:name/:routeParams?": [],
     "/twitter/likes/:id/:routeParams?": [],
     "/twitter/followings/:id/:routeParams?": [],
-    "/twitter/keyword/:keyword/:routeParams?": [],
+    "/twitter/keyword/:keyword/:routeParams?/:limit?": [],
     "/twitter/trends/:woeid?": [],
+    "/twitter/media/:id/:routeParams?": [],
     "/youtube/user/:username/:embed?": [],
     "/youtube/channel/:id/:embed?": [],
     "/youtube/playlist/:id/:embed?": [],
@@ -209,7 +543,7 @@
     "/telegram/blog": [],
     "/readhub/category/:category": [],
     "/github/repos/:user": [],
-    "/github/trending/:since/:language?": [],
+    "/github/trending/:since/:language?/:spoken_language?": [],
     "/github/issue/:user/:repo/:state?/:labels?": [],
     "/github/pull/:user/:repo": [],
     "/github/user/followers/:user": [],
@@ -241,11 +575,8 @@
     "/nytimes/:lang?": [],
     "/3dm/:name/:type": [],
     "/3dm/news": [],
-    "/lfsyd/:typecode": [],
-    "/lfsyd/user/:id": [],
-    "/lfsyd/tag/:tag": [],
-    "/ximalaya/album/:id/:all?": [],
-    "/ximalaya/album/:id/:all/:shownote?": [],
+    "/ximalaya/:type/:id/:all?": [],
+    "/ximalaya/:type/:id/:all/:shownote?": [],
     "/eztv/torrents/:imdb_id": [],
     "/smzdm/keyword/:keyword": [],
     "/smzdm/ranking/:rank_type/:rank_id/:hour": [],
@@ -267,6 +598,7 @@
     "/mihoyo/bh3/:type": [],
     "/mihoyo/bh2/:type": [],
     "/cctv/xwlb": [],
+    "/cctv/lm/:id?": [],
     "/cctv/:category": [],
     "/cctv/photo/jx": [],
     "/cctv-special/:id?": [],
@@ -452,13 +784,6 @@
     "/utdallas/isso": [],
     "/njupt/jwc/:type?": [],
     "/nchu/jwc/:type?": [],
-    "/heu/ugs/news/:author?/:category?": [],
-    "/heu/yjsy/:type?": [],
-    "/heu/gongxue/:type?": [],
-    "/heu/news/:type?": [],
-    "/heu/shuisheng/:type?": [],
-    "/heu/uae/:type?": [],
-    "/heu/job/:type?": [],
     "/cqu/jwc/:path*": [],
     "/cqu/news/jzyg": [],
     "/cqu/news/tz": [],
@@ -512,6 +837,7 @@
     "/ynu/grs/qttz/:category": [],
     "/ynu/jwc/:category": [],
     "/ynu/home": [],
+    "/ynnu/edu/news": [],
     "/kmust/jwc/:type?": [],
     "/kmust/job/careers/:type?": [],
     "/kmust/job/jobfairs": [],
@@ -534,6 +860,7 @@
     "/dgut/xsc/:type?": [],
     "/tju/sse/:type?": [],
     "/scut/jwc/notice/:category?": [],
+    "/scut/jwc/school/:category?": [],
     "/scut/jwc/news": [],
     "/wzbc/:type?": [],
     "/henu/:type?": [],
@@ -561,6 +888,7 @@
     "/usst/jwc": [],
     "/lyu/news/:type": [],
     "/fzu/:type": [],
+    "/fzu_min/:type": [],
     "/xmu/aero/:type": [],
     "/ifanr/:channel?": [],
     "/guokr/scientific": [],
@@ -594,7 +922,6 @@
     "/kirara/news": [],
     "/dytt": [],
     "/dytt/index": [],
-    "/btzj/:type?": [],
     "/rs05/rs05": [],
     "/rrys/review": [],
     "/yyets/todayfilelist": [],
@@ -618,7 +945,6 @@
     "/60s-science": [],
     "/99percentinvisible/transcript": [],
     "/aozora/newbook/:count?": [],
-    "/solidot/:type?": [],
     "/parcel/hermesuk/:tracking": [],
     "/dgtle": [],
     "/dgtle/whale/category/:category": [],
@@ -660,6 +986,7 @@
     "/manhuagui/comic/:id": [],
     "/mhgui/comic/:id": [],
     "/twmanhuagui/comic/:id": [],
+    "/copymanga/comic/:id": [],
     "/cartoonmad/comic/:id": [],
     "/vol/:mode?": [],
     "/dongmanmanhua/:category/:name/:id": [],
@@ -711,7 +1038,6 @@
     "/zimuzu/resource/:id?": [],
     "/zimuzu/top/:range/:type": [],
     "/zimuku/:type?": [],
-    "/subhd/newest": [],
     "/huxiu/tag/:id": [],
     "/huxiu/search/:keyword": [],
     "/huxiu/author/:id": [],
@@ -798,6 +1124,7 @@
     "/woshipm/latest": [],
     "/gaoqing/latest": [],
     "/wenku8/chapter/:id": [],
+    "/wenku8/volume/:id": [],
     "/whalegogo/home": [],
     "/whalegogo/portal/:type_id/:tagid?": [],
     "/aisixiang/column/:id": [],
@@ -928,6 +1255,8 @@
     "/nintendo/direct": [],
     "/nintendo/system-update": [],
     "/who/news-room/:type": [],
+    "/who/speeches/:language?": [],
+    "/who/news/:language?": [],
     "/metred/fuli": [],
     "/mit/graduateadmissions/:type/:name": [],
     "/mit/ocw-top": [],
@@ -988,7 +1317,9 @@
     "/aqicn/:city/:pollution?": [],
     "/maoyan/hot": [],
     "/maoyan/upcoming": [],
+    "/maoyan/hotComplete/:orderby?/:ascOrDesc?/:top?": [],
     "/cnbeta": [],
+    "/cnbeta/topic/:topic_id": [],
     "/gov/veterans/:type": [],
     "/gov/veterans/hebei/:type": [],
     "/dilbert/strip": [],
@@ -1023,6 +1354,7 @@
     "/changba/:userid": [],
     "/lol/newsindex/:type": [],
     "/lolapp/recommend": [],
+    "/lolapp/article/:uuid": [],
     "/zreading": [],
     "/nba/app_news": [],
     "/tprtc/cqzr": [],
@@ -1051,6 +1383,7 @@
     "/simonsfoundation/recommend": [],
     "/tencent/pvp/newsindex/:type": [],
     "/arknights/news": [],
+    "/arknights/japan": [],
     "/siren/news": [],
     "/ff14/ff14_zh/:type": [],
     "/ff14/ff14_global/:lang/:type": [],
@@ -1135,7 +1468,6 @@
     "/sse/disclosure/:query?": [],
     "/szse/notice": [],
     "/szse/inquire/:type": [],
-    "/szse/rule": [],
     "/szse/projectdynamic/:type?/:stage?/:status?": [],
     "/jskou/:type?": [],
     "/cneb/yjxx": [],
@@ -1170,7 +1502,7 @@
     "/taptap/topic/:id/:label?": [],
     "/taptap/changelog/:id": [],
     "/taptap/review/:id/:order?": [],
-    "/lofter/tag/:name/:type?": [],
+    "/lofter/tag/:name?/:type?": [],
     "/lofter/user/:username": [],
     "/watchface/:watch_type?/:list_type?": [],
     "/cnu/selected": [],
@@ -1317,6 +1649,7 @@
     "/coronavirus/mogov-2019ncov/:lang": [],
     "/coronavirus/qq/fact": [],
     "/coronavirus/sg-moh": [],
+    "/coronavirus/yahoo-japan/:tdfk?": [],
     "/njfu/jwc/:category?": [],
     "/nikkei/index": [],
     "/nikkei/:category/:article_type?": [],
@@ -1341,7 +1674,6 @@
     "/hackerone/hacktivity": [],
     "/hackerone/search/:search": [],
     "/cowlevel/element/:id": [],
-    "/2048/bbs/:fid": [],
     "/google/news/:category/:locale": [],
     "/p-articles/section/:section": [],
     "/p-articles/contributors/:author": [],
@@ -1369,10 +1701,8 @@
     "/lagou/jobs/:position/:city": [],
     "/yzu/home/:type": [],
     "/yzu/yjszs/:type": [],
-    "/nsfc/news/:type?": [],
     "/krankenkassen": [],
     "/guat/news/:type?": [],
-    "/csc/notice/:type?": [],
     "/learnku/:community/:category?": [],
     "/neea/:type": [],
     "/cauyjs": [],
@@ -1406,7 +1736,6 @@
     "/eastmoney/user/:uid": [],
     "/ssmh": [],
     "/ssmh/category/:cid": [],
-    "/wsyu/news/:type?": [],
     "/scnuyjs": [],
     "/scnucs": [],
     "/scutyjs": [],
@@ -1438,6 +1767,7 @@
     "/etoland/:bo_table": [],
     "/lntu/jwnews": [],
     "/51voa/:channel": [],
+    "/fanxinzhui": [],
     "/zhuixinfan/list": [],
     "/scoresaber/user/:id": [],
     "/blur-studio": [],
@@ -1531,7 +1861,6 @@
     "/jike/topic/:id": [],
     "/jike/topic/text/:id": [],
     "/jike/user/:id": [],
-    "/netease/news/rank/:category?/:type?/:time?": [],
     "/netease/news/special/:type?": [],
     "/netease/dy/:id": [],
     "/netease/dy2/:id": [],
@@ -1642,7 +1971,6 @@
     "/secshi": [],
     "/chuhaibiji": [],
     "/blogs/jianning": [],
-    "/yaohuo/:type?": [],
     "/hudongba/:city/:id": [],
     "/chaping/banner": [],
     "/chaping/news/:caty?": [],
@@ -1673,14 +2001,6 @@
     "/mamibuy/:caty?/:age?/:sort?": [],
     "/mercari/:type/:id": [],
     "/notefolio/:caty?/:order?/:time?/:query?": [],
-    "/javdb/home/:category?/:sort?/:filter?": [],
-    "/javdb/search/:keyword?/:filter?": [],
-    "/javdb/tags/:query?/:caty?": [],
-    "/javdb/actors/:id/:filter?": [],
-    "/javdb/makers/:id/:filter?": [],
-    "/javdb/series/:id/:filter?": [],
-    "/javdb/rankings/:caty?/:time?": [],
-    "/javdb/:category?/:sort?/:filter?": [],
     "/weforum/report/:lang?/:year?/:platform?": [],
     "/nobelprize/:caty?": [],
     "/gov/taiwan/mnd": [],
@@ -1875,7 +2195,6 @@
     "/shinybbs": [],
     "/tianyancha/hot": [],
     "/kingarthur/:type": [],
-    "/news/whxw": [],
     "/yxdown/recommend": [],
     "/yxdown/news/:category?": [],
     "/babehub/search/:keyword?": [],
@@ -1918,20 +2237,18 @@
     "/elitebabes/:category?": [],
     "/trakt/collection/:username/:type?": [],
     "/ccg/:category?": [],
-    "/gf-cn/news/:category?": [],
     "/eagle/changelog/:language?": [],
     "/ezone/:category?": [],
     "/cria/news/:id?": [],
     "/lingyi/:category": [],
     "/wainao-reads/all-articles": [],
     "/react/react-native-weekly": [],
+    "/dbaplus/activity/:type?": [],
     "/dbaplus/:tab?": [],
     "/liyuan-forums/threads": [],
     "/liyuan-forums/threads/forum/:forum_id": [],
     "/liyuan-forums/threads/topic/:topic_id": [],
     "/liyuan-forums/threads/user/:user_id": [],
-    "/jisilu/reply/:user": [],
-    "/jisilu/topic/:user": [],
     "/verfghbw/press/:keyword?": [],
     "/topbook/overview/:id?": [],
     "/topbook/today": [],
@@ -1963,7 +2280,6 @@
     "/tanchinese/:category?": [],
     "/harvard/health/blog": [],
     "/yuzu-emu/entry": [],
-    "/wzu/news": [],
     "/partnershiponai/resources": [],
     "/commonapp/blog": [],
     "/skysports/news/:team": [],
@@ -1978,7 +2294,28 @@
     "/fnal/news/:category?": [],
     "/x410/news": [],
     "/right/forum/:id?": [],
-    "/biodiscover/:channel?": [],
-    "/hket/:category?": [],
-    "/s-hentai/:id?": []
+    "/micmicidol": [],
+    "/micmicidol/search/:label": [],
+    "/hkgolden/:id?/:limit?/:sort?": [],
+    "/discuss/:fid": [],
+    "/uwants/:fid": [],
+    "/now/news/rank": [],
+    "/s-hentai/:id?": [],
+    "/etherscan/transactions/:address": [],
+    "/blogs/foreverblog": [],
+    "/netflix/newsroom/:category?/:region?": [],
+    "/sbs/chinese/:category?/:id?/:dialect?/:language?": [],
+    "/asiantolick/:category?/:keyword?": [],
+    "/researchgate/publications/:id": [],
+    "/questmobile/report/:category?/:label?": [],
+    "/rss3/blog": [],
+    "/odaily/activity": [],
+    "/odaily/newsflash": [],
+    "/odaily/user/:id": [],
+    "/odaily/:id?": [],
+    "/fashionnetwork/news/:sectors?/:categories?/:language?": [],
+    "/dykszx/news/:type?": [],
+    "/secrss/category/:category?": [],
+    "/secrss/author/:author?": [],
+    "/fashionnetwork/headline/:country?": []
 }
