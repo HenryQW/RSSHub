@@ -117,6 +117,9 @@
     "/ajmide/:id": [
         "Fatpandac"
     ],
+    "/ally/rail/:category?/:topic?": [
+        "Rongronggg9"
+    ],
     "/app-center/release/:user/:app/:distribution_group": [
         "Rongronggg9"
     ],
@@ -252,6 +255,9 @@
         "nczitzk"
     ],
     "/bupt/rczp": [
+        "nczitzk"
+    ],
+    "/c114/roll": [
         "nczitzk"
     ],
     "/cahkms/:category?": [
@@ -1849,6 +1855,17 @@
         "MegrezZhu",
         "nczitzk"
     ],
+    "/szse/inquire/:category?/:select?/:keyword?": [
+        "Jeason0228",
+        "nczitzk"
+    ],
+    "/szse/notice": [
+        "Jeason0228",
+        "nczitzk"
+    ],
+    "/szse/projectdynamic/:type?/:stage?/:status?": [
+        "nczitzk"
+    ],
     "/szse/rule": [
         "nczitzk"
     ],
@@ -2267,6 +2284,9 @@
     ],
     "/zooTeam/zooTeam/weekly": [
         "Pulset"
+    ],
+    "/zotero/versions": [
+        "jasongzy"
     ],
     "/zuel/notice": [
         "nczitzk"
@@ -3113,9 +3133,6 @@
     "/sse/renewal": [],
     "/sse/inquire": [],
     "/sse/disclosure/:query?": [],
-    "/szse/notice": [],
-    "/szse/inquire/:type": [],
-    "/szse/projectdynamic/:type?/:stage?/:status?": [],
     "/jskou/:type?": [],
     "/cneb/yjxx": [],
     "/cneb/guoneinews": [],
