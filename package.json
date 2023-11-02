@@ -73,7 +73,7 @@
     "supertest": "6.2.3",
     "tosource": "2.0.0-alpha.3",
     "unified": "9.2.2",
-    "vuepress": "1.9.7",
+    "vuepress": "1.9.10",
     "yorkie": "2.0.0"
   },
   "dependencies": {
