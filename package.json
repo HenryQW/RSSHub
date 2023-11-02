@@ -115,7 +115,7 @@
     "mailparser": "3.5.0",
     "markdown-it": "13.0.1",
     "module-alias": "2.2.2",
-    "parse-torrent": "9.1.5",
+    "parse-torrent": "11.0.14",
     "pidusage": "3.0.0",
     "plist": "3.0.5",
     "puppeteer": "13.7.0",
