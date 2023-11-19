@@ -3274,6 +3274,12 @@
         "docs": "https://docs.rsshub.app/routes/anime#bangumi-fan-zu-ji-hua",
         "source": "/calendar",
         "target": "/bangumi/tv/calendar/today"
+      },
+      {
+        "title": "成员关注动画榜",
+        "docs": "https://docs.rsshub.app/routes/anime#bangumi-fan-zu-ji-hua",
+        "source": "/anime",
+        "target": "/bangumi/tv/followrank"
       }
     ]
   },
@@ -3333,6 +3339,12 @@
         "docs": "https://docs.rsshub.app/routes/anime#bangumi-fan-zu-ji-hua",
         "source": "/calendar",
         "target": "/bangumi/tv/calendar/today"
+      },
+      {
+        "title": "成员关注动画榜",
+        "docs": "https://docs.rsshub.app/routes/anime#bangumi-fan-zu-ji-hua",
+        "source": "/anime",
+        "target": "/bangumi/tv/followrank"
       }
     ]
   },
@@ -4207,6 +4219,19 @@
         "title": "MMDArchive 标签查询",
         "docs": "https://docs.rsshub.app/routes/picture#booru-mmdarchive-biao-qian-cha-xun",
         "source": "/index.php"
+      }
+    ]
+  },
+  "bossdesign.cn": {
+    "_name": "Boss 设计",
+    ".": [
+      {
+        "title": "分类",
+        "docs": "https://docs.rsshub.app/routes/design#boss-she-ji",
+        "source": [
+          "/:category?",
+          "/"
+        ]
       }
     ]
   },
@@ -6462,6 +6487,18 @@
       }
     ]
   },
+  "cma.cn": {
+    "_name": "中国气象局",
+    "weather": [
+      {
+        "title": "天气预报频道",
+        "docs": "https://docs.rsshub.app/routes/forecast#zhong-guo-qi-xiang-ju-tian-qi-yu-bao-pin-dao",
+        "source": [
+          "/web/*"
+        ]
+      }
+    ]
+  },
   "cmde.org.cn": {
     "_name": "国家药品监督管理局医疗器械技术审评中心",
     "www": [
@@ -6471,6 +6508,19 @@
         "source": [
           "/*cate"
         ]
+      }
+    ]
+  },
+  "cmpxchg8b.com": {
+    "_name": "cmpxchg8b",
+    "lock": [
+      {
+        "title": "文章 articles",
+        "docs": "https://docs.rsshub.app/routes/blog#cmpxchg8b",
+        "source": [
+          "/articles"
+        ],
+        "target": "/cmpxchg8b/articles"
       }
     ]
   },
@@ -10347,10 +10397,24 @@
         "title": "分类",
         "docs": "https://docs.rsshub.app/routes/shopping#zheng-ban-zhong-guo-fen-lei",
         "source": [
-          "/category/:category",
-          "/"
+          "/category/:id"
         ],
-        "target": "/getitfree/:category?"
+        "target": "/getitfree/category/:id"
+      },
+      {
+        "title": "标签",
+        "docs": "https://docs.rsshub.app/routes/shopping#zheng-ban-zhong-guo-biao-qian",
+        "source": [
+          "/tag/:id"
+        ],
+        "target": "/getitfree/tag/:id"
+      },
+      {
+        "title": "搜索",
+        "docs": "https://docs.rsshub.app/routes/shopping#zheng-ban-zhong-guo-sou-suo",
+        "source": [
+          "/"
+        ]
       }
     ]
   },
@@ -12101,6 +12165,13 @@
         "source": [
           "/cheaps.php"
         ]
+      },
+      {
+        "title": "关键字搜索",
+        "docs": "https://docs.rsshub.app/routes/shopping#guang-diu",
+        "source": [
+          "/search.php"
+        ]
       }
     ]
   },
@@ -13463,6 +13534,18 @@
         "source": [
           "/category/*path",
           "/"
+        ]
+      }
+    ]
+  },
+  "ianspriggs.com": {
+    "_name": "Ian Spriggs",
+    ".": [
+      {
+        "title": "Category",
+        "docs": "https://docs.rsshub.app/routes/blog#ian-spriggs-category",
+        "source": [
+          "/:category"
         ]
       }
     ]
@@ -16391,7 +16474,7 @@
       }
     ]
   },
-  "kemono.party": {
+  "kemono.su": {
     "_name": "Kemono",
     ".": [
       {
@@ -19151,13 +19234,19 @@
       {
         "title": "分类",
         "docs": "https://docs.rsshub.app/routes/finance#mei-jing-wang",
-        "source": "/",
-        "target": "/nbd"
+        "source": [
+          "/",
+          "/columns/:id?"
+        ],
+        "target": "/nbd/:id?"
       },
       {
         "title": "重磅原创",
         "docs": "https://docs.rsshub.app/routes/finance#mei-jing-wang",
-        "source": "/",
+        "source": [
+          "/",
+          "/columns/332"
+        ],
         "target": "/nbd/daily"
       }
     ]
@@ -30450,6 +30539,26 @@
           "/"
         ],
         "target": "/zhubai/top20"
+      }
+    ]
+  },
+  "zimuxia.cn": {
+    "_name": "FIX 字幕侠",
+    ".": [
+      {
+        "title": "分类",
+        "docs": "https://docs.rsshub.app/routes/multimedia#fix-zi-mu-xia",
+        "source": [
+          "/我们的作品"
+        ]
+      },
+      {
+        "title": "剧集",
+        "docs": "https://docs.rsshub.app/routes/multimedia#fix-zi-mu-xia",
+        "source": [
+          "/portfolio/:id"
+        ],
+        "target": "/zimuxia/portfolio/:id"
       }
     ]
   },

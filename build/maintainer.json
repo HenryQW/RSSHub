@@ -711,6 +711,9 @@
     "/bangumi/tv/calendar/today": [
         "magic-akari"
     ],
+    "/bangumi/tv/followrank": [
+        "honue"
+    ],
     "/bangumi/tv/group/:id": [
         "SettingDust"
     ],
@@ -1052,6 +1055,9 @@
         "N78Wy"
     ],
     "/booth.pm/shop/:subdomain": [],
+    "/bossdesign/:category?": [
+        "TonyRL"
+    ],
     "/boston/:tag?": [],
     "/brave/latest": [
         "nczitzk"
@@ -1404,10 +1410,16 @@
     "/cls/telegraph/:category?": [
         "nczitzk"
     ],
+    "/cma/channel/:id?": [
+        "nczitzk"
+    ],
     "/cmde/:cate*": [
         "run-ze"
     ],
     "/cmes/news/:category?": [],
+    "/cmpxchg8b/articles": [
+        "yuguorui"
+    ],
     "/cn-healthcare/index": [
         "qnloft"
     ],
@@ -2013,6 +2025,9 @@
     "/douban/people/:userid/wish/:routeParams?": [
         "exherb"
     ],
+    "/douban/recommended/:type?/:routeParams?": [
+        "honue"
+    ],
     "/douban/replied/:uid": [
         "nczitzk"
     ],
@@ -2591,11 +2606,17 @@
     "/getdr": [
         "nczitzk"
     ],
-    "/getitfree/:category?": [
+    "/getitfree/category/:id": [
+        "sanmmm",
         "nczitzk"
     ],
-    "/getitfree/category/:category?": [],
-    "/getitfree/search/:keyword?": [],
+    "/getitfree/search/:keyword": [
+        "sanmmm",
+        "nczitzk"
+    ],
+    "/getitfree/tag/:id": [
+        "nczitzk"
+    ],
     "/gettr/user/:id": [
         "TonyRL"
     ],
@@ -3112,6 +3133,9 @@
     "/guangdiu/rank": [
         "fatpandac"
     ],
+    "/guangdiu/search/:query?": [
+        "Huzhixin00"
+    ],
     "/guanggoo/:category?": [],
     "/guangzhoumetro/news": [
         "HankChow"
@@ -3542,6 +3566,9 @@
     "/i-cable/:category?": [
         "tpnonthealps"
     ],
+    "/ianspriggs/:category?": [
+        "nczitzk"
+    ],
     "/ibc/maitta": [
         "fengkx"
     ],
@@ -3951,6 +3978,9 @@
     ],
     "/javlibrary/genre/:genre?/:language?/:mode?": [
         "nczitzk"
+    ],
+    "/javlibrary/maker/:maker?/:language?/:mode?": [
+        "Zhixin Hu"
     ],
     "/javlibrary/mostwanted/:language?/:mode?": [
         "nczitzk"
@@ -4792,7 +4822,7 @@
         "nczitzk"
     ],
     "/nbd/daily": [
-        "MeXunco"
+        "yuuow"
     ],
     "/nber/articles": [
         "5upernova-heng"
@@ -7876,7 +7906,7 @@
         "nczitzk"
     ],
     "/zcool/top/:type": [
-        "mexunco"
+        "yuuow"
     ],
     "/zcool/user/:uid": [
         "junbaor"
@@ -7991,8 +8021,12 @@
     "/zhuixinfan/list": [],
     "/zhutix/latest": [],
     "/zimuku/:type?": [],
-    "/zimuxia/:category?": [],
-    "/zimuxia/portfolio/:id": [],
+    "/zimuxia/:category?": [
+        "nczitzk"
+    ],
+    "/zimuxia/portfolio/:id": [
+        "nczitzk"
+    ],
     "/zimuzu/resource/:id?": [],
     "/zimuzu/top/:range/:type": [],
     "/ziroom/room/:city/:iswhole/:room/:keyword": [],
