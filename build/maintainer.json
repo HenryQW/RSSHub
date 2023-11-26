@@ -851,6 +851,9 @@
     "/bilibili/partion/ranking/:tid/:days?/:disableEmbed?": [
         "lengthmin"
     ],
+    "/bilibili/platform/:area?/:p_type?/:uid?": [
+        "nightmare-mio"
+    ],
     "/bilibili/popular/all": [
         "ziminliu"
     ],
@@ -2738,6 +2741,9 @@
     "/google/album/:id": [
         "hoilc"
     ],
+    "/google/alerts/:keyword": [
+        "TonyRL"
+    ],
     "/google/citations/:id": [
         "KellyHwong"
     ],
@@ -2950,6 +2956,9 @@
     "/gov/mohurd/policy": [],
     "/gov/moj/aac/news/:type?": [
         "TonyRL"
+    ],
+    "/gov/mot/:category?": [
+        "nczitzk"
     ],
     "/gov/ndrc/xwdt/:caty?": [],
     "/gov/news/:uid": [
@@ -5673,6 +5682,12 @@
     "/putty/changes": [
         "nczitzk"
     ],
+    "/qbitai/category/:category": [
+        "FuryMartin"
+    ],
+    "/qbitai/tag/:tag": [
+        "FuryMartin"
+    ],
     "/qbittorrent/news": [
         "TonyRL"
     ],
@@ -7126,6 +7141,9 @@
     "/umass/amherst/ipoevents": [],
     "/umass/amherst/ipostories": [],
     "/un/scveto": [],
+    "/uniqlo/new/:country/:category": [
+        "DIYgod"
+    ],
     "/uniqlo/stylingbook/:category?": [],
     "/unit-image/films/:type?": [],
     "/unusualwhales/news": [
