@@ -8935,6 +8935,19 @@
       }
     ]
   },
+  "egsea.com": {
+    "_name": "e 公司",
+    ".": [
+      {
+        "title": "快讯",
+        "docs": "https://docs.rsshub.app/routes/new-media#e-gong-si",
+        "source": [
+          "/news/flash"
+        ],
+        "target": "/egsea/flash"
+      }
+    ]
+  },
   "elasticsearch.cn": {
     "_name": "Elastic 中文社区",
     ".": [
@@ -11824,7 +11837,7 @@
         "title": "通用",
         "docs": "https://docs.rsshub.app/routes/government#guo-jia-yao-pin-jian-du-guan-li-ju-yi-liao-qi-xie-biao-zhun-guan-li-zhong-xin",
         "source": [
-          "/*path"
+          "/*"
         ]
       }
     ]
