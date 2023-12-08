@@ -12042,6 +12042,25 @@
       }
     ]
   },
+  "safe.gov.cn": {
+    "_name": "国家外汇管理局",
+    ".": [
+      {
+        "title": "业务咨询",
+        "docs": "https://docs.rsshub.app/routes/government#guo-jia-wai-hui-guan-li-ju-ye-wu-zi-xun",
+        "source": [
+          "/:site/ywzx/index.html"
+        ]
+      },
+      {
+        "title": "投诉建议",
+        "docs": "https://docs.rsshub.app/routes/government#guo-jia-wai-hui-guan-li-ju-tou-su-jian-yi",
+        "source": [
+          "/:site/tsjy/index.html"
+        ]
+      }
+    ]
+  },
   "sasac.gov.cn": {
     "_name": "国务院国有资产监督管理委员会",
     ".": [
@@ -18601,6 +18620,21 @@
       }
     ]
   },
+  "missav.com": {
+    "_name": "MissAV.com",
+    ".": [
+      {
+        "title": "最近更新",
+        "docs": "https://docs.rsshub.app/multimedia#missav-com",
+        "source": [
+          "/dm397/new",
+          "/new",
+          "/"
+        ],
+        "target": "/missav/new"
+      }
+    ]
+  },
   "misskey.io": {
     "_name": "Misskey",
     ".": [
@@ -19749,7 +19783,7 @@
   },
   "ncu.edu.cn": {
     "_name": "南昌大学",
-    ".": [
+    "jwc": [
       {
         "title": "教务通知",
         "docs": "https://docs.rsshub.app/routes/university#nan-chang-da-xue",
@@ -22966,6 +23000,19 @@
           "/ko"
         ],
         "target": "/rodong/news"
+      }
+    ]
+  },
+  "routledge.com": {
+    "_name": "Routledge",
+    ".": [
+      {
+        "title": "Book Series",
+        "docs": "https://docs.rsshub.app/routes/journals#routledge",
+        "source": [
+          "/:bookName/book-series/:bookId"
+        ],
+        "target": "/routledge/:bookName/book-series/:bookId"
       }
     ]
   },
