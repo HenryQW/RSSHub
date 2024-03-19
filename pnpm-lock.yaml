@@ -311,8 +311,8 @@ devDependencies:
     specifier: 5.0.1
     version: 5.0.1(@types/eslint@8.44.8)(eslint-config-prettier@9.1.0)(eslint@8.55.0)(prettier@3.1.0)
   eslint-plugin-yml:
-    specifier: 1.10.0
-    version: 1.10.0(eslint@8.55.0)
+    specifier: 1.13.1
+    version: 1.13.1(eslint@8.55.0)
   fs-extra:
     specifier: 11.2.0
     version: 11.2.0
@@ -1108,7 +1108,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       eslint: 8.55.0
-      jschardet: 3.0.0
+      jschardet: 3.1.0
       lodash: 4.17.21
       utf8: 3.0.0
     transitivePeerDependencies:
@@ -1176,7 +1176,7 @@ packages:
       '@babel/runtime-corejs2': 7.23.2
       '@postlight/ci-failed-test-reporter': 1.0.26
       cheerio: 0.22.0
-      difflib: github.com/postlight/difflib.js/32e8e38c7fcd935241b9baab71bb432fd9b166ed
+      difflib: git/github.com+postlight/difflib.js/32e8e38c7fcd935241b9baab71bb432fd9b166ed
       ellipsize: 0.1.0
       iconv-lite: 0.5.0
       moment: 2.29.4
@@ -3151,13 +3151,14 @@ packages:
       source-map: 0.6.1
     dev: false
 
-  /eslint-compat-utils@0.1.2(eslint@8.55.0):
-    resolution: {integrity: sha512-Jia4JDldWnFNIru1Ehx1H5s9/yxiRHY/TimCuUc0jNexew3cF1gI6CYZil1ociakfWO3rRqFjl1mskBblB3RYg==}
+  /eslint-compat-utils@0.5.0(eslint@8.55.0):
+    resolution: {integrity: sha512-dc6Y8tzEcSYZMHa+CMPLi/hyo1FzNeonbhJL7Ol0ccuKQkwopJcJBA9YL/xmMTLU1eKigXo9vj9nALElWYSowg==}
     engines: {node: '>=12'}
     peerDependencies:
       eslint: '>=6.0.0'
     dependencies:
       eslint: 8.55.0
+      semver: 7.5.4
     dev: true
 
   /eslint-config-prettier@9.1.0(eslint@8.55.0):
@@ -3221,15 +3222,15 @@ packages:
       synckit: 0.8.5
     dev: true
 
-  /eslint-plugin-yml@1.10.0(eslint@8.55.0):
-    resolution: {integrity: sha512-53SUwuNDna97lVk38hL/5++WXDuugPM9SUQ1T645R0EHMRCdBIIxGye/oOX2qO3FQ7aImxaUZJU/ju+NMUBrLQ==}
+  /eslint-plugin-yml@1.13.1(eslint@8.55.0):
+    resolution: {integrity: sha512-J1gNca5cWUIlo6ilQJBlPwap2ggVuc7gaOxiCdYjmncyWN8aNHErEhk2ICFj6shr8Jz27c3AU1Ie7i6HqVa4Hw==}
     engines: {node: ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: '>=6.0.0'
     dependencies:
       debug: 4.3.4(supports-color@5.5.0)
       eslint: 8.55.0
-      eslint-compat-utils: 0.1.2(eslint@8.55.0)
+      eslint-compat-utils: 0.5.0(eslint@8.55.0)
       lodash: 4.17.21
       natural-compare: 1.4.0
       yaml-eslint-parser: 1.2.2
@@ -5027,8 +5028,8 @@ packages:
   /jsbn@0.1.1:
     resolution: {integrity: sha512-UVU9dibq2JcFWxQPA6KCqj5O42VOmAY3zQUfEKxU0KpTGXwNoCjkX1e13eHNvw/xPynt6pU0rZ1htjWTNTSXsg==}
 
-  /jschardet@3.0.0:
-    resolution: {integrity: sha512-lJH6tJ77V8Nzd5QWRkFYCLc13a3vADkh3r/Fi8HupZGWk2OVVDfnZP8V/VgQgZ+lzW0kG2UGb5hFgt3V3ndotQ==}
+  /jschardet@3.1.0:
+    resolution: {integrity: sha512-MND0yjRsoQ/3iFXce7lqV/iBmqH9oWGUTlty36obRBZjhFDWCLKjXgfxY75wYfwlW7EFqw52tyziy/q4WsQmrA==}
     engines: {node: '>=0.1.90'}
     dev: true
 
@@ -8171,8 +8172,8 @@ packages:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
     dev: true
 
-  github.com/postlight/difflib.js/32e8e38c7fcd935241b9baab71bb432fd9b166ed:
-    resolution: {tarball: https://codeload.github.com/postlight/difflib.js/tar.gz/32e8e38c7fcd935241b9baab71bb432fd9b166ed}
+  git/github.com+postlight/difflib.js/32e8e38c7fcd935241b9baab71bb432fd9b166ed:
+    resolution: {commit: 32e8e38c7fcd935241b9baab71bb432fd9b166ed, repo: git@github.com:postlight/difflib.js.git, type: git}
     name: difflib
     version: 0.2.6
     dependencies:
