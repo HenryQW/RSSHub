@@ -73,6 +73,9 @@
   "/0818tuan/:listId?": [
     "TonyRL"
   ],
+  "/0x80/blog": [
+    "xnum"
+  ],
   "/141jav/{.*}?": [
     "cgkings",
     "nczitzk"
@@ -414,6 +417,9 @@
     "metowolf",
     "HenryQW",
     "kt286"
+  ],
+  "/apple/podcast/:id": [
+    "Acring"
   ],
   "/appleinsider/:category?": [
     "nczitzk"
@@ -5396,7 +5402,7 @@
   "/tesla/price": [
     "xiaokyo"
   ],
-  "/test/:id": [
+  "/test/:id/:params?": [
     "DIYgod",
     "NeverBehave"
   ],

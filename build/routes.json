@@ -722,6 +722,26 @@
     "name": "0818 团",
     "url": "0818tuan.com"
   },
+  "0x80": {
+    "routes": {
+      "/blog": {
+        "path": "/blog",
+        "categories": [
+          "blog"
+        ],
+        "example": "/0x80/blog",
+        "url": "0x80.pl/notesen.html",
+        "name": "Articles",
+        "maintainers": [
+          "xnum"
+        ],
+        "location": "index.ts"
+      }
+    },
+    "name": "Wojciech Muła",
+    "url": "0x80.pl",
+    "description": ""
+  },
   "141jav": {
     "routes": {
       "/{.*}?": {
@@ -4164,6 +4184,37 @@
           "kt286"
         ],
         "location": "exchange-repair.ts"
+      },
+      "/podcast/:id": {
+        "path": "/podcast/:id",
+        "categories": [
+          "multimedia"
+        ],
+        "example": "/apple/podcast/id1559695855",
+        "parameters": {
+          "id": "播客id，可以在 Apple 播客app 内分享的播客的 URL 中找到"
+        },
+        "features": {
+          "requireConfig": false,
+          "requirePuppeteer": false,
+          "antiCrawler": false,
+          "supportBT": false,
+          "supportPodcast": false,
+          "supportScihub": false
+        },
+        "radar": [
+          {
+            "source": [
+              "podcasts.apple.com/cn/podcast/:id"
+            ]
+          }
+        ],
+        "name": "播客",
+        "maintainers": [
+          "Acring"
+        ],
+        "url": "https://www.apple.com.cn/apple-podcasts/",
+        "location": "podcast.ts"
       }
     },
     "name": "Apple",
@@ -44767,12 +44818,14 @@
           "id": "专辑id, 可在专辑页 URL 中找到"
         },
         "features": {
-          "requireConfig": false,
-          "requirePuppeteer": false,
-          "antiCrawler": false,
-          "supportBT": false,
           "supportPodcast": true,
-          "supportScihub": false
+          "requireConfig": [
+            {
+              "name": "QINGTING_ID",
+              "optional": true,
+              "description": "用户id， 部分专辑需要会员身份，用户id可以通过从网页端登录蜻蜓fm后使用开发者工具，在控制台中运行JSON.parse(localStorage.getItem(\"user\")).qingting_id获取"
+            }
+          ]
         },
         "radar": [
           {
@@ -53817,8 +53870,8 @@
   },
   "test": {
     "routes": {
-      "/:id": {
-        "path": "/:id",
+      "/:id/:params?": {
+        "path": "/:id/:params?",
         "name": "Unknown",
         "maintainers": [
           "DIYgod",
