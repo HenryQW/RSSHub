@@ -8194,6 +8194,123 @@
           "TonyRL"
         ],
         "location": "lib.ts"
+      },
+      "/mba/:category{.+}?": {
+        "path": "/mba/:category{.+}?",
+        "name": "经济与工商管理学院MBA",
+        "url": "mba.bnu.edu.cn",
+        "maintainers": [
+          "nczitzk"
+        ],
+        "example": "/bnu/mba/xwdt",
+        "parameters": {
+          "category": "分类，默认为 xwdt，即新闻聚焦"
+        },
+        "description": ":::tip\n  若订阅 [新闻聚焦](https://mba.bnu.edu.cn/xwdt/index.html)，网址为 `https://mba.bnu.edu.cn/xwdt/index.html`。截取 `https://mba.bnu.edu.cn/` 到末尾 `/index.html` 的部分 `xwdt` 作为参数填入，此时路由为 [`/bnu/mba/xwdt`](https://rsshub.app/bnu/mba/xwdt)。\n  :::\n\n  #### [主页](https://mba.bnu.edu.cn)\n\n  | [新闻聚焦](https://mba.bnu.edu.cn/xwdt/index.html) | [通知公告](https://mba.bnu.edu.cn/tzgg/index.html) | [MBA 系列讲座](https://mba.bnu.edu.cn/mbaxljz/index.html) |\n  | -------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------- |\n  | [xwdt](https://rsshub.app/bnu/mba/xwdt)            | [tzgg](https://rsshub.app/bnu/mba/tzgg)            | [mbaxljz](https://rsshub.app/bnu/mba/mbaxljz)             |\n\n  #### [招生动态](https://mba.bnu.edu.cn/zsdt/zsjz/index.html)\n\n  | [下载专区](https://mba.bnu.edu.cn/zsdt/cjwt/index.html) |\n  | ------------------------------------------------------- |\n  | [zsdt/cjwt](https://rsshub.app/bnu/mba/zsdt/cjwt)       |\n\n  #### [国际视野](https://mba.bnu.edu.cn/gjhz/hwjd/index.html)\n\n  | [海外基地](https://mba.bnu.edu.cn/gjhz/hwjd/index.html) | [学位合作](https://mba.bnu.edu.cn/gjhz/xwhz/index.html) | [长期交换](https://mba.bnu.edu.cn/gjhz/zqjh/index.html) | [短期项目](https://mba.bnu.edu.cn/gjhz/dqxm/index.html) |\n  | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |\n  | [gjhz/hwjd](https://rsshub.app/bnu/mba/gjhz/hwjd)       | [gjhz/xwhz](https://rsshub.app/bnu/mba/gjhz/xwhz)       | [gjhz/zqjh](https://rsshub.app/bnu/mba/gjhz/zqjh)       | [gjhz/dqxm](https://rsshub.app/bnu/mba/gjhz/dqxm)       |\n\n  #### [校园生活](https://mba.bnu.edu.cn/xysh/xszz/index.html)\n\n  | [学生组织](https://mba.bnu.edu.cn/xysh/xszz/index.html) |\n  | ------------------------------------------------------- |\n  | [xysh/xszz](https://rsshub.app/bnu/mba/xysh/xszz)       |\n\n  #### [职业发展](https://mba.bnu.edu.cn/zyfz/xwds/index.html)\n\n  | [校外导师](https://mba.bnu.edu.cn/zyfz/xwds/index.html) | [企业实践](https://mba.bnu.edu.cn/zyfz/zycp/index.html) | [就业创业](https://mba.bnu.edu.cn/zyfz/jycy/index.html) |\n  | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |\n  | [zyfz/xwds](https://rsshub.app/bnu/mba/zyfz/xwds)       | [zyfz/zycp](https://rsshub.app/bnu/mba/zyfz/zycp)       | [zyfz/jycy](https://rsshub.app/bnu/mba/zyfz/jycy)       |\n  ",
+        "categories": [
+          "university"
+        ],
+        "features": {
+          "requireConfig": false,
+          "requirePuppeteer": false,
+          "antiCrawler": false,
+          "supportRadar": true,
+          "supportBT": false,
+          "supportPodcast": false,
+          "supportScihub": false
+        },
+        "radar": [
+          {
+            "source": [
+              "mba.bnu.edu.cn/:category?"
+            ]
+          },
+          {
+            "title": "新闻聚焦",
+            "source": [
+              "mba.bnu.edu.cn/xwdt/index.html"
+            ],
+            "target": "/mba/xwdt"
+          },
+          {
+            "title": "通知公告",
+            "source": [
+              "mba.bnu.edu.cn/tzgg/index.html"
+            ],
+            "target": "/mba/tzgg"
+          },
+          {
+            "title": "MBA系列讲座",
+            "source": [
+              "mba.bnu.edu.cn/mbaxljz/index.html"
+            ],
+            "target": "/mba/mbaxljz"
+          },
+          {
+            "title": "招生动态 - 下载专区",
+            "source": [
+              "mba.bnu.edu.cn/zsdt/cjwt/index.html"
+            ],
+            "target": "/mba/zsdt/cjwt"
+          },
+          {
+            "title": "国际视野 - 海外基地",
+            "source": [
+              "mba.bnu.edu.cn/gjhz/hwjd/index.html"
+            ],
+            "target": "/mba/gjhz/hwjd"
+          },
+          {
+            "title": "国际视野 - 学位合作",
+            "source": [
+              "mba.bnu.edu.cn/gjhz/xwhz/index.html"
+            ],
+            "target": "/mba/gjhz/xwhz"
+          },
+          {
+            "title": "国际视野 - 长期交换",
+            "source": [
+              "mba.bnu.edu.cn/gjhz/zqjh/index.html"
+            ],
+            "target": "/mba/gjhz/zqjh"
+          },
+          {
+            "title": "国际视野 - 短期项目",
+            "source": [
+              "mba.bnu.edu.cn/gjhz/dqxm/index.html"
+            ],
+            "target": "/mba/gjhz/dqxm"
+          },
+          {
+            "title": "校园生活 - 学生组织",
+            "source": [
+              "mba.bnu.edu.cn/xysh/xszz/index.html"
+            ],
+            "target": "/mba/xysh/xszz"
+          },
+          {
+            "title": "职业发展 - 校外导师",
+            "source": [
+              "mba.bnu.edu.cn/zyfz/xwds/index.html"
+            ],
+            "target": "/mba/zyfz/xwds"
+          },
+          {
+            "title": "职业发展 - 企业实践",
+            "source": [
+              "mba.bnu.edu.cn/zyfz/zycp/index.html"
+            ],
+            "target": "/mba/zyfz/zycp"
+          },
+          {
+            "title": "职业发展 - 就业创业",
+            "source": [
+              "mba.bnu.edu.cn/zyfz/jycy/index.html"
+            ],
+            "target": "/mba/zyfz/jycy"
+          }
+        ],
+        "location": "mba.ts"
       }
     },
     "name": "北京师范大学",
@@ -8653,6 +8770,37 @@
     },
     "name": "北京邮电大学",
     "url": "bupt.edu.cn"
+  },
+  "byau": {
+    "routes": {
+      "/news/:type_id": {
+        "path": "/news/:type_id",
+        "categories": [
+          "university"
+        ],
+        "example": "/byau/news/3674",
+        "parameters": {
+          "type_id": "栏目类型(从菜单栏获取对应 ID)"
+        },
+        "radar": [
+          {
+            "source": [
+              "xinwen.byau.edu.cn/:type_id/list.htm"
+            ],
+            "target": "/news/:type_id"
+          }
+        ],
+        "name": "新闻网",
+        "maintainers": [
+          "ueiu"
+        ],
+        "url": "xinwen.byau.edu.cn",
+        "description": "| 学校要闻 | 校园动态 |\n  | ---- | ----------- |\n  | 3674 | 3676 |",
+        "location": "xinwen/index.ts"
+      }
+    },
+    "name": "黑龙江八一农垦大学",
+    "url": "byau.edu.cn"
   },
   "byteclicks": {
     "routes": {
@@ -24141,7 +24289,7 @@
             "target": "/gov/stats/*path"
           }
         ],
-        "description": "::: tip\n    路径处填写对应页面 URL 中 `http://www.stats.gov.cn/` 后的字段。下面是一个例子。\n\n    若订阅 [数据 > 数据解读](http://www.stats.gov.cn/sj/sjjd/) 则将对应页面 URL `http://www.stats.gov.cn/sj/sjjd/` 中 `http://www.stats.gov.cn/` 后的字段 `sj/sjjd` 作为路径填入。此时路由为 [`/gov/stats/sj/sjjd`](https://rsshub.app/gov/stats/sj/sjjd)\n\n    若订阅 [新闻 > 时政要闻 > 中央精神](http://www.stats.gov.cn/xw/szyw/zyjs/) 则将对应页面 URL `http://www.stats.gov.cn/xw/szyw/zyjs/` 中 `http://www.stats.gov.cn/` 后的字段 `xw/szyw/zyjs` 作为路径填入。此时路由为 [`/gov/stats/xw/szyw/zyjs`](https://rsshub.app/gov/stats/xw/szyw/zyjs)\n    :::",
+        "description": "::: tip\n    路径处填写对应页面 URL 中 `http://www.stats.gov.cn/` 后的字段。下面是一个例子。\n\n    若订阅 [数据 > 数据解读](http://www.stats.gov.cn/sj/sjjd/)\n    则将对应页面 URL `http://www.stats.gov.cn/sj/sjjd/` 中 `http://www.stats.gov.cn/` 后的字段 `sj/sjjd` 作为路径填入。\n    此时路由为 [`/gov/stats/sj/sjjd`](https://rsshub.app/gov/stats/sj/sjjd)\n\n    若订阅 [新闻 > 时政要闻 > 中央精神](http://www.stats.gov.cn/xw/szyw/zyjs/)\n    则将对应页面 URL `http://www.stats.gov.cn/xw/szyw/zyjs/` 中 `http://www.stats.gov.cn/`\n    后的字段 `xw/szyw/zyjs` 作为路径填入。此时路由为 [`/gov/stats/xw/szyw/zyjs`](https://rsshub.app/gov/stats/xw/szyw/zyjs)\n    :::",
         "location": "stats/index.ts"
       },
       "/suzhou/doc": {
@@ -56652,7 +56800,7 @@
         "categories": [
           "multimedia"
         ],
-        "example": "/u9a9/search/新片速递",
+        "example": "/u3c3/search/新片速递",
         "parameters": {
           "keyword": "Search keyword",
           "preview": "Show image preview, off by default, non empty value means on"
@@ -56679,7 +56827,7 @@
         "categories": [
           "multimedia"
         ],
-        "example": "/u9a9/search/新片速递",
+        "example": "/u3c3/search/新片速递",
         "parameters": {
           "keyword": "Search keyword",
           "preview": "Show image preview, off by default, non empty value means on"
@@ -56699,7 +56847,7 @@
         "location": "index.ts"
       }
     },
-    "name": "U9A9",
+    "name": "U3C3",
     "url": "u3c3.com"
   },
   "u9a9": {
@@ -56709,6 +56857,7 @@
           "/:preview?",
           "/search/:keyword/:preview?"
         ],
+        "example": "/u9a9/search/新片速递",
         "radar": [
           {
             "source": [
@@ -56717,7 +56866,7 @@
             "target": ""
           }
         ],
-        "name": "Unknown",
+        "name": "Search",
         "maintainers": [
           "TonyRL"
         ],
@@ -56729,6 +56878,7 @@
           "/:preview?",
           "/search/:keyword/:preview?"
         ],
+        "example": "/u9a9/search/新片速递",
         "radar": [
           {
             "source": [
@@ -56737,7 +56887,7 @@
             "target": ""
           }
         ],
-        "name": "Unknown",
+        "name": "Search",
         "maintainers": [
           "TonyRL"
         ],
@@ -56745,7 +56895,7 @@
         "location": "index.ts"
       }
     },
-    "name": "Unknown",
+    "name": "U9A9",
     "url": "u9a9.com"
   },
   "uber": {
@@ -65394,6 +65544,74 @@
     },
     "name": "赵容部落",
     "url": "zrblog.net"
+  },
+  "zsxq": {
+    "routes": {
+      "/group/:id/:scope?": {
+        "name": "星球",
+        "categories": [
+          "social-media"
+        ],
+        "path": "/group/:id/:scope?",
+        "example": "/zsxq/group/88855458825252",
+        "parameters": {
+          "id": "星球id，从网页端url中获取",
+          "scope": "栏目分类，默认为\"all\"，见下表"
+        },
+        "maintainers": [
+          "KarasuShin"
+        ],
+        "radar": [
+          {
+            "source": [
+              "wx.zsxq.com/dweb2/index/group/:id"
+            ]
+          }
+        ],
+        "features": {
+          "requireConfig": [
+            {
+              "name": "ZSXQ_ACCESS_TOKEN",
+              "description": "知识星球访问令牌,获取方式：\n1. 登录知识星球网页版\n2. 打开浏览器开发者工具，切换到 Application 面板\n3. 点击侧边栏中的Storage -> Cookies -> https://wx.zsxq.com\n4. 复制 Cookie 中的 zsxq_access_token 值"
+            }
+          ]
+        },
+        "description": "| all  | digests | by_owner | questions | tasks |\n    | ---- | ------ | --------- | -------- | ------ |\n    | 最新 | 精华    | 只看星主    | 问答      | 作业   |",
+        "location": "group.ts"
+      },
+      "/user/:id": {
+        "name": "用户足迹",
+        "categories": [
+          "social-media"
+        ],
+        "path": "/user/:id",
+        "example": "/zsxq/user/2414218251",
+        "parameters": {
+          "id": "用户id，从网页端url中获取"
+        },
+        "maintainers": [
+          "KarasuShin"
+        ],
+        "radar": [
+          {
+            "source": [
+              "wx.zsxq.com/dweb2/index/footprint/:id"
+            ]
+          }
+        ],
+        "features": {
+          "requireConfig": [
+            {
+              "name": "ZSXQ_ACCESS_TOKEN",
+              "description": "知识星球访问令牌,获取方式：\n1. 登录知识星球网页版\n2. 打开浏览器开发者工具，切换到 Application 面板\n3. 点击侧边栏中的Storage -> Cookies -> https://wx.zsxq.com\n4. 复制 Cookie 中的 zsxq_access_token 值"
+            }
+          ]
+        },
+        "location": "user.ts"
+      }
+    },
+    "name": "知识星球",
+    "url": "zsxq.com"
   },
   "zuel": {
     "routes": {
