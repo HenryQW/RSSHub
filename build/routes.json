@@ -4881,51 +4881,12 @@
   },
   "baai": {
     "routes": {
-      "/hub/comments": {
-        "path": "/hub/comments",
-        "categories": [
-          "programming"
-        ],
-        "example": "/baai/hub/comments",
-        "parameters": {},
-        "features": {
-          "requireConfig": false,
-          "requirePuppeteer": false,
-          "antiCrawler": false,
-          "supportBT": false,
-          "supportPodcast": false,
-          "supportScihub": false
-        },
-        "radar": [
-          {
-            "source": [
-              "hub.baai.ac.cn/comments",
-              "hub.baai.ac.cn/"
-            ]
-          }
-        ],
-        "name": "智源社区 - 评论",
-        "maintainers": [
-          "TonyRL"
-        ],
-        "url": "hub.baai.ac.cn/comments",
-        "location": "comments.ts"
-      },
       "/hub/events": {
         "path": "/hub/events",
         "categories": [
           "programming"
         ],
         "example": "/baai/hub/events",
-        "parameters": {},
-        "features": {
-          "requireConfig": false,
-          "requirePuppeteer": false,
-          "antiCrawler": false,
-          "supportBT": false,
-          "supportPodcast": false,
-          "supportScihub": false
-        },
         "radar": [
           {
             "source": [
@@ -4941,34 +4902,31 @@
         "url": "hub.baai.ac.cn/events",
         "location": "events.ts"
       },
-      "/hub/:tagId/:sort?/:range?": {
+      "/hub/:tagId?/:sort?/:range?": {
         "path": [
-          "/hub/:tagId/:sort?/:range?",
-          "/hub/:tagId/:sort?",
-          "/hub/:sort?"
+          "/hub/:tagId?/:sort?/:range?"
         ],
-        "name": "Unknown",
-        "maintainers": [],
-        "location": "hub.ts"
-      },
-      "/hub/:tagId/:sort?": {
-        "path": [
-          "/hub/:tagId/:sort?/:range?",
-          "/hub/:tagId/:sort?",
-          "/hub/:sort?"
+        "categories": [
+          "programming"
         ],
-        "name": "Unknown",
-        "maintainers": [],
-        "location": "hub.ts"
-      },
-      "/hub/:sort?": {
-        "path": [
-          "/hub/:tagId/:sort?/:range?",
-          "/hub/:tagId/:sort?",
-          "/hub/:sort?"
+        "example": "/baai/hub",
+        "parameters": {
+          "tagId": "社群 ID，可在 [社群页](https://hub.baai.ac.cn/taglist) 或 URL 中找到",
+          "sort": "排序，见下表，默认为 `new`",
+          "range": "时间跨度，仅在排序 `readCnt` 时有效"
+        },
+        "description": "排序\n\n| 最新 | 最热    |\n| ---- | ------- |\n| new  | readCnt |\n\n时间跨度\n\n| 3 天 | 本周 | 本月 |\n| ---- | ---- | ---- |\n| 3    | 7    | 30   |",
+        "radar": [
+          {
+            "source": [
+              "baai.ac.cn/"
+            ]
+          }
         ],
-        "name": "Unknown",
-        "maintainers": [],
+        "name": "智源社区",
+        "maintainers": [
+          "TonyRL"
+        ],
         "location": "hub.ts"
       }
     },
@@ -9291,15 +9249,6 @@
           "traditional-media"
         ],
         "example": "/caixin/weekly",
-        "parameters": {},
-        "features": {
-          "requireConfig": false,
-          "requirePuppeteer": false,
-          "antiCrawler": false,
-          "supportBT": false,
-          "supportPodcast": false,
-          "supportScihub": false
-        },
         "radar": [
           {
             "source": [
@@ -17738,6 +17687,27 @@
         "url": "acm.ecnu.edu.cn/contest/",
         "location": "contest.ts"
       },
+      "/jwc": {
+        "path": "/jwc",
+        "categories": [
+          "university"
+        ],
+        "example": "/ecnu/jwc",
+        "radar": [
+          {
+            "source": [
+              "www.jwc.ecnu.edu.cn",
+              "www.ecnu.edu.cn"
+            ],
+            "target": "/tzgg"
+          }
+        ],
+        "name": "教务处通知",
+        "maintainers": [
+          "markbang"
+        ],
+        "location": "jwc.ts"
+      },
       "/yjs": {
         "path": "/yjs",
         "categories": [
@@ -17770,7 +17740,7 @@
       }
     },
     "name": "East China Normal University 华东师范大学",
-    "url": "acm.ecnu.edu.cn"
+    "url": "ecnu.edu.cn"
   },
   "economist": {
     "routes": {
@@ -29072,15 +29042,6 @@
           "journal"
         ],
         "example": "/ieee-security/security-privacy",
-        "parameters": {},
-        "features": {
-          "requireConfig": false,
-          "requirePuppeteer": false,
-          "antiCrawler": false,
-          "supportBT": false,
-          "supportPodcast": false,
-          "supportScihub": false
-        },
         "radar": [
           {
             "source": [
@@ -33477,6 +33438,37 @@
     },
     "name": "旅法师营地",
     "url": "www.iyingdi.com"
+  },
+  "lianxh": {
+    "routes": {
+      "/:category?": {
+        "path": "/:category?",
+        "example": "/lianxh",
+        "parameters": {
+          "category": "分类 id，可在对应分类页 URL 中找到，默认为 `all`，即全部"
+        },
+        "radar": [
+          {
+            "source": [
+              "www.lianxh.cn/blogs/all.html",
+              "www.lianxh.cn/"
+            ]
+          }
+        ],
+        "name": "精彩资讯",
+        "maintainers": [
+          "nczitzk"
+        ],
+        "url": "www.lianxh.cn/",
+        "description": "| 分类                 | id  |\n -------------------- | --- |\n 全部                 | all |\n Stata 入门           | 16  |\n Stata 教程           | 17  |\n 计量专题             | 18  |\n 内生性 - 因果推断    | 19  |\n 面板数据             | 20  |\n 交乘项 - 调节 - 中介 | 21  |\n 结果输出             | 22  |\n 工具软件             | 23  |\n Stata 绘图           | 24  |\n 数据处理             | 25  |\n Stata 程序           | 26  |\n Probit-Logit         | 27  |\n 时间序列             | 28  |\n 空间计量 - 网络分析  | 29  |\n Markdown-LaTeX       | 30  |\n 论文写作             | 31  |\n 回归分析             | 32  |\n 其它                 | 33  |\n 数据分享             | 34  |\n Stata 资源           | 35  |\n 文本分析 - 爬虫      | 36  |\n Python-R-Matlab      | 37  |\n IV-GMM               | 38  |\n 倍分法 DID           | 39  |\n 断点回归 RDD         | 40  |\n PSM-Matching         | 41  |\n 合成控制法           | 42  |\n Stata 命令           | 43  |\n 专题课程             | 44  |\n 风险管理             | 45  |\n 生存分析             | 46  |\n 机器学习             | 47  |\n 分位数回归           | 48  |\n SFA-DEA - 效率分析   | 49  |\n 答疑 - 板书          | 50  |\n 论文重现             | 51  |\n 最新课程             | 52  |\n 公开课               | 53  |",
+        "location": "index.ts"
+      }
+    },
+    "name": "连享会",
+    "url": "www.lianxh.cn",
+    "categories": [
+      "programming"
+    ]
   },
   "lifeweek": {
     "routes": {
@@ -50089,15 +50081,6 @@
           "journal"
         ],
         "example": "/sigsac/ccs",
-        "parameters": {},
-        "features": {
-          "requireConfig": false,
-          "requirePuppeteer": false,
-          "antiCrawler": false,
-          "supportBT": false,
-          "supportPodcast": false,
-          "supportScihub": false
-        },
         "radar": [
           {
             "source": [
@@ -50107,7 +50090,9 @@
           }
         ],
         "name": "The ACM Conference on Computer and Communications Security",
-        "maintainers": [],
+        "maintainers": [
+          "ZeddYu"
+        ],
         "url": "sigsac.org/ccs.html",
         "description": "Return results from 2020",
         "location": "ccs.ts"
@@ -52246,6 +52231,39 @@
   },
   "steam": {
     "routes": {
+      "/appcommunityfeed/:appid/:routeParams?": {
+        "path": "/appcommunityfeed/:appid/:routeParams?",
+        "categories": [
+          "game"
+        ],
+        "example": "/steam/appcommunityfeed/730",
+        "parameters": {
+          "appid": "Steam appid, can be found on the community hub page or store page URL.",
+          "routeParams": "Query parameters."
+        },
+        "radar": [
+          {
+            "title": "Community Hub",
+            "source": [
+              "steamcommunity.com/app/:appid"
+            ],
+            "target": "/appcommunityfeed/:appid"
+          },
+          {
+            "title": "Community Hub",
+            "source": [
+              "store.steampowered.com/app/:appid/*/"
+            ],
+            "target": "/appcommunityfeed/:appid"
+          }
+        ],
+        "description": "Query Parameters:\n\n| Name                   | Type   | Description             |\n| ---------------------- | ------ | ----------------------- |\n| p                      | string | p                       |\n| rgSections[]           | string | rgSections              |\n| filterLanguage         | string | Filter Language         |\n| languageTag            | string | Language Tag            |\n| nMaxInappropriateScore | string | Max Inappropriate Score |\n\nExample:\n- `/appcommunityfeed/730/p=1&rgSections[]=2&rgSections[]=4&filterLanguage=english&languageTag=english&nMaxInappropriateScore=1` for CS2 Screenshot and Artwork contents.\n- `/appcommunityfeed/730/rgSections[]=6` for CS2 Workshop contents only.\n- `/appcommunityfeed/570/rgSections[]=3&rgSections[]=9` for Dota2 Video and Guides contents.\n\n:::tip\nIt can also access community hub contents that require a logged-in account.\n:::\n",
+        "name": "Steam Community Hub Feeds",
+        "maintainers": [
+          "NyaaaDoge"
+        ],
+        "location": "appcommunityfeed.ts"
+      },
       "/search/:params": {
         "path": "/search/:params",
         "categories": [
@@ -57889,15 +57907,6 @@
           "journal"
         ],
         "example": "/usenix/usenix-security-sympoium",
-        "parameters": {},
-        "features": {
-          "requireConfig": false,
-          "requirePuppeteer": false,
-          "antiCrawler": false,
-          "supportBT": false,
-          "supportPodcast": false,
-          "supportScihub": false
-        },
         "radar": [
           {
             "source": [
