@@ -24655,6 +24655,34 @@
           "zxx-457"
         ],
         "location": "zhengce/zhengceku.ts"
+      },
+      "/zj/search/:websiteid?/:word/:cateid?": {
+        "path": "/zj/search/:websiteid?/:word/:cateid?",
+        "categories": [
+          "government"
+        ],
+        "example": "/gov/zj/search",
+        "parameters": {
+          "websiteid": "搜索范围-全省、各市各区、详细信息点击源网站https://www.zj.gov.cn/请求中寻找",
+          "word": "搜索关键词-默认：人才",
+          "cateid": "信息分类-默认：658（全部）",
+          "sortType": "排序类型-默认：2（按时间）"
+        },
+        "radar": [
+          {
+            "source": [
+              "search.zj.gov.cn/jsearchfront/search.do"
+            ],
+            "target": "/zj/search/:websiteid?/:word/:cateid?"
+          }
+        ],
+        "name": "浙江省人民政府-全省政府网站统一搜索",
+        "url": "search.zj.gov.cn/jsearchfront/search.do",
+        "maintainers": [
+          "HaoyuLee"
+        ],
+        "description": "\n        | 行政区域         | websiteid |\n        | ------------ | -- |\n        | 宁波市本级     | 330201000000000  |\n\n        | 搜索关键词         | word    |\n\n        | 信息分类         | cateid    |\n\n        | 排序类型         | sortType    |\n        | ------------ | -- |\n        | 按相关度     | 1  |\n        | 按时间     | 2  |\n    ",
+        "location": "zj/search.ts"
       }
     },
     "name": "中国人民银行",
@@ -29062,6 +29090,65 @@
     "name": "IEEE Computer Society",
     "url": "ieee-security.org"
   },
+  "iehou": {
+    "routes": {
+      "/:category?": {
+        "path": "/:category?",
+        "name": "线报",
+        "url": "iehou.com",
+        "maintainers": [
+          "nczitzk"
+        ],
+        "example": "/iehou",
+        "parameters": {
+          "category": "分类，默认为空，即最新线报，可在对应分类页 URL 中找到"
+        },
+        "description": ":::tip\n  若订阅 [24小时热门线报](https://iehou.com/page-dayhot.htm)，网址为 `https://iehou.com/page-dayhot.htm`。截取 `https://iehou.com/page-` 到末尾 `.htm` 的部分 `dayhot` 作为参数填入，此时路由为 [`/iehou/dayhot`](https://rsshub.app/iehou/dayhot)。\n  :::\n  \n  | [最新线报](https://iehou.com/) | [24 小时热门](https://iehou.com/page-dayhot.htm) | [一周热门](https://iehou.com/page-weekhot.htm) |\n  | ------------------------------ | ------------------------------------------------ | ---------------------------------------------- |\n  | [](https://rsshub.app/iehou)   | [dayhot](https://rsshub.app/iehou/dayhot)        | [weekhot](https://rsshub.app/iehou/weekhot)    |\n  ",
+        "categories": [
+          "new-media"
+        ],
+        "features": {
+          "requireConfig": false,
+          "requirePuppeteer": false,
+          "antiCrawler": false,
+          "supportRadar": true,
+          "supportBT": false,
+          "supportPodcast": false,
+          "supportScihub": false
+        },
+        "radar": [
+          {
+            "title": "最新线报",
+            "source": [
+              "iehou.com"
+            ],
+            "target": "/"
+          },
+          {
+            "title": "24小时热门",
+            "source": [
+              "iehou.com/page-dayhot.htm"
+            ],
+            "target": "/dayhot"
+          },
+          {
+            "title": "一周热门",
+            "source": [
+              "iehou.com/page-weekhot.htm"
+            ],
+            "target": "/weekhot"
+          }
+        ],
+        "location": "index.ts"
+      }
+    },
+    "name": "网猴线报",
+    "url": "iehou.com",
+    "categories": [
+      "new-media"
+    ],
+    "description": ""
+  },
   "ielts": {
     "routes": {
       "/": {
@@ -32654,6 +32741,48 @@
     "name": "Kong API 网关平台",
     "url": "konghq.com",
     "description": "[Kong](https://konghq.com/) 是一家开源的 API 网关服务商，此处收集其官网的最新博客文章。"
+  },
+  "kpmg": {
+    "routes": {
+      "/insights/:lang?": {
+        "path": "/insights/:lang?",
+        "example": "/kpmg/insights",
+        "parameters": {
+          "lang": "Language, either `en` or `zh`"
+        },
+        "radar": [
+          {
+            "source": [
+              "kpmg.com/xx/en/home/insights.html"
+            ],
+            "target": "/insights/en"
+          },
+          {
+            "source": [
+              "kpmg.com/cn/zh/home/insights.html"
+            ],
+            "target": "/insights/zh"
+          }
+        ],
+        "name": "Insights",
+        "maintainers": [
+          "LogicJake"
+        ],
+        "url": "kpmg.com/xx/en/home/insights.html",
+        "zh": {
+          "name": "洞察"
+        },
+        "location": "insights.ts"
+      }
+    },
+    "name": "KPMG",
+    "url": "kpmg.com",
+    "categories": [
+      "other"
+    ],
+    "zh": {
+      "name": "毕马威"
+    }
   },
   "kuaidi100": {
     "routes": {
