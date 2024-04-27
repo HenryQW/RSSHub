@@ -10614,6 +10614,19 @@
       }
     ]
   },
+  "ollama.com": {
+    "_name": "Ollama",
+    ".": [
+      {
+        "title": "Models",
+        "docs": "https://docs.rsshub.app/routes/programming",
+        "source": [
+          "/library"
+        ],
+        "target": "/ollama/library"
+      }
+    ]
+  },
   "onet.pl": {
     "_name": "Onet",
     "wiadomosci": [
@@ -13804,10 +13817,11 @@
     "_name": "四川工商学院",
     "jsjxy": [
       {
-        "title": "计算机学院通知公告",
+        "title": "计算机学院 - 通知公告",
         "docs": "https://docs.rsshub.app/routes/university",
         "source": [
           "/news",
+          "/",
           "/"
         ],
         "target": "/stbu/jsjxy"
@@ -13815,7 +13829,7 @@
     ],
     ".": [
       {
-        "title": "Unknown",
+        "title": "学院新闻",
         "docs": "https://docs.rsshub.app/routes/university",
         "source": [
           "/html/news/xueyuan",
