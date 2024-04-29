@@ -11268,6 +11268,24 @@
     "name": "川流",
     "url": "chuanliu.org"
   },
+  "chub": {
+    "routes": {
+      "/characters": {
+        "path": "/characters",
+        "categories": [
+          "new-media"
+        ],
+        "example": "/chub/characters",
+        "name": "Characters",
+        "maintainers": [
+          "flameleaf"
+        ],
+        "location": "characters.ts"
+      }
+    },
+    "name": "Chub",
+    "url": "chub.ai"
+  },
   "cib": {
     "routes": {
       "/whpj/:format?": {
@@ -16972,7 +16990,8 @@
         ],
         "name": "直播间开播",
         "maintainers": [
-          "DIYgod"
+          "DIYgod",
+          "ChaosTong"
         ],
         "location": "room.ts"
       }
@@ -26170,37 +26189,7 @@
     "routes": {
       "/article/:sort?/:id?": {
         "path": [
-          "/article/:sort?/:id?",
-          "/:sort?/:id?"
-        ],
-        "categories": [
-          "programming"
-        ],
-        "example": "/hellogithub/article",
-        "parameters": {
-          "sort": "排序方式，见下表，默认为 `hot`，即热门",
-          "id": "标签 id，可在对应标签页 URL 中找到，默认为全部标签"
-        },
-        "features": {
-          "requireConfig": false,
-          "requirePuppeteer": false,
-          "antiCrawler": false,
-          "supportBT": false,
-          "supportPodcast": false,
-          "supportScihub": false
-        },
-        "name": "文章",
-        "maintainers": [
-          "moke8",
-          "nczitzk"
-        ],
-        "description": "| 热门 | 最近 |\n  | ---- | ---- |\n  | hot  | last |",
-        "location": "index.ts"
-      },
-      "/:sort?/:id?": {
-        "path": [
-          "/article/:sort?/:id?",
-          "/:sort?/:id?"
+          "/article/:sort?/:id?"
         ],
         "categories": [
           "programming"
@@ -26231,7 +26220,8 @@
           "/ranking/:type?",
           "/report/:type?"
         ],
-        "name": "Unknown",
+        "example": "/hellogithub/ranking",
+        "name": "榜单报告",
         "maintainers": [
           "moke8",
           "nczitzk"
@@ -26244,7 +26234,8 @@
           "/ranking/:type?",
           "/report/:type?"
         ],
-        "name": "Unknown",
+        "example": "/hellogithub/ranking",
+        "name": "榜单报告",
         "maintainers": [
           "moke8",
           "nczitzk"
@@ -26257,10 +26248,12 @@
           "/month",
           "/volume"
         ],
-        "name": "Unknown",
+        "example": "/hellogithub/volume",
+        "name": "月刊",
         "maintainers": [
           "moke8",
-          "nczitzk"
+          "nczitzk",
+          "CaoMeiYouRen"
         ],
         "location": "volume.ts"
       },
@@ -26269,10 +26262,12 @@
           "/month",
           "/volume"
         ],
-        "name": "Unknown",
+        "example": "/hellogithub/volume",
+        "name": "月刊",
         "maintainers": [
           "moke8",
-          "nczitzk"
+          "nczitzk",
+          "CaoMeiYouRen"
         ],
         "location": "volume.ts"
       }
@@ -51080,28 +51075,27 @@
   },
   "sohu": {
     "routes": {
-      "/mp/:id": {
-        "path": "/mp/:id",
+      "/mp/:xpt": {
+        "path": "/mp/:xpt",
         "categories": [
           "new-media"
         ],
-        "example": "/sohu/mp/119097",
+        "example": "/sohu/mp/c29odXptdGhnbjZ3NEBzb2h1LmNvbQ==",
         "parameters": {
-          "id": "搜狐号 ID"
+          "xpt": "搜狐号 xpt ，可在URL中找到或搜狐号 ID"
         },
-        "features": {
-          "requireConfig": false,
-          "requirePuppeteer": false,
-          "antiCrawler": false,
-          "supportBT": false,
-          "supportPodcast": false,
-          "supportScihub": false
-        },
-        "name": "更新",
+        "radar": [
+          {
+            "source": [
+              "mp.sohu.com/profile"
+            ]
+          }
+        ],
+        "name": "最新",
         "maintainers": [
           "HenryQW"
         ],
-        "description": "1.  通过浏览器搜索相关搜狐号 `果壳 site: mp.sohu.com`。\n  2.  通过浏览器控制台执行 `contentData.mkey`，返回的即为搜狐号 ID。",
+        "description": "搜狐号 ID 可以通过以下方式获取：\n  1.  通过浏览器搜索相关搜狐号 `果壳 site: mp.sohu.com`。\n  2.  通过浏览器控制台执行 `window.globalConst.mkeyConst_mkey`，返回的即为搜狐号 ID。",
         "location": "mp.ts"
       }
     },

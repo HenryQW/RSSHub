@@ -1116,6 +1116,9 @@
   "/chuanliu/nice": [
     "nczitzk"
   ],
+  "/chub/characters": [
+    "flameleaf"
+  ],
   "/cib/whpj/:format?": [
     "Qixingchen"
   ],
@@ -1669,7 +1672,8 @@
     "nczitzk"
   ],
   "/douyu/room/:id": [
-    "DIYgod"
+    "DIYgod",
+    "ChaosTong"
   ],
   "/dribbble/keyword/:keyword": [
     "DIYgod",
@@ -2626,10 +2630,6 @@
     "moke8",
     "nczitzk"
   ],
-  "/hellogithub/:sort?/:id?": [
-    "moke8",
-    "nczitzk"
-  ],
   "/hellogithub/ranking/:type?": [
     "moke8",
     "nczitzk"
@@ -2640,11 +2640,13 @@
   ],
   "/hellogithub/month": [
     "moke8",
-    "nczitzk"
+    "nczitzk",
+    "CaoMeiYouRen"
   ],
   "/hellogithub/volume": [
     "moke8",
-    "nczitzk"
+    "nczitzk",
+    "CaoMeiYouRen"
   ],
   "/hex-rays/news": [
     "hellodword ",
@@ -5098,7 +5100,7 @@
   "/sogou/search/:keyword": [
     "CaoMeiYouRen"
   ],
-  "/sohu/mp/:id": [
+  "/sohu/mp/:xpt": [
     "HenryQW"
   ],
   "/solidot/:type?": [
