@@ -12933,6 +12933,34 @@
     "name": "Coomer",
     "url": "coomer.party"
   },
+  "copernicium": {
+    "routes": {
+      "/:category": {
+        "path": "/:category",
+        "categories": [
+          "new-media"
+        ],
+        "radar": [
+          {
+            "source": [
+              "www.copernicium.tw"
+            ]
+          }
+        ],
+        "name": "分类",
+        "example": "/copernicium/环球视角",
+        "parameters": {
+          "category": "分类名"
+        },
+        "maintainers": [
+          "dzx-dzx"
+        ],
+        "location": "index.ts"
+      }
+    },
+    "name": "日新说",
+    "url": "www.copernicium.tw"
+  },
   "copymanga": {
     "routes": {
       "/comic/:id/:chapterCnt?": {
@@ -56526,6 +56554,34 @@
     },
     "name": "The Ring of Wonder",
     "url": "trow.cc"
+  },
+  "ttv": {
+    "routes": {
+      "/:category?": {
+        "path": "/:category?",
+        "categories": [
+          "traditional-media"
+        ],
+        "example": "/ttv",
+        "parameters": {
+          "category": "分类"
+        },
+        "name": "分类",
+        "maintainers": [
+          "dzx-dzx"
+        ],
+        "radar": [
+          {
+            "source": [
+              "news.ttv.com.tw/:category"
+            ]
+          }
+        ],
+        "location": "index.ts"
+      }
+    },
+    "name": "台視新聞網",
+    "url": "news.ttv.com.tw"
   },
   "tvb": {
     "routes": {
