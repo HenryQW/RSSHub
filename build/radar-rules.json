@@ -1019,6 +1019,14 @@
     "_name": "AP News",
     ".": [
       {
+        "title": "RSS",
+        "docs": "https://docs.rsshub.app/routes/traditional-media",
+        "source": [
+          "/:rss"
+        ],
+        "target": "/apnews/rss/:rss"
+      },
+      {
         "title": "Topics",
         "docs": "https://docs.rsshub.app/routes/traditional-media",
         "source": [
@@ -6494,6 +6502,19 @@
       }
     ]
   },
+  "gq.com": {
+    "_name": "GQ",
+    ".": [
+      {
+        "title": "News",
+        "docs": "https://docs.rsshub.app/routes/traditional-media",
+        "source": [
+          "/"
+        ],
+        "target": "/gq/news"
+      }
+    ]
+  },
   "greasyfork.org": {
     "_name": "Greasy Fork",
     ".": [
@@ -9252,6 +9273,19 @@
       }
     ]
   },
+  "magnumphotos.com": {
+    "_name": "Magnum Photos",
+    ".": [
+      {
+        "title": "Magazine",
+        "docs": "https://docs.rsshub.app/routes/picture",
+        "source": [
+          "/"
+        ],
+        "target": "/magnumphotos/magazine"
+      }
+    ]
+  },
   "mangadex.org": {
     "_name": "Unknown",
     ".": [
@@ -9971,6 +10005,19 @@
           "/"
         ],
         "target": "/newsmarket/:category?"
+      }
+    ]
+  },
+  "newyorker.com": {
+    "_name": "New Yorker",
+    ".": [
+      {
+        "title": "The New Yorker",
+        "docs": "https://docs.rsshub.app/routes/traditional-media",
+        "source": [
+          "/feed/:category/:subCategory"
+        ],
+        "target": "/newyorker/:category/:subCategory?"
       }
     ]
   },
@@ -14642,6 +14689,43 @@
       }
     ]
   },
+  "theinitium.com": {
+    "_name": "端传媒",
+    ".": [
+      {
+        "title": "作者",
+        "docs": "https://docs.rsshub.app/routes/new-media",
+        "source": [
+          "/author/:type"
+        ],
+        "target": "/theinitium/author/:type"
+      },
+      {
+        "title": "专题・栏目",
+        "docs": "https://docs.rsshub.app/routes/new-media",
+        "source": [
+          "/channel/:type"
+        ],
+        "target": "/theinitium/channel/:type"
+      },
+      {
+        "title": "作者",
+        "docs": "https://docs.rsshub.app/routes/new-media",
+        "source": [
+          "/author/:type"
+        ],
+        "target": "/theinitium/author/:type"
+      },
+      {
+        "title": "话题・标签",
+        "docs": "https://docs.rsshub.app/routes/new-media",
+        "source": [
+          "/tags/:type"
+        ],
+        "target": "/theinitium/tags/:type"
+      }
+    ]
+  },
   "factpaper.cn": {
     "_name": "澎湃新闻",
     ".": [
@@ -15427,6 +15511,17 @@
   },
   "upc.edu.cn": {
     "_name": "中国石油大学（华东）",
+    "jwc": [
+      {
+        "title": "教务处通知公告",
+        "docs": "https://docs.rsshub.app/routes/university",
+        "source": [
+          "/",
+          "/:type/list.htm"
+        ],
+        "target": "/upc/jwc/:type?"
+      }
+    ],
     "zs.gs": [
       {
         "title": "研究生院通知公告",

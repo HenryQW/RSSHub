@@ -4037,6 +4037,39 @@
   },
   "apnews": {
     "routes": {
+      "/rss/:rss?": {
+        "path": "/rss/:rss?",
+        "categories": [
+          "traditional-media"
+        ],
+        "example": "/apnews/rss/business",
+        "parameters": {
+          "rss": "Route name from the first segment of the corresponding site, or `index` for the front page(default)."
+        },
+        "features": {
+          "requireConfig": false,
+          "requirePuppeteer": false,
+          "antiCrawler": false,
+          "supportBT": false,
+          "supportPodcast": false,
+          "supportScihub": false
+        },
+        "radar": [
+          {
+            "source": [
+              "apnews.com/:rss"
+            ],
+            "target": "/rss/:rss"
+          }
+        ],
+        "name": "RSS",
+        "maintainers": [
+          "zoenglinghou",
+          "mjysci",
+          "TonyRL"
+        ],
+        "location": "rss.ts"
+      },
       "/topics/:topic?": {
         "path": "/topics/:topic?",
         "categories": [
@@ -21878,7 +21911,10 @@
           }
         ],
         "name": "Repo Pull Requests",
-        "maintainers": [],
+        "maintainers": [
+          "hashman",
+          "TonyRL"
+        ],
         "location": "pulls.ts"
       },
       "/pulse/:user/:repo/:period?": {
@@ -24902,6 +24938,40 @@
       "government"
     ],
     "description": "<details>\n  <summary>*业务咨询* 和 *投诉建议* 可用的站点参数</summary>\n\n  | 上海市   | 北京市  | 天津市  | 河北省 |\n  | -------- | ------- | ------- | ------ |\n  | shanghai | beijing | tianjin | hebei  |\n\n  | 山西省 | 内蒙古自治区 | 辽宁省   | 吉林省 |\n  | ------ | ------------ | -------- | ------ |\n  | shanxi | neimenggu    | liaoning | jilin  |\n\n  | 黑龙江省     | 江苏省  | 浙江省   | 安徽省 |\n  | ------------ | ------- | -------- | ------ |\n  | heilongjiang | jiangsu | zhejiang | anhui  |\n\n  | 福建省 | 江西省  | 山东省   | 河南省 |\n  | ------ | ------- | -------- | ------ |\n  | fujian | jiangxi | shandong | henan  |\n\n  | 湖北省 | 湖南省 | 广东省    | 广西壮族自治区 |\n  | ------ | ------ | --------- | -------------- |\n  | hubei  | hunan  | guangdong | guangxi        |\n\n  | 海南省 | 重庆市    | 四川省  | 贵州省  |\n  | ------ | --------- | ------- | ------- |\n  | hainan | chongqing | sichuan | guizhou |\n\n  | 云南省 | 西藏自治区 | 陕西省  | 甘肃省 |\n  | ------ | ---------- | ------- | ------ |\n  | yunnan | xizang     | shaanxi | gansu  |\n\n  | 青海省  | 宁夏回族自治区 | 新疆维吾尔自治区 | 大连市 |\n  | ------- | -------------- | ---------------- | ------ |\n  | qinghai | ningxia        | xinjiang         | dalian |\n\n  | 宁波市 | 厦门市 | 青岛市  | 深圳市   |\n  | ------ | ------ | ------- | -------- |\n  | ningbo | xiamen | qingdao | shenzhen |\n</details>"
+  },
+  "gq": {
+    "routes": {
+      "/news": {
+        "path": "/news",
+        "categories": [
+          "traditional-media"
+        ],
+        "example": "/gq/news",
+        "parameters": {},
+        "features": {
+          "requireConfig": false,
+          "requirePuppeteer": false,
+          "antiCrawler": false,
+          "supportBT": false,
+          "supportPodcast": false,
+          "supportScihub": false
+        },
+        "radar": [
+          {
+            "source": [
+              "gq.com/"
+            ]
+          }
+        ],
+        "name": "News",
+        "maintainers": [
+          "EthanWng97"
+        ],
+        "location": "news.ts"
+      }
+    },
+    "name": "GQ",
+    "url": "gq.com"
   },
   "greasyfork": {
     "routes": {
@@ -30565,19 +30635,26 @@
         ],
         "location": "tag.ts"
       },
-      "/zt/:id": {
-        "path": "/zt/:id",
-        "categories": [
-          "new-media"
+      "/zt/:id?": {
+        "path": "/zt/:id?",
+        "name": "专题",
+        "url": "ithome.com",
+        "maintainers": [
+          "nczitzk"
         ],
         "example": "/ithome/zt/xijiayi",
         "parameters": {
-          "id": "专题 id"
+          "category": "专题 id，默认为 xijiayi，即 [喜加一](https://www.ithome.com/zt/xijiayi)，可在对应专题页 URL 中找到"
         },
+        "description": ":::tip\n  更多专题请见 [IT之家专题](https://www.ithome.com/zt)\n  :::",
+        "categories": [
+          "new-media"
+        ],
         "features": {
           "requireConfig": false,
           "requirePuppeteer": false,
           "antiCrawler": false,
+          "supportRadar": true,
           "supportBT": false,
           "supportPodcast": false,
           "supportScihub": false
@@ -30586,14 +30663,10 @@
           {
             "source": [
               "ithome.com/zt/:id"
-            ]
+            ],
+            "target": "/zt/:id"
           }
         ],
-        "name": "专题",
-        "maintainers": [
-          "nczitzk"
-        ],
-        "description": "所有专题请见[此处](https://www.ithome.com/zt)",
         "location": "zt.ts"
       },
       "/tw/feeds/:category": {
@@ -35063,6 +35136,41 @@
     "name": "MagazineLib",
     "url": "magazinelib.com"
   },
+  "magnumphotos": {
+    "routes": {
+      "/magazine": {
+        "path": "/magazine",
+        "categories": [
+          "picture"
+        ],
+        "example": "/magnumphotos/magazine",
+        "parameters": {},
+        "features": {
+          "requireConfig": false,
+          "requirePuppeteer": false,
+          "antiCrawler": false,
+          "supportBT": false,
+          "supportPodcast": false,
+          "supportScihub": false
+        },
+        "radar": [
+          {
+            "source": [
+              "magnumphotos.com/"
+            ]
+          }
+        ],
+        "name": "Magazine",
+        "maintainers": [
+          "EthanWng97"
+        ],
+        "url": "magnumphotos.com/",
+        "location": "magazine.ts"
+      }
+    },
+    "name": "Magnum Photos",
+    "url": "magnumphotos.com"
+  },
   "mail": {
     "routes": {
       "/imap/:email/:folder{.+}?": {
@@ -38195,6 +38303,42 @@
     },
     "name": "上下游 News&Market",
     "url": "newsmarket.com.tw"
+  },
+  "newyorker": {
+    "routes": {
+      "/:category/:subCategory?": {
+        "path": "/:category/:subCategory?",
+        "categories": [
+          "traditional-media"
+        ],
+        "example": "/newyorker/everything",
+        "parameters": {
+          "category": "rss category. can be found at `https://www.newyorker.com/about/feeds`"
+        },
+        "features": {
+          "requireConfig": false,
+          "requirePuppeteer": false,
+          "antiCrawler": false,
+          "supportBT": false,
+          "supportPodcast": false,
+          "supportScihub": false
+        },
+        "radar": [
+          {
+            "source": [
+              "newyorker.com/feed/:category/:subCategory?"
+            ]
+          }
+        ],
+        "name": "The New Yorker",
+        "maintainers": [
+          "EthanWng97"
+        ],
+        "location": "news.ts"
+      }
+    },
+    "name": "New Yorker",
+    "url": "newyorker.com"
   },
   "newzmz": {
     "routes": {
@@ -55042,11 +55186,127 @@
   },
   "theinitium": {
     "routes": {
-      "/:model?/:type?/:language?": {
-        "path": "/:model?/:type?/:language?",
-        "name": "Unknown",
-        "maintainers": [],
-        "location": "full.ts"
+      "/author/:type/:language?": {
+        "path": "/author/:type/:language?",
+        "name": "作者",
+        "maintainers": [
+          "AgFlore"
+        ],
+        "parameters": {
+          "type": "作者 ID，可从作者主页 URL 中获取，如 `https://theinitium.com/author/ninghuilulu`",
+          "language": "语言，简体`zh-hans`，繁体`zh-hant`，缺省为简体"
+        },
+        "radar": [
+          {
+            "source": [
+              "theinitium.com/author/:type"
+            ],
+            "target": "/author/:type"
+          }
+        ],
+        "example": "/theinitium/author/ninghuilulu/zh-hans",
+        "categories": [
+          "new-media"
+        ],
+        "location": "author.ts"
+      },
+      "/channel/:type?/:language?": {
+        "path": "/channel/:type?/:language?",
+        "name": "专题・栏目",
+        "maintainers": [
+          "prnake"
+        ],
+        "parameters": {
+          "type": "栏目，缺省为最新",
+          "language": "语言，简体`zh-hans`，繁体`zh-hant`，缺省为简体"
+        },
+        "radar": [
+          {
+            "source": [
+              "theinitium.com/channel/:type"
+            ],
+            "target": "/channel/:type"
+          }
+        ],
+        "example": "/theinitium/channel/latest/zh-hans",
+        "categories": [
+          "new-media"
+        ],
+        "description": "Type 栏目：\n\n  | 最新   | 深度    | What’s New | 广场              | 科技       | 风物    | 特约     | ... |\n  | ------ | ------- | ---------- | ----------------- | ---------- | ------- | -------- | --- |\n  | latest | feature | news-brief | notes-and-letters | technology | culture | pick_up | ... |",
+        "location": "channel.ts"
+      },
+      "/follow/articles/:language?": {
+        "path": "/follow/articles/:language?",
+        "name": "个人订阅追踪动态",
+        "maintainers": [
+          "AgFlore"
+        ],
+        "parameters": {
+          "language": "语言，简体`zh-hans`，繁体`zh-hant`，缺省为简体"
+        },
+        "radar": [
+          {
+            "title": "作者",
+            "source": [
+              "theinitium.com/author/:type"
+            ],
+            "target": "/author/:type"
+          }
+        ],
+        "example": "/theinitium/author/ninghuilulu/zh-hans",
+        "categories": [
+          "new-media"
+        ],
+        "description": "Web 版认证 token 和 iOS 内购回执认证 token 只需选择其一填入即可。你也可选择直接在环境设置中填写明文的用户名和密码",
+        "features": {
+          "requireConfig": [
+            {
+              "name": "INITIUM_BEARER_TOKEN",
+              "optional": true,
+              "description": "端传媒 Web 版认证 token。获取方式：登陆后打开端传媒站内任意页面，打开浏览器开发者工具中 “网络”(Network) 选项卡，筛选 URL 找到任一个地址为 `api.initium.com` 开头的请求，点击检查其 “消息头”，在 “请求头” 中找到Authorization字段，将其值复制填入配置即可。你的配置应该形如 `INITIUM_BEARER_TOKEN: 'Bearer eyJxxxx......xx_U8'`。使用 token 部署的好处是避免占据登陆设备数的额度，但这个 token 一般有效期为两周，因此只可作临时测试使用。"
+            },
+            {
+              "name": "INITIUM_IAP_RECEIPT",
+              "optional": true,
+              "description": "端传媒 iOS 版内购回执认证 token。获取方式：登陆后打开端传媒 iOS app 内任意页面，打开抓包工具，筛选 URL 找到任一个地址为 `api.initium.com` 开头的请求，点击检查其 “消息头”，在 “请求头” 中找到 `X-IAP-Receipt` 字段，将其值复制填入配置即可。你的配置应该形如 `INITIUM_IAP_RECEIPT: ef81dee9e4e2fe084a0af1ea82da2f7b16e75f756db321618a119fa62b52550e`。"
+            },
+            {
+              "name": "INITIUM_USERNAME",
+              "optional": true,
+              "description": "端传媒用户名 （邮箱）"
+            },
+            {
+              "name": "INITIUM_PASSWORD",
+              "optional": true,
+              "description": "端传媒密码"
+            }
+          ]
+        },
+        "location": "follow.ts"
+      },
+      "/tags/:type/:language?": {
+        "path": "/tags/:type/:language?",
+        "name": "话题・标签",
+        "maintainers": [
+          "AgFlore"
+        ],
+        "parameters": {
+          "type": "话题 ID，可从话题页 URL 中获取，如 `https://theinitium.com/tags/2019_10/`",
+          "language": "语言，简体`zh-hans`，繁体`zh-hant`，缺省为简体"
+        },
+        "radar": [
+          {
+            "source": [
+              "theinitium.com/tags/:type"
+            ],
+            "target": "/tags/:type"
+          }
+        ],
+        "example": "/theinitium/tags/2019_10/zh-hans",
+        "categories": [
+          "new-media"
+        ],
+        "location": "tags.ts"
       }
     },
     "name": "端传媒",
@@ -58158,6 +58418,40 @@
         ],
         "description": "| 学院新闻 | 学术关注 | 学工动态 | 通知公告 |\n  | -------- | -------- | -------- | -------- |\n  | news     | scholar  | states   | notice   |",
         "location": "jsj.ts"
+      },
+      "/jwc/:type?": {
+        "path": "/jwc/:type?",
+        "categories": [
+          "university"
+        ],
+        "example": "/upc/jwc/tzgg",
+        "parameters": {
+          "type": "分类，见下表，其值与对应网页url路径参数一致，默认为所有通知"
+        },
+        "features": {
+          "requireConfig": false,
+          "requirePuppeteer": false,
+          "antiCrawler": true,
+          "supportBT": false,
+          "supportPodcast": false,
+          "supportScihub": false
+        },
+        "radar": [
+          {
+            "source": [
+              "jwc.upc.edu.cn",
+              "jwc.upc.edu.cn/:type/list.htm"
+            ],
+            "target": "/jwc/:type?"
+          }
+        ],
+        "name": "教务处通知公告",
+        "maintainers": [
+          "sddzhyc"
+        ],
+        "description": "| 所有通知 | 教学·运行 | 学业·学籍 | 教学·研究 | 课程·教材 | 实践·教学 | 创新·创业 | 语言·文字 | 继续·教育 | 本科·招生 |\n  | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |\n  | tzgg     | 18519    | 18520   | 18521    |    18522 |    18523 | 18524    |  yywwz   |  jxwjy   |   bkwzs  |",
+        "url": "jwc.upc.edu.cn/tzgg/list.htm",
+        "location": "jwc.ts"
       },
       "/main/:type": {
         "path": "/main/:type",
