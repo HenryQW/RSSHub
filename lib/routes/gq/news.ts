@@ -1,13 +1,13 @@
 import { Route } from '@/types';
 import cache from '@/utils/cache';
 import parser from '@/utils/rss-parser';
-import got from '@/utils/got';
 import { load } from 'cheerio';
-const host = 'https://techcrunch.com';
+import { ofetch } from 'ofetch';
+const host = 'https://www.gq.com';
 export const route: Route = {
     path: '/news',
-    categories: ['new-media'],
-    example: '/techcrunch/news',
+    categories: ['traditional-media'],
+    example: '/gq/news',
     parameters: {},
     features: {
         requireConfig: false,
@@ -19,33 +19,26 @@ export const route: Route = {
     },
     radar: [
         {
-            source: ['techcrunch.com/'],
+            source: ['gq.com/'],
         },
     ],
     name: 'News',
     maintainers: ['EthanWng97'],
     handler,
-    url: 'techcrunch.com/',
 };
 
 async function handler() {
-    const rssUrl = `${host}/feed/`;
+    const rssUrl = `${host}/feed/rss`;
     const feed = await parser.parseURL(rssUrl);
     const items = await Promise.all(
         feed.items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const url = item.link;
-                const response = await got({
-                    url,
-                    method: 'get',
-                });
-                const html = response.data;
-                const $ = load(html);
-                const description = $('#root');
-                description.find('.article__title').remove();
-                description.find('.article__byline__meta').remove();
-                description.find('.mobile-header-nav').remove();
-                description.find('.desktop-nav').remove();
+                const data = await ofetch(item.link);
+                const $ = load(data);
+                const description = $('#main-content');
+                description.find('.article-body__footer').remove();
+                description.find('[class*="ContentHeaderContributorImage"]').remove();
+                description.find('h1').remove();
                 return {
                     title: item.title,
                     pubDate: item.pubDate,
@@ -58,9 +51,9 @@ async function handler() {
     );
 
     return {
-        title: 'TechCrunch',
+        title: 'GQ',
         link: host,
-        description: 'Reporting on the business of technology, startups, venture capital funding, and Silicon Valley.',
+        description: `GQ is the global flagship of men's fashion, the arbiter of cool for anyone who sees the world through the lens of taste and style.`,
         item: items,
     };
 }
