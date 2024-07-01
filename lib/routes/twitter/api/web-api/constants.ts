@@ -1,4 +1,4 @@
-const baseUrl = 'https://twitter.com/i/api';
+const baseUrl = 'https://x.com/i/api';
 
 const graphQLEndpointsPlain = [
     '/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets',
@@ -88,6 +88,7 @@ const gqlFeatures = {
     ListLatestTweetsTimeline: gqlFeatureFeed,
     HomeTimeline: gqlFeatureFeed,
     TweetDetail: TweetDetailFeatures,
+    Likes: gqlFeatureFeed,
 };
 
 const timelineParams = {

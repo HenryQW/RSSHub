@@ -20,17 +20,24 @@ const toSize = (raw) => {
 const allowDomain = new Set(['javbus.com', 'javbus.org', 'javsee.icu', 'javsee.one']);
 
 export const route: Route = {
-    path: '*',
+    path: '/:path{.+}?',
     radar: [
         {
-            source: ['www.seejav.pw/'],
-            target: '',
+            source: ['www.javbus.com/:path*'],
+            target: '/:path',
         },
     ],
-    name: 'Unknown',
-    maintainers: [],
+    name: 'Works',
+    maintainers: ['MegrezZhu', 'CoderTonyChan', 'nczitzk', 'Felix2yu'],
+    categories: ['multimedia', 'popular'],
     handler,
-    url: 'www.seejav.pw/',
+    url: 'www.javbus.com',
+    example: '/javbus/star/rwt',
+    parameters: {
+        path: {
+            description: 'Any path of list page on javbus',
+        },
+    },
 };
 
 async function handler(ctx) {

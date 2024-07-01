@@ -4,9 +4,24 @@ import { load } from 'cheerio';
 
 export const route: Route = {
     path: '/routes/:lang?',
-    categories: ['program-update'],
+    categories: ['program-update', 'popular'],
     example: '/rsshub/routes/en',
-    parameters: { lang: 'Language, `zh` means Chinese docs, other values or null means English docs, `en` by default' },
+    parameters: {
+        lang: {
+            description: 'Language',
+            options: [
+                {
+                    label: 'Chinese',
+                    value: 'zh',
+                },
+                {
+                    label: 'English',
+                    value: 'en',
+                },
+            ],
+            default: 'en',
+        },
+    },
     radar: [
         {
             source: ['docs.rsshub.app/*'],

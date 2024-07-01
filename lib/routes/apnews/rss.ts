@@ -4,10 +4,15 @@ import { fetchArticle } from './utils';
 const HOME_PAGE = 'https://apnews.com';
 
 export const route: Route = {
-    path: '/rss/:rss?',
-    categories: ['traditional-media'],
+    path: '/rss/:category?',
+    categories: ['traditional-media', 'popular'],
     example: '/apnews/rss/business',
-    parameters: { rss: 'Route name from the first segment of the corresponding site, or `index` for the front page(default).' },
+    parameters: {
+        category: {
+            description: 'Category from the first segment of the corresponding site, or `index` for the front page.',
+            default: 'index',
+        },
+    },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -22,7 +27,7 @@ export const route: Route = {
             target: '/rss/:rss',
         },
     ],
-    name: 'RSS',
+    name: 'News',
     maintainers: ['zoenglinghou', 'mjysci', 'TonyRL'],
     handler,
 };
@@ -35,7 +40,7 @@ async function handler(ctx) {
     const items = await Promise.all(res.items.map((item) => fetchArticle(item)));
 
     return {
-        ...rss,
+        ...res,
         item: items,
     };
 }
