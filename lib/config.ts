@@ -96,6 +96,11 @@ export type Config = {
         price?: number;
         userLimit?: number;
     };
+    rss3: {
+        address: string;
+        endpoint: string;
+        signature: string;
+    };
 
     // Route-specific Configurations
     bilibili: {
