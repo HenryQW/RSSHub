@@ -1,30 +1,23 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
-const urlRoot = 'https://jwc.sjtu.edu.cn/xwtg';
+const urlRoot = 'https://jwc.sjtu.edu.cn';
 
 async function getFullArticle(link) {
     const response = await got(link);
+    if (!response) {
+        return null;
+    }
     const $ = load(response.body);
     const content = $('.content-con');
     if (content.length === 0) {
         return null;
     }
-    // resolve links of <img> and <a>
-    content.find('img').each((_, e) => {
-        const relativeLink = $(e).attr('src');
-        const absLink = new URL(relativeLink, urlRoot).href;
-        $(e).attr('src', absLink);
-    });
-    content.find('a').each((_, e) => {
-        const relativeLink = $(e).attr('href');
-        const absLink = new URL(relativeLink, urlRoot).href;
-        $(e).attr('href', absLink);
-    });
-    return content.html() + ($('.Newslist2').length ? $('.Newslist2').html() : '');
+    return content.html()! + ($('.Newslist2').length ? $('.Newslist2').html() : '')!;
 }
 
 export const route: Route = {
@@ -43,9 +36,9 @@ export const route: Route = {
     name: '教务处通知公告',
     maintainers: ['SeanChao'],
     handler,
-    description: `| 新闻中心 | 通知通告 | 教学运行  | 注册学务 | 研究办 | 教改办 | 综合办 | 语言文字 | 工会与支部 | 通识教育 |
-  | -------- | -------- | --------- | -------- | ------ | ------ | ------ | -------- | ---------- | -------- |
-  | news     | notice   | operation | affairs  | yjb    | jgb    | zhb    | language | party      | ge       |`,
+    description: `| 新闻中心 | 通知通告 | 教学运行  | 注册学务 | 研究办 | 教改办 | 综合办 | 语言文字 | 工会与支部 | 通识教育 | 面向学生的通知 |
+| -------- | -------- | --------- | -------- | ------ | ------ | ------ | -------- | ---------- | -------- | -------------- |
+| news     | notice   | operation | affairs  | yjb    | jgb    | zhb    | language | party      | ge       | students       |`,
 };
 
 async function handler(ctx) {
@@ -53,47 +46,51 @@ async function handler(ctx) {
     const config = {
         all: {
             section: '通知通告',
-            link: '/tztg.htm',
+            link: '/xwtg/tztg.htm',
         },
         news: {
-            link: '/xwzx.htm',
+            link: '/xwtg/xwzx.htm',
             section: '新闻中心',
         },
         notice: {
-            link: '/tztg.htm',
+            link: '/xwtg/tztg.htm',
             section: '通知通告',
         },
         operation: {
-            link: '/jxyx.htm',
+            link: '/xwtg/jxyx.htm',
             section: '教学运行',
         },
         affairs: {
-            link: '/zcxw.htm',
+            link: '/xwtg/zcxw.htm',
             section: '注册学务',
         },
         yjb: {
-            link: '/yjb.htm',
+            link: '/xwtg/yjb.htm',
             section: '研究办',
         },
         jgb: {
-            link: '/jgb.htm',
+            link: '/xwtg/jgb.htm',
             section: '教改办',
         },
         zhb: {
-            link: '/zhb.htm',
+            link: '/xwtg/zhb.htm',
             section: '综合办',
         },
         language: {
-            link: '/yywz.htm',
+            link: '/xwtg/yywz.htm',
             section: '语言文字',
         },
         party: {
-            link: '/ghyzb.htm',
+            link: '/xwtg/ghyzb.htm',
             section: '工会与支部',
         },
         ge: {
-            link: '/tsjy.htm',
+            link: '/xwtg/tsjy.htm',
             section: '通识教育',
+        },
+        students: {
+            link: '/index/mxxsdtz.htm',
+            section: '面向学生的通知',
         },
     };
 
@@ -113,7 +110,7 @@ async function handler(ctx) {
             .map((e) => {
                 const info = $(e).find('.wz');
                 const relativeLink = info.find('a').attr('href');
-                const link = new URL(relativeLink, sectionLink).href;
+                const link = new URL(relativeLink!, sectionLink).href;
                 const title = info.find('a > h2').text();
                 const timeElement = $(e).find('.sj');
                 const day = timeElement.find('h2').text();

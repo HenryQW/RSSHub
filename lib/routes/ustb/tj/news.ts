@@ -1,6 +1,8 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+import type { Text } from 'domhandler';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -26,8 +28,8 @@ function getNews(data) {
         .toArray()
         .map((elem) => ({
             link: baseUrl + elem.attribs.href,
-            title: elem.children[0].data,
-            pubDate: timezone(parseDate(elem.attribs.href.split('/')[3].split('.')[0].substring(0, 14), 'YYYYMMDDHHmmss'), 8),
+            title: (elem.children[0] as Text).data,
+            pubDate: timezone(parseDate(elem.attribs.href.split('/', 4)[3].split('.', 1)[0].slice(0, 14), 'YYYYMMDDHHmmss'), 8),
         }));
 }
 
@@ -48,8 +50,8 @@ export const route: Route = {
     maintainers: ['henbf'],
     handler,
     description: `| 全部 | 学院新闻 | 学术活动 | 城市建设学院 | 信息工程学院 | 经济学院 | 管理学院 | 材料系 | 机械工程系 | 护理系 | 法律系 | 外语系 | 艺术系 |
-  | ---- | -------- | -------- | ------------ | ------------ | -------- | -------- | ------ | ---------- | ------ | ------ | ------ | ------ |
-  | all  | xyxw     | xshhd    | csjsxy       | xxgcxy       | jjx      | glxy     | clx    | jxgcx      | hlx    | flx    | wyx    | ysx    |`,
+| ---- | -------- | -------- | ------------ | ------------ | -------- | -------- | ------ | ---------- | ------ | ------ | ------ | ------ |
+| all  | xyxw     | xshhd    | csjsxy       | xxgcxy       | jjx      | glxy     | clx    | jxgcx      | hlx    | flx    | wyx    | ysx    |`,
 };
 
 async function handler(ctx) {
@@ -58,11 +60,7 @@ async function handler(ctx) {
         type = 'all';
     }
 
-    const responseData = {
-        title: '北京科技大学天津学院新闻动态',
-        link: baseUrl,
-        item: null,
-    };
+    let item;
 
     if (type === 'all') {
         const all = await Promise.all(
@@ -72,12 +70,15 @@ async function handler(ctx) {
                 return news;
             })
         );
-        responseData.item = all.flat();
+        item = all.flat();
     } else {
         const response = await got(baseUrl + maps[type]);
-        const news = getNews(response.data);
-        responseData.item = news;
+        item = getNews(response.data);
     }
 
-    return responseData;
+    return {
+        title: '北京科技大学天津学院新闻动态',
+        link: baseUrl,
+        item,
+    };
 }

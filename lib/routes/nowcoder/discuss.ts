@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -24,8 +25,8 @@ export const route: Route = {
     maintainers: ['LogicJake'],
     handler,
     description: `| 最新回复 | 最新发表 | 最新 | 精华 |
-  | -------- | -------- | ---- | ---- |
-  | 0        | 3        | 1    | 4    |`,
+| -------- | -------- | ---- | ---- |
+| 0        | 3        | 1    | 4    |`,
 };
 
 async function handler(ctx) {
@@ -40,19 +41,19 @@ async function handler(ctx) {
     const order_name = $('li.selected a').text();
 
     const list = $('li.clearfix')
-        .map(function () {
+        .toArray()
+        .map((element) => {
             const info = {
-                title: $(this).find('div.discuss-main.clearfix a:first').text().trim().replace('\n', ' '),
-                link: $(this).find('div.discuss-main.clearfix a[rel]').attr('href'),
+                title: $(element).find('div.discuss-main.clearfix a:first').text().trim().replaceAll('\n', ' '),
+                link: $(element).find('div.discuss-main.clearfix a[rel]').attr('href'),
             };
             return info;
-        })
-        .get();
+        });
 
     const out = await Promise.all(
         list.map((info) => {
             const title = info.title || 'tzgg';
-            const itemUrl = new URL(info.link, host).href.replace(/^(.*)\?(.*)$/, '$1');
+            const itemUrl = new URL(info.link!, host).href.replace(/^([^\n\r\u{2028}\u{2029}]*)\?[^\n\r?\u{2028}\u{2029}]*$/u, '$1');
 
             return cache.tryGet(itemUrl, async () => {
                 const response = await got.get(itemUrl);
@@ -66,7 +67,7 @@ async function handler(ctx) {
                     title,
                     link: itemUrl,
                     description,
-                    pubDate: timezone(parseDate(date_value), +8),
+                    pubDate: timezone(parseDate(date_value), 8),
                 };
             });
         })

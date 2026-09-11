@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -51,8 +52,8 @@ export const route: Route = {
     handler,
     url: 'ustc.edu.cn/',
     description: `| 教学类 | 科研类 | 管理类 | 服务类 |
-  | ------ | ------ | ------ | ------ |
-  | jx     | ky     | gl     | fw     |`,
+| ------ | ------ | ------ | ------ |
+| jx     | ky     | gl     | fw     |`,
 };
 
 async function handler(ctx) {
@@ -70,22 +71,22 @@ async function handler(ctx) {
 
     const $ = load(response.data);
     let items = $('table[portletmode=simpleList] > tbody > tr.light')
-        .map(function () {
-            const child = $(this).children();
-            const info = {
-                title: $(child[1]).find('a').attr('title'),
-                link: $(child[1]).find('a').attr('href').startsWith('../') ? new URL($(child[1]).find('a').attr('href'), notice_type[type].url).href : $(child[1]).find('a').attr('href'),
-                pubDate: timezone(parseDate($(child[2]).text(), 'YYYY-MM-DD'), +8),
+        .toArray()
+        .map((element) => {
+            const child = $(element).children();
+            const info: DataItem = {
+                title: $(child[1]).find('a').attr('title')!,
+                link: $(child[1]).find('a').attr('href')!.startsWith('../') ? new URL($(child[1]).find('a').attr('href')!, notice_type[type].url).href : $(child[1]).find('a').attr('href'),
+                pubDate: timezone(parseDate($(child[2]).text(), 'YYYY-MM-DD'), 8),
             };
             return info;
-        })
-        .get();
+        });
 
     items = await Promise.all(
         items
             .filter((item) => item.link)
             .map((item) =>
-                cache.tryGet(item.link, async () => {
+                cache.tryGet(item.link!, async () => {
                     try {
                         const response = await got(item.link);
                         const $ = load(response.data);

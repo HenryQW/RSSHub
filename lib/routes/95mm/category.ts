@@ -1,5 +1,6 @@
-import { Route } from '@/types';
-import { rootUrl, ProcessItems } from './utils';
+import type { Route } from '@/types';
+
+import { ProcessItems, rootUrl } from './utils';
 
 export const route: Route = {
     path: '/category/:category',
@@ -13,6 +14,7 @@ export const route: Route = {
         supportBT: false,
         supportPodcast: false,
         supportScihub: false,
+        nsfw: true,
     },
     radar: [
         {
@@ -24,8 +26,8 @@ export const route: Route = {
     handler,
     url: '95mm.org/',
     description: `| 清纯唯美 | 摄影私房 | 明星写真 | 三次元 | 异域美景 | 性感妖姬 | 游戏主题 | 美女壁纸 |
-  | -------- | -------- | -------- | ------ | -------- | -------- | -------- | -------- |
-  | 1        | 2        | 4        | 5      | 6        | 7        | 9        | 11       |`,
+| -------- | -------- | -------- | ------ | -------- | -------- | -------- | -------- |
+| 1        | 2        | 4        | 5      | 6        | 7        | 9        | 11       |`,
 };
 
 async function handler(ctx) {

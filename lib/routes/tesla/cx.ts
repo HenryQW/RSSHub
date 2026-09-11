@@ -1,13 +1,11 @@
-import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
+import { load } from 'cheerio';
 
+import type { Language, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
-import { art } from '@/utils/render';
-import path from 'node:path';
+
+import { renderDescription } from './templates/description';
 
 export const route: Route = {
     path: '/cx/:category?/:city?',
@@ -26,86 +24,87 @@ export const route: Route = {
     maintainers: ['simonsmh', 'nczitzk'],
     handler,
     description: `| 充电免停 | 酒店 | 美食 | 生活方式 |
-  | -------- | ---- | ---- | -------- |
+| -------- | ---- | ---- | -------- |
 
-  :::tip
-  分类为 **充电免停** 时，城市参数不起作用
-  :::
+::: tip
+分类为 **充电免停** 时，城市参数不起作用
+:::
 
-  <details>
-    <summary>可选城市</summary>
+<details>
+<summary>可选城市</summary>
 
-    | 成都 | 深圳 | 洛阳 | 北京 | 南京 | 绍兴 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 成都 | 深圳 | 洛阳 | 北京 | 南京 | 绍兴 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 西安 | 上海 | 阿坝藏族羌族自治州 | 重庆 | 郑州 | 天津 |
-    | ---- | ---- | ------------------ | ---- | ---- | ---- |
+| 西安 | 上海 | 阿坝藏族羌族自治州 | 重庆 | 郑州 | 天津 |
+| ---- | ---- | ------------------ | ---- | ---- | ---- |
 
-    | 晋中 | 三亚 | 湖州 | 苏州 | 扬州 | 秦皇岛 |
-    | ---- | ---- | ---- | ---- | ---- | ------ |
+| 晋中 | 三亚 | 湖州 | 苏州 | 扬州 | 秦皇岛 |
+| ---- | ---- | ---- | ---- | ---- | ------ |
 
-    | 长沙 | 武汉 | 安阳 | 温州 | 瑞安 | 石家庄 |
-    | ---- | ---- | ---- | ---- | ---- | ------ |
+| 长沙 | 武汉 | 安阳 | 温州 | 瑞安 | 石家庄 |
+| ---- | ---- | ---- | ---- | ---- | ------ |
 
-    | 佛山 | 广州 | 杭州 | 烟台 | 沧州 | 张家港 |
-    | ---- | ---- | ---- | ---- | ---- | ------ |
+| 佛山 | 广州 | 杭州 | 烟台 | 沧州 | 张家港 |
+| ---- | ---- | ---- | ---- | ---- | ------ |
 
-    | 金华 | 临沧 | 大理 | 南昌 | 贵阳 | 信阳 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 金华 | 临沧 | 大理 | 南昌 | 贵阳 | 信阳 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 张家口 | 铜仁 | 沈阳 | 合肥 | 黔东 | 高邮 |
-    | ------ | ---- | ---- | ---- | ---- | ---- |
+| 张家口 | 铜仁 | 沈阳 | 合肥 | 黔东 | 高邮 |
+| ------ | ---- | ---- | ---- | ---- | ---- |
 
-    | 三河 | 安顺 | 莆田 | 阳江 | 南宁 | 台州 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 三河 | 安顺 | 莆田 | 阳江 | 南宁 | 台州 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 余姚 | 淄博 | 三明 | 中山 | 宁波 | 厦门 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 余姚 | 淄博 | 三明 | 中山 | 宁波 | 厦门 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 永康 | 慈溪 | 台山 | 福州 | 无锡 | 宜昌 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 永康 | 慈溪 | 台山 | 福州 | 无锡 | 宜昌 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 泉州 | 肇庆 | 太仓 | 珠海 | 邢台 | 衡水 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 泉州 | 肇庆 | 太仓 | 珠海 | 邢台 | 衡水 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 温岭 | 宜兴 | 东莞 | 威海 | 南通 | 舟山 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 温岭 | 宜兴 | 东莞 | 威海 | 南通 | 舟山 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 都匀 | 长治 | 江阴 | 云浮 | 常州 | 唐山 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 都匀 | 长治 | 江阴 | 云浮 | 常州 | 唐山 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 平湖 | 商丘 | 保定 | 泰州 | 青岛 | 龙口 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 平湖 | 商丘 | 保定 | 泰州 | 青岛 | 龙口 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 泰安 | 岳阳 | 惠州 | 徐州 | 哈尔滨 | 潍坊 |
-    | ---- | ---- | ---- | ---- | ------ | ---- |
+| 泰安 | 岳阳 | 惠州 | 徐州 | 哈尔滨 | 潍坊 |
+| ---- | ---- | ---- | ---- | ------ | ---- |
 
-    | 大同 | 嘉兴 | 毕节 | 临汾 | 江门 | 诸暨 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 大同 | 嘉兴 | 毕节 | 临汾 | 江门 | 诸暨 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 儋州 | 衢州 | 大连 | 昆山 | 靖江 | 常熟 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 儋州 | 衢州 | 大连 | 昆山 | 靖江 | 常熟 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 罗定 | 丽江 | 晋江 | 乐清 | 茂名 | 福清 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 罗定 | 丽江 | 晋江 | 乐清 | 茂名 | 福清 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 廊坊 | 兰溪 | 汕尾 | 滨州 | 昆明 | 玉环 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 廊坊 | 兰溪 | 汕尾 | 滨州 | 昆明 | 玉环 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 绵阳 | 漳州 | 德州 | 聊城 | 龙岩 | 临沂 |
-    | ---- | ---- | ---- | ---- | ---- | ---- |
+| 绵阳 | 漳州 | 德州 | 聊城 | 龙岩 | 临沂 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
 
-    | 新沂 | 桐乡 | 迪庆藏族自治州 | 汕头 | 潮州 | 驻马店 |
-    | ---- | ---- | -------------- | ---- | ---- | ------ |
+| 新沂 | 桐乡 | 迪庆藏族自治州 | 汕头 | 潮州 | 驻马店 |
+| ---- | ---- | -------------- | ---- | ---- | ------ |
 
-    | 曲阜 | 郴州 | 济源 | 兴义 |
-    | ---- | ---- | ---- | ---- |
-  </details>`,
+| 曲阜 | 郴州 | 济源 | 兴义 |
+| ---- | ---- | ---- | ---- |
+
+</details>`,
 };
 
 async function handler(ctx) {
     const { category, city } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const limit = ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 10;
 
     const rootUrl = 'https://cx.tesla.cn';
     const rootApiUrl = 'https://community-api.tesla.cn';
@@ -118,16 +117,13 @@ async function handler(ctx) {
     const categoryToUrl = (category) => new URL(`user-right/list/${category}`, rootUrl).href;
     const mediaToUrl = (media) => new URL(`community-media/${media}`, rootMediaApi).href;
 
-    art.defaults.imports.categoryToUrl = categoryToUrl;
-    art.defaults.imports.mediaToUrl = mediaToUrl;
-
     const { data: categoryResponse } = await got(apiCategoryUrl, {
         searchParams: {
             type: 2,
         },
     });
 
-    const categoryObject = categoryResponse.data.filter((c) => c.name === category).pop();
+    const categoryObject = categoryResponse.data.findLast((c) => c.name === category);
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -142,14 +138,14 @@ async function handler(ctx) {
     let items = response.data.pageDatas.slice(0, limit).map((item) => ({
         title: item.venueName ?? item.title,
         link: new URL(`user-right/detail/${item.id}`, rootUrl).href,
-        description: art(path.join(__dirname, 'templates/description.art'), {
+        description: renderDescription({
             image: item.coverImage
                 ? {
                       src: item.coverImage,
                       alt: item.venueName ?? item.title,
                   }
                 : undefined,
-            description: item.description?.replace(/\["|"]/g, '') ?? undefined,
+            description: item.description?.replaceAll(/\["|"\]/g, '') ?? undefined,
             data: item.parkingLocationId
                 ? {
                       title: item.venueName ?? item.title,
@@ -157,6 +153,8 @@ async function handler(ctx) {
                       description: `充电停车减免${item.parkingVoucherValue}小时`,
                   }
                 : undefined,
+            categoryToUrl,
+            mediaToUrl,
         }),
         category: item.categories,
         guid: item.id,
@@ -182,8 +180,10 @@ async function handler(ctx) {
                 const data = detailResponse.data;
 
                 item.title = data.title ?? item.title;
-                item.description = art(path.join(__dirname, 'templates/description.art'), {
+                item.description = renderDescription({
                     data,
+                    categoryToUrl,
+                    mediaToUrl,
                 });
                 item.author = data.merchants ? data.merchants.map((a) => a.name).join('/') : undefined;
                 item.category = [...new Set([...item.category, ...data.categories])].filter(Boolean);
@@ -200,14 +200,15 @@ async function handler(ctx) {
 
     const author = $('title').text();
     const description = `${city ?? ''}${category ?? ''}`;
-    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href;
+    const icon = new URL($('link[rel="icon"]').prop('href')!, rootUrl).href;
+    const language = $('html').prop('lang') as Language;
 
     return {
         item: items,
         title: `${author}权益中心${description ? ` - ${description}` : ''}`,
         link: currentUrl,
         description,
-        language: $('html').prop('lang'),
+        language,
         image: $('meta[property="og:image"]').prop('content'),
         icon,
         logo: icon,

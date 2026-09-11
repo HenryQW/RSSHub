@@ -1,4 +1,4 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
@@ -24,6 +24,16 @@ async function handler(ctx) {
     const query = ctx.req.param('query') ?? ''; // beginDate=2018-08-18&endDate=2019-08-18&companyCode=603283&title=股份
     const pageUrl = 'https://bond.sse.com.cn/disclosure/announ/convertible/';
     const host = 'https://www.sse.com.cn';
+    const queries: Record<string, string> = {};
+    if (query) {
+        const pairs = query.split('&');
+        for (const pair of pairs) {
+            const [key, value] = pair.split('=', 2);
+            if (key) {
+                queries[key] = value;
+            }
+        }
+    }
 
     const response = await got('https://query.sse.com.cn/infodisplay/queryBulletinKzzTipsNew.do', {
         searchParams: {
@@ -31,11 +41,7 @@ async function handler(ctx) {
             'pageHelp.pageSize': 20,
             flag: 0,
             _: Date.now(),
-            ...query.split('&').reduce((acc, cur) => {
-                const [key, value] = cur.split('=');
-                acc[key] = value;
-                return acc;
-            }, {}),
+            ...queries,
         },
         headers: {
             Referer: pageUrl,

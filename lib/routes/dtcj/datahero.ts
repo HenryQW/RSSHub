@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 const titles = {
@@ -28,8 +29,8 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 侠创 | 纽约数据科学学院 | RS 实验所 | 阿里云天池 |
-  | ---- | ---------------- | --------- | ---------- |
-  | 5    | 6                | 9         | 10         |`,
+| ---- | ---------------- | --------- | ---------- |
+| 5    | 6                | 9         | 10         |`,
 };
 
 async function handler(ctx) {

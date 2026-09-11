@@ -1,13 +1,14 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
 
 export const route: Route = {
-    path: '/suzhou/news/:uid',
+    path: '/news/:uid',
     categories: ['government'],
     example: '/gov/suzhou/news/news',
     parameters: { uid: '栏目名' },
@@ -28,39 +29,39 @@ export const route: Route = {
     maintainers: ['EsuRt', 'luyuhuang'],
     handler,
     description: `| 新闻栏目名 |       :uid       |
-  | :--------: | :--------------: |
-  |  苏州要闻  |   news 或 szyw   |
-  |  区县快讯  | district 或 qxkx |
-  |  部门动态  |       bmdt       |
-  |  新闻视频  |       xwsp       |
-  |  政务公告  |       zwgg       |
-  |  便民公告  |       mszx       |
-  |  民生资讯  |       bmzx       |
+| :--------: | :--------------: |
+|  苏州要闻  |   news 或 szyw   |
+|  区县快讯  | district 或 qxkx |
+|  部门动态  |       bmdt       |
+|  新闻视频  |       xwsp       |
+|  政务公告  |       zwgg       |
+|  便民公告  |       mszx       |
+|  民生资讯  |       bmzx       |
 
-  | 热点专题栏目名 |  :uid  |
-  | :------------: | :----: |
-  |    热点专题    |  rdzt  |
-  |   市本级专题   |  sbjzt |
-  |  最新热点专题  | zxrdzt |
-  |    往期专题    |  wqzt  |
-  |    区县专题    |  qxzt  |
+| 热点专题栏目名 |  :uid  |
+| :------------: | :----: |
+|    热点专题    |  rdzt  |
+|   市本级专题   |  sbjzt |
+|  最新热点专题  | zxrdzt |
+|    往期专题    |  wqzt  |
+|    区县专题    |  qxzt  |
 
-  :::tip
-  **热点专题**栏目包含**市本级专题**和**区县专题**
+::: tip
+**热点专题**栏目包含**市本级专题**和**区县专题**
 
-  **市本级专题**栏目包含**最新热点专题**和**往期专题**
+**市本级专题**栏目包含**最新热点专题**和**往期专题**
 
-  如需订阅完整的热点专题，仅需订阅 **热点专题**\`rdzt\` 一项即可。
-  :::`,
+如需订阅完整的热点专题，仅需订阅 **热点专题**\`rdzt\` 一项即可。
+:::`,
 };
 
 async function handler(ctx) {
     const rootUrl = 'https://www.suzhou.gov.cn';
     const uid = ctx.req.param('uid');
-    let url = '';
-    let title = '';
+    let url: string;
+    let title: string;
     let apiUrl = '';
-    let items = [];
+    let items: DataItem[];
     switch (uid) {
         case 'szyw':
         case 'news':
@@ -149,12 +150,12 @@ async function handler(ctx) {
         items = $('ul.infolist li')
             .toArray()
             .map((item) => {
-                item = $(item);
-                const a = item.find('a');
+                const $item = $(item);
+                const a = $item.find('a');
                 return {
-                    title: a.attr('title'),
-                    link: new URL(a.attr('href'), rootUrl).href,
-                    pubDate: timezone(parseDate(item.find('.time').text(), 'YYYY-MM-DD'), 8),
+                    title: a.attr('title')!,
+                    link: new URL(a.attr('href')!, rootUrl).href,
+                    pubDate: timezone(parseDate($item.find('.time').text(), 'YYYY-MM-DD'), 8),
                 };
             });
     }

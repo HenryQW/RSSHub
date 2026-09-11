@@ -1,6 +1,7 @@
-import got from '@/utils/got';
-import { toTitleCase } from '@/utils/common-utils';
 import { load } from 'cheerio';
+
+import { toTitleCase } from '@/utils/common-utils';
+import got from '@/utils/got';
 
 const handler = async (ctx) => {
     let type = 'new-releases';
@@ -17,6 +18,9 @@ const handler = async (ctx) => {
             type = 'available';
             title = 'All Releases';
             break;
+        default:
+            // defaults to 'new-releases'
+            break;
     }
 
     const url = `https://www.metacritic.com/browse/games/release-date/${type}/${ctx.req.param('platform')}/${sort}`;
@@ -28,7 +32,7 @@ const handler = async (ctx) => {
     const data = response.body;
 
     const $ = load(data);
-    const list = $('.list_products > li').get().slice(0, 10);
+    const list = $('.list_products > li').toArray().slice(0, 10);
 
     const result = list.map((item) => {
         const $ = load(item);
@@ -51,4 +55,5 @@ const handler = async (ctx) => {
         })),
     };
 };
+// TODO: missing route export
 export default handler;

@@ -1,43 +1,60 @@
-import { type NotFoundHandler, type ErrorHandler } from 'hono';
-import { getDebugInfo, setDebugInfo } from '@/utils/debug-info';
+import Honeybadger from '@honeybadger-io/js';
+import type { ErrorHandler, NotFoundHandler } from 'hono';
+import { routePath } from 'hono/route';
+
 import { config } from '@/config';
-import Sentry from '@sentry/node';
+import { getDebugInfo, setDebugInfo } from '@/utils/debug-info';
 import logger from '@/utils/logger';
+import { requestMetric } from '@/utils/otel';
 import Error from '@/views/error';
 
 import NotFoundError from './types/not-found';
 
+const Sentry = config.sentry.dsn ? await import('@sentry/node') : undefined;
+
 export const errorHandler: ErrorHandler = (error, ctx) => {
     const requestPath = ctx.req.path;
-    const matchedRoute = ctx.req.routePath;
+    const matchedRoute = routePath(ctx);
     const hasMatchedRoute = matchedRoute !== '/*';
 
     const debug = getDebugInfo();
-    if (ctx.res.headers.get('RSSHub-Cache-Status')) {
-        debug.hitCache++;
+    try {
+        if (ctx.res.headers.get('RSSHub-Cache-Status')) {
+            debug.hitCache++;
+        }
+    } catch {
+        // ignore
     }
     debug.error++;
 
-    if (!debug.errorPaths[requestPath]) {
+    const errorPathCount = debug.errorPaths[requestPath];
+    if (!errorPathCount) {
         debug.errorPaths[requestPath] = 0;
     }
     debug.errorPaths[requestPath]++;
 
-    if (!debug.errorRoutes[matchedRoute] && hasMatchedRoute) {
+    const errorRouteCount = debug.errorRoutes[matchedRoute];
+    if (!errorRouteCount && hasMatchedRoute) {
         debug.errorRoutes[matchedRoute] = 0;
     }
     hasMatchedRoute && debug.errorRoutes[matchedRoute]++;
     setDebugInfo(debug);
 
-    if (config.sentry.dsn) {
+    if (config.honeybadger.apiKey) {
+        Honeybadger.notify(error, {
+            context: { name: requestPath.split('/', 2)[1] },
+        });
+    }
+
+    if (Sentry) {
         Sentry.withScope((scope) => {
-            scope.setTag('name', requestPath.split('/')[1]);
+            scope.setTag('name', requestPath.split('/', 2)[1]);
             Sentry.captureException(error);
         });
     }
 
-    let errorMessage = process.env.NODE_ENV === 'production' ? error.message : error.stack || error.message;
-    switch (error.constructor.name) {
+    let errorMessage = (process.env.NODE_ENV || process.env.VERCEL_ENV) === 'production' || !error.stack ? `${error.name}: ${error.message}` : error.stack;
+    switch (error.name) {
         case 'HTTPError':
         case 'RequestError':
         case 'FetchError':
@@ -58,17 +75,16 @@ export const errorHandler: ErrorHandler = (error, ctx) => {
             ctx.status(503);
             break;
     }
-    const message = `${error.name}: ${errorMessage}`;
+    logger.error(`Error in ${requestPath}: ${errorMessage}`);
+    requestMetric.error({ path: matchedRoute, method: ctx.req.method, status: ctx.res.status });
 
-    logger.error(`Error in ${requestPath}: ${message}`);
-
-    return config.isPackage
+    return config.isPackage || ctx.req.query('format') === 'json'
         ? ctx.json({
               error: {
                   message: error.message ?? error,
               },
           })
-        : ctx.html(<Error requestPath={requestPath} message={message} errorRoute={hasMatchedRoute ? matchedRoute : requestPath} nodeVersion={process.version} />);
+        : ctx.html(<Error requestPath={requestPath} message={errorMessage} errorRoute={hasMatchedRoute ? matchedRoute : requestPath} nodeVersion={process.version} />);
 };
 
 export const notFoundHandler: NotFoundHandler = (ctx) => errorHandler(new NotFoundError(), ctx);

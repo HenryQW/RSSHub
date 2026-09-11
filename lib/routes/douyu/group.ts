@@ -1,12 +1,9 @@
-import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
-
+import type { Route } from '@/types';
 import got from '@/utils/got';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
-import { art } from '@/utils/render';
-import path from 'node:path';
+import timezone from '@/utils/timezone';
+
+import { renderDescription } from './templates/description';
 
 export const route: Route = {
     path: '/group/:id/:sort?',
@@ -31,8 +28,8 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 回复时间排序 | 发布时间排序 |
-  | ------------ | ------------ |
-  | 1            | 2            |`,
+| ------------ | ------------ |
+| 1            | 2            |`,
 };
 
 async function handler(ctx) {
@@ -57,8 +54,8 @@ async function handler(ctx) {
     const items = response.data.data.map((item) => ({
         title: item.title,
         link: `${rootUrl}/p/${item.post_id}`,
-        pubDate: timezone(parseDate(item.created_at_std), +8),
-        description: art(path.join(__dirname, 'templates/description.art'), {
+        pubDate: timezone(parseDate(item.created_at_std), 8),
+        description: renderDescription({
             content: item.describe,
             images: item.imglist.map((i) => ({
                 size: i.size,

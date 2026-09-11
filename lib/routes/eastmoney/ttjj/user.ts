@@ -1,4 +1,5 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
@@ -7,6 +8,7 @@ import timezone from '@/utils/timezone';
 export const route: Route = {
     path: '/ttjj/user/:uid',
     categories: ['finance'],
+    view: ViewType.SocialMedia,
     example: '/eastmoney/ttjj/user/6551094298949188',
     parameters: { uid: '用户id, 可以通过天天基金App分享用户主页到浏览器，在相应的URL中找到' },
     features: {
@@ -69,7 +71,7 @@ async function handler(ctx) {
                 const single = {
                     title: item.post_title,
                     description,
-                    pubDate: timezone(parseDate(item.post_display_time, 'YYYY-MM-DD HH:mm:ss'), +8),
+                    pubDate: timezone(parseDate(item.post_display_time, 'YYYY-MM-DD HH:mm:ss'), 8),
                     link: `https://fundbarmob.eastmoney.com/index.html?goPage=articleView&lastPage=personDetailView&aid=${item.post_id}`,
                 };
                 return single;

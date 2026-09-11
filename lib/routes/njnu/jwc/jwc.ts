@@ -1,8 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import util from './utils';
+
+import { ProcessFeed } from './utils';
 
 export const route: Route = {
     path: '/jwc/:type',
@@ -21,8 +23,8 @@ export const route: Route = {
     maintainers: ['Shujakuinkuraudo'],
     handler,
     description: `| 教师通知 | 新闻动态 | 学生通知 |
-  | -------- | -------- | -------- |
-  | jstz     | xwdt     | xstz     |`,
+| -------- | -------- | -------- |
+| jstz     | xwdt     | xstz     |`,
 };
 
 async function handler(ctx) {
@@ -40,22 +42,19 @@ async function handler(ctx) {
         case 'xstz':
             title = '学生通知';
             path = 'xstz.htm';
+            break;
+        default:
+            throw new Error(`Unknown type: ${type}`);
     }
     const base = 'http://jwc.njnu.edu.cn/index/' + path;
 
-    const response = await got({
-        method: 'get',
-        url: base,
-        https: {
-            rejectUnauthorized: false,
-        },
-    });
+    const response = await got(base);
 
     const $ = load(response.data);
 
-    const list = $('.list_txt a').get();
+    const list = $('.list_txt a').toArray();
 
-    const result = await util.ProcessFeed(list, cache);
+    const result = await ProcessFeed(list, cache);
 
     return {
         title: '南京师范大学教务处 - ' + title,

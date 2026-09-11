@@ -1,20 +1,11 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
-    path: ['/news', '/newsflash'],
+    path: '/news',
     categories: ['new-media'],
     example: '/panewslab/news',
-    parameters: {},
-    features: {
-        requireConfig: false,
-        requirePuppeteer: false,
-        antiCrawler: false,
-        supportBT: false,
-        supportPodcast: false,
-        supportScihub: false,
-    },
     radar: [
         {
             source: ['panewslab.com/'],
@@ -23,7 +14,6 @@ export const route: Route = {
     name: '快讯',
     maintainers: ['nczitzk'],
     handler,
-    url: 'panewslab.com/',
     url: 'panewslab.com/',
 };
 

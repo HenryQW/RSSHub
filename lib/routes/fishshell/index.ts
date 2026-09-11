@@ -1,19 +1,22 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
 import { load } from 'cheerio';
-import got from '@/utils/got';
+
 import { config } from '@/config';
+import type { Language, Route } from '@/types';
+import cache from '@/utils/cache';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/',
+    categories: ['program-update'],
+    example: '/fishshell',
     radar: [
         {
             source: ['fishshell.com/'],
             target: '',
         },
     ],
-    name: 'Unknown',
+    name: 'Release Notes',
     maintainers: ['x2cf'],
     handler,
     url: 'fishshell.com/',
@@ -26,18 +29,18 @@ async function handler() {
     return {
         link,
         title: 'Release notes — fish-shell',
-        language: 'en',
+        language: 'en' as const satisfies Language,
         item: $('#release-notes > section')
-            .map((_, item) => {
+            .toArray()
+            .map((item) => {
                 const title = $(item).find('h2').contents().first().text();
                 const date = title.match(/\(released (.+?)\)/)?.[1];
                 return {
                     title,
-                    link: new URL($(item).find('a').attr('href'), link).href,
+                    link: new URL($(item).find('a').attr('href')!, link).href,
                     pubDate: date ? parseDate(date, 'MMMM D, YYYY') : undefined,
                     description: $(item).html(),
                 };
-            })
-            .get(),
+            }),
     };
 }

@@ -1,11 +1,14 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Data, Route } from '@/types';
+import { ViewType } from '@/types';
+import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/bullets',
     categories: ['finance'],
+    view: ViewType.Notifications,
     example: '/finology/bullets',
     parameters: {},
     features: {
@@ -27,23 +30,23 @@ export const route: Route = {
     url: 'insider.finology.in/bullets',
 };
 
-async function handler() {
+async function handler(): Promise<Data> {
     const baseUrl = 'https://insider.finology.in/bullets';
 
-    const { data: response } = await got(baseUrl);
+    const response = await ofetch(baseUrl);
     const $ = load(response);
 
-    const listItems = $('ul.timeline li.m-pb2')
+    const listItems = $('body > div.flex.bullettext > div.w80 > div')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const time = item.find('div.timeline-info span').text().split(', ')[1];
-            const a = item.find('a.bullet_share_div');
-            const description = item.find('div.bullet-desc').html();
+            const $item = $(item);
+            const time = $item.find('div.timeline-info span').text().split(', ', 2)[1];
+            const a = $item.find('a.timeline-title');
+            const description = $item.find('div.bullet-desc').html();
             return {
-                title: a.attr('data-bullettitle'),
-                link: a.attr('data-bulleturl'),
-                pubDate: parseDate(time, 'DD MMMM'),
+                title: a.text(),
+                link: a.attr('href'),
+                pubDate: parseDate(time),
                 description,
             };
         });
@@ -53,8 +56,8 @@ async function handler() {
         link: baseUrl,
         item: listItems,
         description: 'Your daily dose of crisp, spicy financial news in 80 words.',
-        logo: 'https://assets.finology.in/insider/images/favicon/apple-touch-icon.png',
-        icon: 'https://assets.finology.in/insider/images/favicon/favicon-32x32.png',
+        logo: 'https://insider.finology.in/Images/favicon/favicon.ico',
+        icon: 'https://insider.finology.in/Images/favicon/favicon.ico',
         language: 'en-us',
     };
 }

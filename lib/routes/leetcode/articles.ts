@@ -1,9 +1,11 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
 import { load } from 'cheerio';
-import { parseDate } from '@/utils/parse-date';
 import MarkdownIt from 'markdown-it';
+
+import type { DataItem, Route } from '@/types';
+import cache from '@/utils/cache';
+import ofetch from '@/utils/ofetch';
+import { parseDate } from '@/utils/parse-date';
+
 const md = MarkdownIt({
     html: true,
     breaks: true,
@@ -38,63 +40,64 @@ export const route: Route = {
 
 async function handler() {
     const link = new URL('/articles/', host).href;
-    const response = await got(link);
-    const $ = load(response.data);
+    const response = await ofetch(link, { parseResponse: (txt) => txt });
+    const $ = load(response);
 
     const list = $('a.list-group-item')
-        .filter((i, e) => $(e).find('h4.media-heading i').length === 0)
-        .map(function () {
-            const info = {
-                title: $(this).find('h4.media-heading').text().trim(),
-                author: $(this).find('.text-500').text(),
-                link: new URL($(this).attr('href'), host).href,
-                pubDate: $(this).find('p.pull-right.media-date strong').text().trim(),
+        .toArray()
+        .filter((e) => $(e).find('h4.media-heading i').length === 0)
+        .map((item) => {
+            const info: DataItem = {
+                title: $(item).find('h4.media-heading').text().trim(),
+                author: $(item).find('.text-500').text(),
+                link: new URL($(item).attr('href')!, host).href,
+                pubDate: parseDate($(item).find('p.pull-right.media-date strong').text().trim()),
             };
             return info;
-        })
-        .get();
+        });
 
     const out = await Promise.all(
         list.map((info) =>
-            cache.tryGet(info.link, async () => {
-                const titleSlug = info.link.split('/')[4];
+            cache.tryGet(info.link!, async () => {
+                const titleSlug = info.link!.split('/', 5)[4];
 
-                const questionContent = await got
-                    .post(gqlEndpoint, {
-                        json: {
-                            operationName: 'questionContent',
-                            variables: { titleSlug },
-                            query: `query questionContent($titleSlug: String!) {
+                const questionContent = await ofetch(gqlEndpoint, {
+                    method: 'POST',
+                    body: {
+                        operationName: 'questionContent',
+                        variables: { titleSlug },
+                        query: /* GraphQL */ `
+                            query questionContent($titleSlug: String!) {
                                 question(titleSlug: $titleSlug) {
                                     content
                                     mysqlSchemas
                                     dataSchemas
                                 }
-                            }`,
-                        },
-                    })
-                    .json();
+                            }
+                        `,
+                    },
+                });
 
-                const officialSolution = await got
-                    .post(gqlEndpoint, {
-                        json: {
-                            operationName: 'officialSolution',
-                            variables: { titleSlug },
-                            query: `query officialSolution($titleSlug: String!) {
+                const officialSolution = await ofetch(gqlEndpoint, {
+                    method: 'POST',
+                    body: {
+                        operationName: 'officialSolution',
+                        variables: { titleSlug },
+                        query: /* GraphQL */ `
+                            query officialSolution($titleSlug: String!) {
                                 question(titleSlug: $titleSlug) {
                                     solution {
                                         content
                                     }
                                 }
-                            }`,
-                        },
-                    })
-                    .json();
+                            }
+                        `,
+                    },
+                });
 
                 const solution = md.render(officialSolution.data.question.solution.content);
 
                 info.description = (questionContent.data.question.content?.trim() ?? '') + solution;
-                info.pubDate = parseDate(info.pubDate);
 
                 return info;
             })

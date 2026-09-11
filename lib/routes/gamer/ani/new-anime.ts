@@ -1,4 +1,5 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
@@ -6,6 +7,7 @@ import timezone from '@/utils/timezone';
 export const route: Route = {
     path: '/ani/new_anime',
     categories: ['anime'],
+    view: ViewType.Videos,
     example: '/gamer/ani/new_anime',
     parameters: {},
     features: {
@@ -23,7 +25,7 @@ export const route: Route = {
         },
     ],
     name: '動畫瘋 - 最後更新',
-    maintainers: [],
+    maintainers: ['maple3142', 'pseudoyu'],
     handler,
     url: 'ani.gamer.com.tw/',
 };
@@ -36,7 +38,7 @@ async function handler() {
         title: `${item.title} ${item.volume}`,
         description: `<img src="${item.cover}">`,
         link: `${rootUrl}/animeVideo.php?sn=${item.videoSn}`,
-        pubDate: timezone(parseDate(`${item.upTime} ${item.upTimeHours}`, 'MM/DD HH:mm'), +8),
+        pubDate: timezone(parseDate(`${item.upTime} ${item.upTimeHours}`, 'MM/DD HH:mm'), 8),
     }));
 
     return {

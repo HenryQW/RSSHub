@@ -1,9 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 export const route: Route = {
     path: '/today/:language?',
@@ -29,8 +30,8 @@ export const route: Route = {
     handler,
     url: 'world.kbs.co.kr/',
     description: `| 한국어 | عربي | 中国语 | English | Français | Deutsch | Bahasa Indonesia | 日本語 | Русский | Español | Tiếng Việt |
-  | ------ | ---- | ------ | ------- | -------- | ------- | ---------------- | ------ | ------- | ------- | ---------- |
-  | k      | a    | c      | e       | f        | g       | i                | j      | r       | s       | v          |`,
+| ------ | ---- | ------ | ------- | -------- | ------- | ---------------- | ------ | ------- | ------- | ---------- |
+| k      | a    | c      | e       | f        | g       | i                | j      | r       | s       | v          |`,
 };
 
 async function handler(ctx) {
@@ -47,23 +48,23 @@ async function handler(ctx) {
     const $ = load(response.data);
 
     const list = $('.comp_text_1x article')
-        .map((_, item) => {
-            item = $(item);
+        .toArray()
+        .map((item): DataItem => {
+            const $item = $(item);
 
-            const a = item.find('h2 a');
+            const a = $item.find('h2 a');
 
             return {
                 title: a.text(),
-                category: item.find('.cate').text(),
-                link: `${rootUrl}/service${a.attr('href').replace('./', '/')}`,
-                pubDate: timezone(parseDate(item.find('.date').text()), +9),
+                category: $item.find('.cate').text(),
+                link: `${rootUrl}/service${a.attr('href')!.replace('./', '/')}`,
+                pubDate: timezone(parseDate($item.find('.date').text()), 9),
             };
-        })
-        .get();
+        });
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
@@ -79,7 +80,7 @@ async function handler(ctx) {
     );
 
     return {
-        title: `Latest News | KBS WORLD`,
+        title: 'Latest News | KBS WORLD',
         link: currentUrl,
         item: items,
     };

@@ -1,16 +1,30 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
+import { ViewType } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
+import playwright from '@/utils/playwright';
 import parser from '@/utils/rss-parser';
+
 import utils from './utils';
-import { load } from 'cheerio';
-import puppeteer from '@/utils/puppeteer';
 
 export const route: Route = {
     path: '/:lang?',
     categories: ['traditional-media'],
+    view: ViewType.Articles,
     example: '/nytimes/dual',
-    parameters: { lang: 'language, default to Chinese' },
+    parameters: {
+        lang: {
+            description: 'language, default to Chinese',
+            options: [
+                { value: 'dual', label: 'Chinese-English' },
+                { value: 'en', label: 'English' },
+                { value: 'traditionalchinese', label: 'Traditional Chinese' },
+                { value: 'dual-traditionalchinese', label: 'Chinese-English (Traditional Chinese)' },
+            ],
+        },
+    },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -26,14 +40,10 @@ export const route: Route = {
         },
     ],
     name: 'News',
-    maintainers: ['HenryQW'],
+    maintainers: ['HenryQW', 'pseudoyu'],
     handler,
     url: 'nytimes.com/',
-    description: `By extracting the full text of articles, we provide a better reading experience (full text articles) over the official one.
-
-  | Default to Chinese | Chinese-English | English | Chinese-English (Traditional Chinese) | Traditional Chinese |
-  | ------------------ | --------------- | ------- | ------------------------------------- | ------------------- |
-  | (empty)            | dual            | en      | dual-traditionalchinese               | traditionalchinese  |`,
+    description: 'By extracting the full text of articles, we provide a better reading experience (full text articles) over the official one.',
 };
 
 async function handler(ctx) {
@@ -71,7 +81,7 @@ async function handler(ctx) {
         // Do nothing
     }
 
-    const browser = await puppeteer();
+    const context = await playwright();
     const feed = await parser.parseURL(rssUrl);
     const items = await Promise.all(
         feed.items.splice(0, 10).map(async (item) => {
@@ -82,7 +92,7 @@ async function handler(ctx) {
                 dual = false;
 
             if (lang === 'dual') {
-                link = link.replace('/?utm_source=RSS', '') + '/dual';
+                link = link!.replace('/?utm_source=RSS', '') + '/dual';
 
                 try {
                     response = await cache.tryGet(`nyt: ${link}`, async () => {
@@ -110,15 +120,15 @@ async function handler(ctx) {
                     const $ = load(response);
                     if ($('.dual-btn').length > 0) {
                         hasEnVersion = true;
-                        link = $('.dual-btn a').last().attr().href;
+                        link = $('.dual-btn a').last().attr()!.href;
 
-                        response = await utils.PuppeterGetter(ctx, browser, link);
+                        response = await utils.PuppeterGetter(ctx, context, link);
                     }
                 }
             }
 
-            const single = {
-                title: item.title,
+            const single: DataItem = {
+                title: item.title!,
                 pubDate: item.pubDate,
                 link,
                 author: item['dc:creator'],
@@ -129,7 +139,7 @@ async function handler(ctx) {
             // Match 感谢|謝.*?cn.letters@nytimes.com。
             const ending = /&#x611F;(&#x8C22|&#x8B1D);.*?cn\.letters@nytimes\.com&#x3002;/g;
 
-            single.description = result.description?.replace(ending, '');
+            single.description = result.description?.replaceAll(ending, '');
 
             if (hasEnVersion) {
                 single.title = result.title;
@@ -144,7 +154,7 @@ async function handler(ctx) {
         })
     );
 
-    browser.close();
+    await context.close();
 
     return {
         title,

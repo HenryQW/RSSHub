@@ -1,22 +1,56 @@
-import logger from '@/utils/logger';
+import type { HeaderGeneratorOptions } from 'header-generator';
+import { useRegisterRequest } from 'node-network-devtools';
+import { RateLimiterMemory, RateLimiterQueue } from 'rate-limiter-flexible';
+import type { RequestInfo, RequestInit, Response } from 'undici';
+import undici, { Request } from 'undici';
+
 import { config } from '@/config';
-import undici, { Request, RequestInfo, RequestInit } from 'undici';
+import { generatedHeaders as HEADER_LIST, generateHeaders } from '@/utils/header-generator';
+import logger from '@/utils/logger';
 import proxy from '@/utils/proxy';
 
-const wrappedFetch: typeof undici.fetch = (input: RequestInfo, init?: RequestInit) => {
+const limiter = new RateLimiterMemory({
+    points: 10,
+    duration: 1,
+    execEvenly: true,
+});
+
+const limiterQueue = new RateLimiterQueue(limiter, {
+    maxQueueSize: 4800,
+});
+
+export const useCustomHeader = (headers: Iterable<[string, string]>) => {
+    process.env.NODE_ENV === 'dev' &&
+        useRegisterRequest((req) => {
+            for (const [key, value] of headers) {
+                req.requestHeaders[key] = value;
+            }
+            return req;
+        });
+};
+
+const wrappedFetch: typeof undici.fetch = async (input: RequestInfo, init?: RequestInit & { headerGeneratorOptions?: Partial<HeaderGeneratorOptions> }) => {
     const request = new Request(input, init);
     const options: RequestInit = {};
 
     logger.debug(`Outgoing request: ${request.method} ${request.url}`);
 
     // ua
-    if (!request.headers.get('user-agent')) {
-        request.headers.set('user-agent', config.ua);
-    }
+    if (config.isDefaultUA || init?.headerGeneratorOptions) {
+        const generatedHeaders = generateHeaders(init?.headerGeneratorOptions);
 
-    // accept
-    if (!request.headers.get('accept')) {
-        request.headers.set('accept', '*/*');
+        if (!request.headers.get('user-agent')) {
+            request.headers.set('user-agent', generatedHeaders['user-agent']);
+        }
+
+        for (const header of HEADER_LIST) {
+            const headerValue = generatedHeaders[header];
+            if (!request.headers.has(header) && headerValue) {
+                request.headers.set(header, headerValue);
+            }
+        }
+    } else if (!request.headers.get('user-agent')) {
+        request.headers.set('user-agent', config.ua);
     }
 
     // referer
@@ -29,8 +63,16 @@ const wrappedFetch: typeof undici.fetch = (input: RequestInfo, init?: RequestIni
         }
     }
 
+    let isRetry = false;
+    if (request.headers.get('x-prefer-proxy')) {
+        isRetry = true;
+        request.headers.delete('x-prefer-proxy');
+    }
+
+    config.enableRemoteDebugging && useCustomHeader(request.headers);
+
     // proxy
-    if (!options.dispatcher && proxy.dispatcher) {
+    if (!init?.dispatcher && (proxy.proxyObj.strategy !== 'on_retry' || isRetry)) {
         const proxyRegex = new RegExp(proxy.proxyObj.url_regex);
         let urlHandler;
         try {
@@ -40,11 +82,50 @@ const wrappedFetch: typeof undici.fetch = (input: RequestInfo, init?: RequestIni
         }
 
         if (proxyRegex.test(request.url) && request.url.startsWith('http') && !(urlHandler && urlHandler.host === proxy.proxyUrlHandler?.host)) {
-            options.dispatcher = proxy.dispatcher;
+            const currentProxy = proxy.getCurrentProxy();
+            if (currentProxy) {
+                const dispatcher = proxy.getDispatcherForProxy(currentProxy);
+                if (dispatcher) {
+                    options.dispatcher = dispatcher;
+                    logger.debug(`Proxying request via ${currentProxy.uri}: ${request.url}`);
+                }
+            }
         }
     }
 
-    return undici.fetch(request, options);
+    await limiterQueue.removeTokens(1);
+
+    const maxRetries = proxy.multiProxy?.allProxies.length || 1;
+
+    const attemptRequest = async (attempt: number): Promise<Response> => {
+        try {
+            return await undici.fetch(request, options);
+        } catch (error) {
+            if (options.dispatcher && proxy.multiProxy && attempt < maxRetries - 1) {
+                const currentProxy = proxy.getCurrentProxy();
+                if (currentProxy) {
+                    logger.warn(`Request failed with proxy ${currentProxy.uri}, trying next proxy: ${error}`);
+                    proxy.markProxyFailed(currentProxy.uri);
+
+                    const nextProxy = proxy.getCurrentProxy();
+                    if (nextProxy && nextProxy.uri !== currentProxy.uri) {
+                        const nextDispatcher = proxy.getDispatcherForProxy(nextProxy);
+                        if (nextDispatcher) {
+                            options.dispatcher = nextDispatcher;
+                        }
+                        logger.debug(`Retrying request with proxy ${nextProxy.uri}: ${request.url}`);
+                        return attemptRequest(attempt + 1);
+                    }
+                    logger.warn('No more proxies available, trying without proxy');
+                    delete options.dispatcher;
+                    return attemptRequest(attempt + 1);
+                }
+            }
+            throw error;
+        }
+    };
+
+    return attemptRequest(0);
 };
 
 export default wrappedFetch;

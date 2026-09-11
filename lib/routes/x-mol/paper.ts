@@ -1,11 +1,13 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+import pMap from 'p-map';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import utils from './utils';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
-import asyncPool from 'tiny-async-pool';
+
+import utils from './utils';
 
 export const route: Route = {
     path: '/paper/:type/:magazine',
@@ -39,49 +41,44 @@ async function handler(ctx) {
 
     const newsItem = $('.magazine-model-content-new li')
         .toArray()
-        .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20)
-        .map((item) => {
-            item = $(item);
+        .slice(0, ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 20)
+        .map((item): DataItem & { link: string } => {
+            const $item = $(item);
             return {
-                title: item.find('.magazine-text-title a').text().trim(),
-                link: new URL(item.find('.magazine-model-btn a').first().attr('href'), utils.host).href,
+                title: $item.find('.magazine-text-title a').text().trim(),
+                link: new URL($item.find('.magazine-model-btn a').first().attr('href')!, utils.host).href,
                 pubDate: timezone(
                     parseDate(
-                        item
+                        $item
                             .find('.magazine-text-atten')
                             .text()
-                            .match(/\d{4}-\d{2}-\d{2}/)[0],
-                        8
-                    )
+                            .match(/\d{4}-\d{2}-\d{2}/)![0]
+                    ),
+                    8
                 ),
             };
         });
 
-    const asyncPoolAll = async (...args) => {
-        const results = [];
-        for await (const result of asyncPool(...args)) {
-            results.push(result);
-        }
-        return results;
-    };
+    const item = await pMap(
+        newsItem,
+        (element) =>
+            cache.tryGet(element.link, async () => {
+                const response = await got(element.link);
+                const $ = load(response.data);
 
-    const item = await asyncPoolAll(2, newsItem, (element) =>
-        cache.tryGet(element.link, async () => {
-            const response = await got(element.link);
-            const $ = load(response.data);
+                const description = $('.maga-content');
+                element.doi = description.find('.itsmblue').eq(1).text().trim();
 
-            const description = $('.maga-content');
-            element.doi = description.find('.itsmblue').eq(1).text().trim();
+                description.find('.itgaryfirst').remove();
+                description.find('span').eq(0).remove();
+                element.author = description.find('span').eq(0).text().trim();
+                description.find('span').eq(0).remove();
 
-            description.find('.itgaryfirst').remove();
-            description.find('span').eq(0).remove();
-            element.author = description.find('span').eq(0).text().trim();
-            description.find('span').eq(0).remove();
+                element.description = description.html();
 
-            element.description = description.html();
-
-            return element;
-        })
+                return element;
+            }),
+        { concurrency: 2 }
     );
 
     return {

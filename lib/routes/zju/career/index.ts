@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 const rootUrl = 'http://www.career.zju.edu.cn';
@@ -30,35 +31,31 @@ export const route: Route = {
     maintainers: ['Caicailiushui'],
     handler,
     description: `| 新闻动态 | 活动通知 | 学院通知 | 告示通知 |
-  | -------- | -------- | -------- | -------- |
-  | 1        | 2        | 3        | 4        |`,
+| -------- | -------- | -------- | -------- |
+| 1        | 2        | 3        | 4        |`,
 };
 
 async function handler(ctx) {
     const type = Number.parseInt(ctx.req.param('type'));
-    const id = map.get(type).id;
+    const id = map.get(type)!.id;
     const res = await got(`${host}${id}`);
 
     const $ = load(res.data);
     const list = $('.com-list li');
-    const items =
-        list &&
-        list
-            .map((index, item) => {
-                item = $(item);
-                const link = item.find('a').eq(0);
-                return {
-                    // title: item.find('a').attr('title'),
-                    title: item.find('span').eq(0).attr('title'),
-                    pubDate: parseDate(item.find('.news-time').text()),
+    const items = list.toArray().map((item) => {
+        const $item = $(item);
+        const link = $item.find('a').eq(0);
+        return {
+            // title: item.find('a').attr('title'),
+            title: $item.find('span').eq(0).attr('title')!,
+            pubDate: parseDate($item.find('.news-time').text()),
 
-                    link: link.attr('href').startsWith('http') ? link.attr('href') : `${rootUrl}/jyxt${link.attr('data-src')}xwid=${link.attr('data-xwid')}&lmtype=${link.attr('data-lmtype')}`,
-                };
-            })
-            .get();
+            link: link.attr('href')!.startsWith('http') ? link.attr('href') : `${rootUrl}/jyxt${link.attr('data-src')}xwid=${link.attr('data-xwid')}&lmtype=${link.attr('data-lmtype')}`,
+        };
+    });
 
     return {
-        title: map.get(type).title,
+        title: map.get(type)!.title,
         link: `${host}${id}`,
         item: items,
     };

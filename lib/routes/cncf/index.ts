@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 const rootURL = 'https://www.cncf.io';
@@ -23,8 +24,8 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     description: `| Blog | News | Announcements | Reports |
-  | ---- | ---- | ------------- | ------- |
-  | blog | news | announcements | reports |`,
+| ---- | ---- | ------------- | ------- |
+| blog | news | announcements | reports |`,
 };
 
 async function handler(ctx) {
@@ -35,16 +36,16 @@ async function handler(ctx) {
     const $ = load(response.data);
     const title = $('h1.is-style-page-title').text();
     const list = $('div.post-archive__item')
-        .map((_index, item) => ({
+        .toArray()
+        .map((item): DataItem => ({
             title: $(item).find('span.post-archive__title').text().trim(),
             link: $(item).find('span.post-archive__title > a').attr('href'),
-            pubDate: parseDate($(item).find('span.post-archive__item_date').text().split('|')[0]),
-        }))
-        .get();
+            pubDate: parseDate($(item).find('span.post-archive__item_date').text().split('|', 1)[0]),
+        }));
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got(item.link);
                 const content = load(detailResponse.data);
 

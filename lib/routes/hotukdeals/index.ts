@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 
 export const route: Route = {
     path: '/:type',
@@ -39,15 +40,15 @@ async function handler(ctx) {
         title: `hotukdeals ${type}`,
         link: `https://www.hotukdeals.com/${type}`,
         item: list
-            .map((index, item) => {
-                item = $(item);
+            .toArray()
+            .map((item) => {
+                const $item = $(item);
                 return {
-                    title: item.find('.cept-tt').text(),
-                    description: `${item.find('.thread-listImgCell').html()}<br>${item.find('.cept-vote-temp').html()}<br>${item.find('.overflow--fade').html()}<br>${item.find('.threadGrid-body .userHtml').html()}`,
-                    link: item.find('.cept-tt').attr('href'),
+                    title: $item.find('.cept-tt').text(),
+                    description: `${$item.find('.thread-listImgCell').html()}<br>${$item.find('.cept-vote-temp').html()}<br>${$item.find('.overflow--fade').html()}<br>${$item.find('.threadGrid-body .userHtml').html()}`,
+                    link: $item.find('.cept-tt').attr('href'),
                 };
             })
-            .get()
-            .reverse(),
+            .toReversed(),
     };
 }

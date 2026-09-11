@@ -1,5 +1,7 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
+
 import util from './utils';
+
 const baseUrl = 'https://grad.nua.edu.cn';
 
 export const route: Route = {
@@ -24,10 +26,10 @@ export const route: Route = {
     maintainers: ['evnydd0sf'],
     handler,
     description: `| News Type | Parameters |
-  | --------- | ---------- |
-  | 招生工作  | 1959       |
-  | 培养工作  | 1962       |
-  | 学位工作  | 1958       |`,
+| --------- | ---------- |
+| 招生工作  | 1959       |
+| 培养工作  | 1962       |
+| 学位工作  | 1958       |`,
 };
 
 async function handler(ctx) {

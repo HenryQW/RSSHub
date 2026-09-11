@@ -1,21 +1,47 @@
-import { Route } from '@/types';
+import { load } from 'cheerio'; // html parser
+
+import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import cache from '@/utils/cache';
 // Warning: The author still knows nothing about javascript!
-
 // params:
 // type: subject type
-
 import got from '@/utils/got'; // get web content
-import { load } from 'cheerio'; // html parser
-import get_article from './_article';
 import { isValidHost } from '@/utils/valid-host';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
+
+import get_article from './_article';
 
 export const route: Route = {
     path: '/:type?',
     categories: ['traditional-media'],
+    view: ViewType.Articles,
     example: '/solidot/linux',
-    parameters: { type: '消息类型。默认为 www. 在网站上方选择后复制子域名即可' },
+    parameters: {
+        type: {
+            description: '消息类型，在网站上方选择后复制子域名或参见 [https://www.solidot.org/index.rss](https://www.solidot.org/index.rss) 即可',
+            options: [
+                { value: 'www', label: '全部' },
+                { value: 'startup', label: '创业' },
+                { value: 'linux', label: 'Linux' },
+                { value: 'science', label: '科学' },
+                { value: 'technology', label: '科技' },
+                { value: 'mobile', label: '移动' },
+                { value: 'apple', label: '苹果' },
+                { value: 'hardware', label: '硬件' },
+                { value: 'software', label: '软件' },
+                { value: 'security', label: '安全' },
+                { value: 'games', label: '游戏' },
+                { value: 'books', label: '书籍' },
+                { value: 'ask', label: 'ask' },
+                { value: 'idle', label: 'idle' },
+                { value: 'blog', label: '博客' },
+                { value: 'cloud', label: '云计算' },
+                { value: 'story', label: '奇客故事' },
+            ],
+            default: 'www',
+        },
+    },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -27,15 +53,6 @@ export const route: Route = {
     name: '最新消息',
     maintainers: ['sgqy', 'hang333', 'TonyRL'],
     handler,
-    description: `:::tip
-  Solidot 提供的 feed:
-
-  -   [https://www.solidot.org/index.rss](https://www.solidot.org/index.rss)
-  :::
-
-  | 全部 | 创业    | Linux | 科学    | 科技       | 移动   | 苹果  | 硬件     | 软件     | 安全     | 游戏  | 书籍  | ask | idle | 博客 | 云计算 | 奇客故事 |
-  | ---- | ------- | ----- | ------- | ---------- | ------ | ----- | -------- | -------- | -------- | ----- | ----- | --- | ---- | ---- | ------ | -------- |
-  | www  | startup | linux | science | technology | mobile | apple | hardware | software | security | games | books | ask | idle | blog | cloud  | story    |`,
 };
 
 async function handler(ctx) {
@@ -54,13 +71,10 @@ async function handler(ctx) {
 
     // get urls
     const a = $('div.block_m').find('div.bg_htit > h2 > a');
-    const urls = [];
-    for (const element of a) {
-        urls.push($(element).attr('href'));
-    }
+    const urls = Array.from(a, (element) => $(element).attr('href'));
 
     // get articles
-    const msg_list = await Promise.all(urls.map((u) => cache.tryGet(u, () => get_article(u))));
+    const msg_list = await Promise.all(urls.map((u) => cache.tryGet(u!, () => get_article(u))));
 
     // feed the data
     return {

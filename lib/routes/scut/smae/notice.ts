@@ -1,8 +1,9 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 // 导入必要的模组
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 const categoryMap = {
@@ -32,8 +33,8 @@ export const route: Route = {
     maintainers: ['Ermaotie'],
     handler,
     description: `| 公务信息 | 党建工作 | 人事工作 | 学生工作 | 科研实验室 | 本科生教务 | 研究生教务 |
-  | -------- | -------- | -------- | -------- | ---------- | ---------- | ---------- |
-  | gwxx     | djgz     | rsgz     | xsgz     | kysys      | bksjw      | yjsjw      |`,
+| -------- | -------- | -------- | -------- | ---------- | ---------- | ---------- |
+| gwxx     | djgz     | rsgz     | xsgz     | kysys      | bksjw      | yjsjw      |`,
 };
 
 async function handler(ctx) {
@@ -47,19 +48,19 @@ async function handler(ctx) {
     const $ = load(response);
     const list = $('#wp_news_w6 ul li.news')
         .toArray()
-        .map((item) => {
-            item = $(item);
-            const a = item.find('a');
-            const pubDate = item.find('span.news_meta');
+        .map((item): DataItem => {
+            const $item = $(item);
+            const a = $item.find('a');
+            const pubDate = $item.find('span.news_meta');
             return {
-                title: a.attr('title'),
+                title: a.attr('title')!,
                 link: `${baseUrl}${a.attr('href')}`,
                 pubDate: parseDate(pubDate.text()),
             };
         });
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const { data: response } = await got(item.link);
                 const $ = load(response);
 

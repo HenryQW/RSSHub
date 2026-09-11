@@ -1,14 +1,12 @@
-import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
+import { load } from 'cheerio';
 
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
-import { art } from '@/utils/render';
-import path from 'node:path';
+
+import { renderOutlink } from './templates/outlink';
 
 const rootUrl = 'https://lvv2.com';
 
@@ -46,12 +44,12 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     description: `|   热门   |   最新   |    得分    |   24 小时榜   |
-  | :------: | :------: | :--------: | :-----------: |
-  | sort-hot | sort-new | sort-score | sort-realtime |
+| :------: | :------: | :--------: | :-----------: |
+| sort-hot | sort-new | sort-score | sort-realtime |
 
-  | 排序方式 | 一小时内 | 一天内 | 一个周内 | 一个月内 |
-  | :------: | :------: | :----: | :------: | :------: |
-  |          |  t-hour  |  t-day |  t-week  |  t-month |`,
+| 排序方式 | 一小时内 | 一天内 | 一个周内 | 一个月内 |
+| :------: | :------: | :----: | :------: | :------: |
+|          |  t-hour  |  t-day |  t-week  |  t-month |`,
 };
 
 async function handler(ctx) {
@@ -62,34 +60,32 @@ async function handler(ctx) {
     const response = await got(url);
     const $ = load(response.data);
     const list = $('div.spacer > div')
-        .map((_, item) => ({
+        .toArray()
+        .map((item): DataItem => ({
             title: $(item).find('h3 > a.title').text().trim(),
             author: $(item).find('a.author').text().trim(),
-            link: new URL($(item).find('h3.title > a.title').attr('href'), rootUrl).href.replace(/(https:\/\/lvv2\.com.*?)\/title.*/, '$1'),
-            pubDate: timezone(parseDate($(item).find('a.dateline > time').attr('datetime')), +8),
+            link: new URL($(item).find('h3.title > a.title').attr('href')!, rootUrl).href.replace(/(https:\/\/lvv2\.com.*?)\/title.*/, '$1'),
+            pubDate: timezone(parseDate($(item).find('a.dateline > time').attr('datetime')!), 8),
         }))
-        .filter((_, item) => item.title !== '')
-        .get();
+        .filter((item) => item.title !== '');
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 item.description =
-                    new URL(item.link).hostname === 'instant.lvv2.com'
-                        ? await cache.tryGet(item.link, async () => {
+                    new URL(item.link!).hostname === 'instant.lvv2.com'
+                        ? await cache.tryGet(item.link!, async () => {
                               const articleResponse = await got(item.link);
                               const article = load(articleResponse.data);
 
                               const description = article('#_tl_editor')
-                                  .html()
+                                  .html()!
                                   .replaceAll(/src=["'|]data.*?["'|]/g, '')
                                   .replaceAll(/(<img.*?)data-src(.*?>)/g, '$1src$2');
 
                               return description;
                           })
-                        : art(path.join(__dirname, 'templates/outlink.art'), {
-                              outlink: item.link,
-                          });
+                        : renderOutlink(item.link!);
 
                 return item;
             })

@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -27,8 +28,8 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 学院新闻 | 通知公告 | 学术成果 | 学术讲座 | 教师观点 | 人才招聘 |
-  | -------- | -------- | -------- | -------- | -------- | -------- |
-  | xw       | zytzyyg  | xzcg     | xzjz     | xz       | bshzs    |`,
+| -------- | -------- | -------- | -------- | -------- | -------- |
+| xw       | zytzyyg  | xzcg     | xzjz     | xz       | bshzs    |`,
 };
 
 async function handler(ctx) {
@@ -45,20 +46,20 @@ async function handler(ctx) {
     const $ = load(response.data);
 
     const list = $('a[title]')
-        .map((_, item) => {
-            item = $(item);
+        .toArray()
+        .map((item): DataItem => {
+            const $item = $(item);
 
             return {
-                title: item.attr('title'),
-                pubDate: parseDate(item.prev().text()),
-                link: `${rootUrl}/${category}/${item.attr('href')}`,
+                title: $item.attr('title')!,
+                pubDate: parseDate($item.prev().text()),
+                link: `${rootUrl}/${category}/${$item.attr('href')}`,
             };
-        })
-        .get();
+        });
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,

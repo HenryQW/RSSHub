@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -23,7 +24,7 @@ export const route: Route = {
         },
     ],
     name: '日报',
-    maintainers: ['LogicJake ', 'prnake ', 'nczitzk'],
+    maintainers: ['LogicJake', 'prnake', 'nczitzk'],
     handler,
     url: 'luogu.com.cn/discuss/47327',
 };
@@ -36,7 +37,7 @@ async function handler(ctx) {
     const title = $('head title').text();
 
     const injectionScript = $('head script:contains("window._feInjection")').text();
-    const jsonRaw = injectionScript.match(/window\._feInjection = JSON\.parse\(decodeURIComponent\("(.*?)"\)\);/)[1];
+    const jsonRaw = injectionScript.match(/window\._feInjection = JSON\.parse\(decodeURIComponent\("(.*?)"\)\);/)![1];
     const jsonDecode = JSON.parse(decodeURIComponent(jsonRaw));
 
     const mdRaw = jsonDecode.currentData.post.content;

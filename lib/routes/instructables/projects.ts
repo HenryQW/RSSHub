@@ -1,5 +1,8 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import ofetch from '@/utils/ofetch';
+import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/projects/:category?',
@@ -25,15 +28,15 @@ export const route: Route = {
     handler,
     url: 'instructables.com/projects',
     description: `| All | Circuits | Workshop | Craft | Cooking | Living | Outside | Teachers |
-  | --- | -------- | -------- | ----- | ------- | ------ | ------- | -------- |
-  |     | circuits | workshop | craft | cooking | living | outside | teachers |`,
+| --- | -------- | -------- | ----- | ------- | ------ | ------- | -------- |
+|     | circuits | workshop | craft | cooking | living | outside | teachers |`,
 };
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'all';
+    const { category = 'all' } = ctx.req.param();
+    const limit = ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 50;
 
-    const siteDomain = 'www.instructables.com';
-    const apiKey = 'NU5CdGwyRDdMVnVmM3l4cWNqQzFSVzJNZU5jaUxFU3dGK3J2L203MkVmVT02ZWFYeyJleGNsdWRlX2ZpZWxkcyI6WyJvdXRfb2YiLCJzZWFyY2hfdGltZV9tcyIsInN0ZXBCb2R5Il0sInBlcl9wYWdlIjo1MH0=';
+    const siteDomain = 'instructables.com';
 
     let pathPrefix, projectFilter;
     if (category === 'all') {
@@ -45,40 +48,43 @@ async function handler(ctx) {
         projectFilter = category === 'teachers' ? `&& teachers:=${filterValue}` : ` && category:=${filterValue}`;
     }
 
-    const link = `https://${siteDomain}/${pathPrefix}projects?projects=all`;
+    const pageLink = `https://${siteDomain}/${pathPrefix}projects`;
 
-    const response = await got({
+    const pageResponse = await ofetch(pageLink);
+    const $ = load(pageResponse);
+    const { typesenseProxy, typesenseApiKey } = JSON.parse($('script#js-page-context').text());
+
+    const data = await ofetch(`${typesenseProxy}/collections/projects/documents/search`, {
         method: 'get',
-        url: `https://${siteDomain}/api_proxy/search/collections/projects/documents/search`,
+        baseURL: `https://${siteDomain}`,
         headers: {
-            Referer: link,
+            Referer: pageLink,
             Host: siteDomain,
-            'x-typesense-api-key': apiKey,
+            'x-typesense-api-key': typesenseApiKey,
         },
-        searchParams: {
+        query: {
             q: '*',
             query_by: 'title,stepBody,screenName',
             page: 1,
-            per_page: 50,
+            per_page: limit,
             sort_by: 'publishDate:desc',
             include_fields: 'title,urlString,coverImageUrl,screenName,publishDate,favorites,views,primaryClassification,featureFlag,prizeLevel,IMadeItCount',
             filter_by: `featureFlag:=true${projectFilter}`,
         },
+        parseResponse: JSON.parse,
     });
-
-    const data = response.data;
 
     return {
         title: 'Instructables Projects', // 项目的标题
-        link, // 指向项目的链接
+        link: `https://${siteDomain}/projects`, // 指向项目的链接
         description: 'Instructables Projects', // 描述项目
-        language: 'en', // 频道语言
+        language: 'en' as const, // 频道语言
         item: data.hits.map((item) => ({
             title: item.document.title,
             link: `https://${siteDomain}/${item.document.urlString}`,
             author: item.document.screenName,
             description: `<img src="${item.document.coverImageUrl}?auto=webp&crop=1.2%3A1&frame=1&width=500" width="500">`,
-            pubDate: new Date(item.document.publishDate).toUTCString(),
+            pubDate: parseDate(item.document.publishDate),
             category: item.document.primaryClassification,
         })),
     };

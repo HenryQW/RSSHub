@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -29,9 +30,9 @@ export const route: Route = {
     url: 'who.int/director-general/speeches',
     description: `Language
 
-  | English | العربية | 中文 | Français | Русский | Español | Português |
-  | ------- | ------- | ---- | -------- | ------- | ------- | --------- |
-  | en      | ar      | zh   | fr       | ru      | es      | pt        |`,
+| English | العربية | 中文 | Français | Русский | Español | Português |
+| ------- | ------- | ---- | -------- | ------- | ------- | --------- |
+| en      | ar      | zh   | fr       | ru      | es      | pt        |`,
 };
 
 async function handler(ctx) {

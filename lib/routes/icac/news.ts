@@ -1,9 +1,11 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import utils from './utils';
 import { parseDate } from '@/utils/parse-date';
+
+import utils from './utils';
 
 export const route: Route = {
     path: '/news/:lang?',
@@ -35,17 +37,17 @@ async function handler(ctx) {
     const $ = load(res.data);
 
     const list = $('.pressItem.clearfix')
-        .map((_, e) => {
+        .toArray()
+        .map((e): DataItem => {
             const c = load(e);
             return {
                 title: c('.hd a').text(),
                 link: `${utils.BASE_URL}${c('.hd a').attr('href')}`,
             };
-        })
-        .get();
+        });
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,

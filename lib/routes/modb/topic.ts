@@ -1,10 +1,11 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
 import { load } from 'cheerio';
-import got from '@/utils/got';
+
+import type { DataItem, Route } from '@/types';
+import cache from '@/utils/cache';
 import logger from '@/utils/logger';
-import timezone from '@/utils/timezone';
+import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 export const route: Route = {
     path: '/topic/:id',
@@ -24,19 +25,24 @@ export const route: Route = {
     handler,
 };
 
+interface TopicDoc {
+    title?: DataItem['title'];
+    createdByName?: string;
+    tags?: string[];
+}
+
 async function handler(ctx) {
     const baseUrl = 'https://www.modb.pro';
     const topicId = ctx.req.param('id');
-    const response = await got({
-        url: `${baseUrl}/api/columns/getKnowledge`,
-        searchParams: {
+    const response = await ofetch(`${baseUrl}/api/columns/getKnowledge`, {
+        query: {
             pageNum: 1,
             pageSize: 20,
             columnId: topicId,
         },
-    }).json();
+    });
     const list = response.list.map((item) => {
-        let doc = {};
+        let doc: TopicDoc = {};
         let baseLink = {};
         switch (item.type) {
             case 0:
@@ -54,7 +60,7 @@ async function handler(ctx) {
         return {
             title: doc.title,
             link: `${baseLink}/${item.rid}`,
-            pubDate: timezone(parseDate(item.createdTime), +8),
+            pubDate: timezone(parseDate(item.createdTime), 8),
             author: doc.createdByName,
             category: doc.tags,
         };
@@ -63,7 +69,7 @@ async function handler(ctx) {
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.link);
+                const response = await ofetch(item.link);
                 const $ = load(response);
                 item.description = $('div.editor-content-styl.article-style').first().html();
                 return item;

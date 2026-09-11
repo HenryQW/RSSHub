@@ -1,12 +1,13 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 export const route: Route = {
-    path: '/shaanxi/kjt/:id?',
+    path: '/kjt/:id?',
     categories: ['government'],
     example: '/gov/shaanxi/kjt',
     parameters: { id: '分类，见下表，默认为通知公告' },
@@ -22,8 +23,8 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 科技头条 | 工作动态 | 基层科技 | 科技博览 | 媒体聚焦 | 通知公告 |
-  | -------- | -------- | -------- | -------- | -------- | -------- |
-  | 1061     | 24       | 27       | 25       | 28       | 221      |`,
+| -------- | -------- | -------- | -------- | -------- | -------- |
+| 1061     | 24       | 27       | 25       | 28       | 221      |`,
 };
 
 async function handler(ctx) {
@@ -41,19 +42,19 @@ async function handler(ctx) {
 
     let items = $('.textlist li a')
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .map((item): DataItem => {
+            const $item = $(item);
 
             return {
-                title: item.text(),
-                link: `${rootUrl}${item.attr('href')}`,
-                pubDate: parseDate(item.prev().text()),
+                title: $item.text(),
+                link: `${rootUrl}${$item.attr('href')}`,
+                pubDate: parseDate($item.prev().text()),
             };
         });
 
     items = await Promise.all(
         items.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
@@ -63,7 +64,7 @@ async function handler(ctx) {
 
                 item.description = content('.info_content').html();
                 item.author = content('meta[name="Author"]').attr('content');
-                item.pubDate = timezone(parseDate(content('meta[name="PubDate"]').attr('content')), +8);
+                item.pubDate = timezone(parseDate(content('meta[name="PubDate"]').attr('content')!), 8);
 
                 return item;
             })

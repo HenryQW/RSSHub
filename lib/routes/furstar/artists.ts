@@ -1,8 +1,10 @@
-import { Route } from '@/types';
-import utils from './utils';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
+
+import utils from './utils';
 
 export const route: Route = {
     path: '/artists/:lang?',
@@ -31,15 +33,11 @@ export const route: Route = {
 
 async function handler(ctx) {
     const base = utils.langBase(ctx.req.param('lang'));
-    const res = await got.get(base, {
-        https: {
-            rejectUnauthorized: false,
-        },
-    });
+    const res = await got(base);
     const $ = load(res.data);
     const artists = $('.filter-item')
-        .map((i, e) => utils.authorDetail(e))
-        .get();
+        .toArray()
+        .map((e) => utils.authorDetail(e));
     artists.shift(); // the first one is "show all"
 
     return {
@@ -48,8 +46,8 @@ async function handler(ctx) {
         description: 'Furstar 所有画家列表',
         language: ctx.req.param('lang'),
         item: artists.map((e) => ({
-            title: e.name,
-            author: e.name,
+            title: e.name!,
+            author: e.name ?? undefined,
             description: `<img src="${e.avatar}"/><a href="${base}/${e.link}">${e.name}</a>`,
             pubDate: parseDate(new Date().toISOString()), // No Time for now
             link: `${base}/${e.link}`,

@@ -1,6 +1,6 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 // 导入所需模组
-import got from '@/utils/got'; // 自订的 got
+import ofetch from '@/utils/ofetch';
 // import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -32,13 +32,9 @@ async function handler(ctx) {
 
     // 发送 HTTP GET 请求到 API 并解构返回的数据对象
     const {
-        result: {
-            hits: { hit: data },
-        },
-    } = await got({
-        method: 'get',
-        url: 'https://dblp.org/search/publ/api',
-        searchParams: {
+        result: { hits },
+    } = await ofetch('https://dblp.org/search/publ/api', {
+        query: {
             q: field,
             format: 'json',
             h: 10,
@@ -46,7 +42,8 @@ async function handler(ctx) {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         },
-    }).json();
+    });
+    const { hit: data } = hits;
 
     // console.log(data);
 

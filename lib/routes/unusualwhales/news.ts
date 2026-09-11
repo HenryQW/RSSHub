@@ -1,5 +1,5 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
+import type { Data, Route } from '@/types';
+import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
 
 const apiBase = 'https://phx.unusualwhales.com';
@@ -22,28 +22,30 @@ export const route: Route = {
             source: ['unusualwhales.com/news', 'unusualwhales.com/'],
         },
     ],
-    name: 'News Flow',
+    name: 'News Feed',
     maintainers: ['TonyRL'],
     handler,
     url: 'unusualwhales.com/news',
 };
 
-async function handler() {
-    const { data } = await got(`${apiBase}/api/fj_articles`);
+async function handler(): Promise<Data> {
+    const response = await ofetch(`${apiBase}/api/news/headlines-feed?limit=100`);
 
-    const items = data.map((item) => ({
-        title: item.title,
-        description: item.description,
+    const items = response.data.map((item) => ({
+        title: item.headline,
         link: item.url,
-        pubDate: parseDate(item.publish_date),
+        guid: item.id,
+        author: item.source,
+        pubDate: parseDate(item.created_at),
+        category: item.tickers,
     }));
 
     return {
-        title: 'Flow - News',
+        title: 'Market Data - News',
         description: 'Explore unusual options, options flow, dark pools, short activity, and stock activity on unusualwhales.com. Unusual whales has a full news service available!',
         link: 'https://unusualwhales.com/news-feed',
         image: 'https://unusualwhales.com/android-icon-192x192.png',
-        language: 'en-US',
+        language: 'en-us',
         item: items,
     };
 }

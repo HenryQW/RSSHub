@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 async function getPage(id) {
@@ -11,24 +12,19 @@ async function getPage(id) {
     const $ = load(res.data);
     const content = $('.lm_new ul li');
 
-    return (
-        content &&
-        content
-            .map((index, item) => {
-                item = $(item);
+    return content.toArray().map((item) => {
+        const $item = $(item);
 
-                const title = item.find('a').text();
-                const pubDate = parseDate(item.find('.fr').text());
-                const link = item.find('a').attr('href');
+        const title = $item.find('a').text();
+        const pubDate = parseDate($item.find('.fr').text());
+        const link = $item.find('a').attr('href');
 
-                return {
-                    title,
-                    pubDate,
-                    link,
-                };
-            })
-            .get()
-    );
+        return {
+            title,
+            pubDate,
+            link,
+        };
+    });
 }
 
 export const route: Route = {
@@ -48,8 +44,8 @@ export const route: Route = {
     maintainers: ['zwithz'],
     handler,
     description: `| 全部通知 | 招生信息 | 教务管理 | 论文管理 | 思政工作 | 评奖评优 | 实习就业 | 国际实习 | 国内合作科研 | 国际合作科研 | 校园服务 |
-  | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ------------ | ------------ | -------- |
-  | 0        | 1        | 2        | 3        | 4        | 5        | 6        | 7        | 8            | 9            | 10       |
+| -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ------------ | ------------ | -------- |
+| 0        | 1        | 2        | 3        | 4        | 5        | 6        | 7        | 8            | 9            | 10       |
 
 #### 自定义聚合通知 {#zhe-jiang-da-xue-ruan-jian-xue-yuan-zi-ding-yi-ju-he-tong-zhi}`,
 };
@@ -58,7 +54,7 @@ async function handler(ctx) {
     const id = ctx.req.param('id').split('+');
     const tasks = id.map((id) => getPage(id));
     const results = await Promise.all(tasks);
-    let items = [];
+    let items: any[] = [];
     for (const result of results) {
         items = [...items, ...result];
     }

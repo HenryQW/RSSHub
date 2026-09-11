@@ -1,19 +1,22 @@
 import dayjs from 'dayjs';
 
+import type { DataItem } from '@/types';
+
 /**
  * This function should be used by RSSHub middleware only.
  * @param {object} data ctx.state.data
  * @returns `JSON.stringify`-ed [UMS Result](https://docs.rss3.io/docs/unified-metadata-schemas)
  */
 
-const NETWORK = 'RSS';
+const NETWORK = 'rsshub';
 const TAG = 'RSS';
 const TYPE = 'feed';
+const PLATFORM = 'RSSHub';
 
 const rss3 = (data) => {
     const currentUnixTsp = dayjs().unix();
     const umsResult = {
-        data: data.item.map((item) => {
+        data: data.item.map((item: DataItem) => {
             const owner = getOwnershipFieldFromURL(item);
             return {
                 owner,
@@ -29,14 +32,14 @@ const rss3 = (data) => {
                     {
                         tag: TAG,
                         type: TYPE,
-                        platform: owner,
+                        platform: PLATFORM,
                         from: owner,
                         to: owner,
                         metadata: {
-                            authors: typeof item.author === 'string' ? [{ name: item.author }] : item.author,
+                            authors: item.author === undefined || Array.isArray(item.author) ? item.author : [{ name: item.author }],
                             description: item.description,
                             pub_date: item.pubDate,
-                            tags: typeof item.category === 'string' ? [item.category] : item.category,
+                            tags: item.category === undefined || Array.isArray(item.category) ? item.category : [item.category],
                             title: item.title,
                         },
                         related_urls: [item.link],

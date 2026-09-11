@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -41,13 +42,13 @@ export const route: Route = {
     maintainers: ['Hivol'],
     handler,
     description: `| Top Stories (default) | Health | Crime | Politics | Business | Tech | Culture | Sports | Weird | 1-1-2 |
-  | --------------------- | ------ | ----- | -------- | -------- | ---- | ------- | ------ | ----- | ----- |
-  | top-stories           | health | crime | politics | business | tech | culture | sports | weird | 1-1-2 |`,
+| --------------------- | ------ | ----- | -------- | -------- | ---- | ------- | ------ | ----- | ----- |
+| top-stories           | health | crime | politics | business | tech | culture | sports | weird | 1-1-2 |`,
 };
 
 async function handler(ctx) {
     const category = ctx.req.param('category') ?? 'top-stories';
-    const suffix = map.get(category).suffix;
+    const suffix = map.get(category)!.suffix;
 
     const rootUrl = 'https://www.nltimes.nl';
     const apiUrl = rootUrl + suffix;
@@ -61,7 +62,8 @@ async function handler(ctx) {
 
     const list = $('.news-card')
         .slice(0, 10)
-        .map((_, elem) => {
+        .toArray()
+        .map((elem) => {
             const item = {
                 link: $(elem).children('.news-card__title').first().children('a').first().attr('href'),
                 title: $(elem).children('.news-card__title').first().children('a').first().text(),
@@ -70,12 +72,11 @@ async function handler(ctx) {
                     .children('.news-card__categories')
                     .first()
                     .children('a')
-                    .map((_, elem) => $(elem).text())
-                    .get(),
+                    .toArray()
+                    .map((elem) => $(elem).text()),
             };
             return item;
-        })
-        .get();
+        });
 
     const ProcessFeed = (data) => {
         const $ = load(data);
@@ -86,7 +87,7 @@ async function handler(ctx) {
     const items = await Promise.all(
         list.map((item) => {
             const title = item.title;
-            const date = timezone(parseDate(item.date, 'DD MMMM YYYY - HH:mm'), +1); // Central European Time
+            const date = timezone(parseDate(item.date, 'DD MMMM YYYY - HH:mm'), 1); // Central European Time
             const link = rootUrl + item.link;
             const category = item.category;
 
@@ -109,10 +110,10 @@ async function handler(ctx) {
     );
 
     return {
-        title: map.get(category).title,
-        language: 'en',
+        title: map.get(category)!.title,
+        language: 'en' as const,
         link: apiUrl,
-        description: map.get(category).title,
+        description: map.get(category)!.title,
         item: items,
     };
 }

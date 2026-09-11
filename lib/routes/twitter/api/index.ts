@@ -1,13 +1,19 @@
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import mobileApi from './mobile-api/api';
-import webApi from './web-api/api';
 import { config } from '@/config';
+import ConfigNotFoundError from '@/errors/types/config-not-found';
 
-const enableMobileApi = config.twitter.username && config.twitter.password;
-const enableWebApi = config.twitter.cookie;
+import devApi from './developer-api/api';
+// import mobileApi from './mobile-api/api';
+import webApi from './web-api/api';
+import type { ApiParams } from './web-api/utils';
 
-type ApiItem = (id: string, params?: Record<string, any>) => Promise<Record<string, any>> | Record<string, any> | null;
-let api: {
+const enableThirdPartyApi = config.twitter.thirdPartyApi;
+// const enableMobileApi = config.twitter.username && config.twitter.password;
+const enableWebApi = config.twitter.authToken;
+const enableDeveloperApi = config.twitter.consumerKey && config.twitter.consumerSecret;
+
+type ApiItem = (id: string, params?: ApiParams) => Promise<any> | null;
+
+interface TwitterApi {
     init: () => void;
     getUser: ApiItem;
     getUserTweets: ApiItem;
@@ -18,7 +24,10 @@ let api: {
     getSearch: ApiItem;
     getList: ApiItem;
     getHomeTimeline: ApiItem;
-} = {
+    getHomeLatestTimeline: ApiItem;
+}
+
+let api: TwitterApi = {
     init: () => {
         throw new ConfigNotFoundError('Twitter API is not configured');
     },
@@ -31,12 +40,13 @@ let api: {
     getSearch: () => null,
     getList: () => null,
     getHomeTimeline: () => null,
+    getHomeLatestTimeline: () => null,
 };
 
-if (enableWebApi) {
+if (enableThirdPartyApi || enableWebApi) {
     api = webApi;
-} else if (enableMobileApi) {
-    api = mobileApi;
+} else if (enableDeveloperApi) {
+    api = devApi;
 }
 
 export default api;

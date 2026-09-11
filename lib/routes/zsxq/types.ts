@@ -16,7 +16,7 @@ interface BasicTopic {
         type: string;
         background_url: string;
     };
-    latest_likes: {
+    latest_likes: Array<{
         create_time: string;
         owner: {
             avatar_url: string;
@@ -24,7 +24,7 @@ interface BasicTopic {
             number: number;
             user_id: number;
         };
-    }[];
+    }>;
     likes_count: number;
     readers_count: number;
     reading_count: number;
@@ -63,6 +63,13 @@ export interface QATopic extends BasicTopic {
     question: {
         images?: TopicImage[];
         text?: string;
+        owner?: {
+            avatar_url: string;
+            description: string;
+            location: string;
+            name: string;
+            user_id: number;
+        };
     };
 }
 
@@ -139,6 +146,8 @@ export interface TopicImage {
 }
 
 export type Topic = TalkTopic | QATopic | TaskTopic | SolutionTopic;
+
+export type ResponseData = UserInfo | GroupInfo | Topic[] | { topics: Topic[] };
 
 export type UserInfoResponse = BasicResponse<UserInfo>;
 

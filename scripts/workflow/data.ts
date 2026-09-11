@@ -1,5 +1,11 @@
 export const categories = [
     {
+        icon: '🌟',
+        link: '/routes/popular',
+        en: 'Popular',
+        zh: '热门',
+    },
+    {
         icon: '💬',
         link: '/routes/social-media',
         en: 'Social Media',
@@ -130,6 +136,12 @@ export const categories = [
         link: '/routes/finance',
         en: 'Finance',
         zh: '金融',
+    },
+    {
+        icon: '⚽',
+        link: '/routes/sport',
+        en: 'Sport',
+        zh: '体育',
     },
     {
         icon: '🔍',

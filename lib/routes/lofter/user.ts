@@ -1,5 +1,6 @@
 import InvalidParameterError from '@/errors/types/invalid-parameter';
-import { Route } from '@/types';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import { isValidHost } from '@/utils/valid-host';
@@ -8,6 +9,7 @@ export const route: Route = {
     path: '/user/:name?',
     categories: ['social-media'],
     example: '/lofter/user/i',
+    view: ViewType.Articles,
     parameters: { name: 'Lofter user name, can be found in the URL' },
     features: {
         requireConfig: false,
@@ -33,12 +35,12 @@ async function handler(ctx) {
 
     const response = await got({
         method: 'post',
-        url: `http://api.lofter.com/v2.0/blogHomePage.api?product=lofter-iphone-10.0.0`,
+        url: 'http://api.lofter.com/v2.0/blogHomePage.api?product=lofter-iphone-10.0.0',
         body: new URLSearchParams({
             blogdomain: rootUrl,
             checkpwd: '1',
             following: '0',
-            limit,
+            limit: String(limit),
             method: 'getPostLists',
             needgetpoststat: '1',
             offset: '0',
@@ -55,7 +57,7 @@ async function handler(ctx) {
         title: item.post.title || item.post.noticeLinkTitle,
         link: item.post.blogPageUrl,
         description:
-            JSON.parse(item.post.photoLinks || `[]`)
+            JSON.parse(item.post.photoLinks || '[]')
                 .map((photo) => {
                     if (photo.raw?.match(/\/\/nos\.netease\.com\//)) {
                         photo.raw = `https://${photo.raw.match(/(imglf\d)/)[0]}.lf127.net${photo.raw.match(/\/\/nos\.netease\.com\/imglf\d(.*)/)[1]}`;
@@ -63,7 +65,7 @@ async function handler(ctx) {
                     return `<img src="${photo.raw || photo.orign}">`;
                 })
                 .join('') +
-            JSON.parse(item.post.embed ? `[${item.post.embed}]` : `[]`)
+            JSON.parse(item.post.embed ? `[${item.post.embed}]` : '[]')
                 .map((video) => `<video src="${video.originUrl}" poster="${video.video_img_url}" controls="controls"></video>`)
                 .join('') +
             item.post.content,
@@ -74,7 +76,7 @@ async function handler(ctx) {
 
     return {
         title: `${items[0].author} | LOFTER`,
-        link: rootUrl,
+        link: `https://${rootUrl}`,
         item: items,
         description: response.data.response.posts[0].post.blogInfo.selfIntro,
     };

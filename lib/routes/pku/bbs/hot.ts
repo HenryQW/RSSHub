@@ -1,7 +1,8 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
-import { config } from '@/config';
 import { load } from 'cheerio';
+
+import { config } from '@/config';
+import type { Route } from '@/types';
+import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
@@ -28,27 +29,25 @@ export const route: Route = {
     maintainers: ['wooddance'],
     handler,
     url: 'bbs.pku.edu.cn/v2/hot-topic.php',
-    description: `:::warning
-  论坛部分帖子正文内容的获取需要用户登录后的 Cookie 值，详情见部署页面的配置模块。
-  :::`,
+    description: `::: warning
+论坛部分帖子正文内容的获取需要用户登录后的 Cookie 值，详情见部署页面的配置模块。
+:::`,
 };
 
 async function handler() {
     const cookie = config.pkubbs.cookie;
-    const headers = {};
+    const headers: Record<string, string> = {};
     if (cookie) {
         headers.cookie = cookie;
     }
     const r = await got('https://bbs.pku.edu.cn/v2/hot-topic.php', { headers });
     const $ = load(r.body);
     const listItems = $('#list-content .list-item')
-        .map(function () {
-            return {
-                url: new URL($(this).find('> a.link').attr('href'), r.url).href,
-                title: $(this).find('.title').text(),
-            };
-        })
-        .get()
+        .toArray()
+        .map((element) => ({
+            url: new URL($(element).find('> a.link').attr('href')!, 'https://bbs.pku.edu.cn/v2/').href,
+            title: $(element).find('.title').text(),
+        }))
         .slice(0, 10);
 
     const item = await Promise.all(
@@ -64,7 +63,7 @@ async function handler() {
                         description: $('.post-card:first-child .content').html(),
                         link: url,
                         guid: url,
-                        pubDate: timezone(parseDate(date, '发表于YYYY-MM-DD HH:mm:ss'), +8),
+                        pubDate: timezone(parseDate(date, '发表于YYYY-MM-DD HH:mm:ss'), 8),
                     };
                 } catch {
                     return {

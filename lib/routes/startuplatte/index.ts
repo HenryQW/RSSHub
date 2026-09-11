@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -26,8 +27,8 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 首頁 | 大師智慧 | 深度分析 | 新知介紹 |
-  | ---- | -------- | -------- | -------- |
-  |      | quote    | analysis | trend    |`,
+| ---- | -------- | -------- | -------- |
+|      | quote    | analysis | trend    |`,
 };
 
 async function handler(ctx) {
@@ -44,19 +45,19 @@ async function handler(ctx) {
     const $ = load(response.data);
 
     const list = $('.post-header h2 a')
-        .map((_, item) => {
-            item = $(item);
+        .toArray()
+        .map((item): DataItem => {
+            const $item = $(item);
 
             return {
-                title: item.text(),
-                link: item.attr('href'),
+                title: $item.text(),
+                link: $item.attr('href'),
             };
-        })
-        .get();
+        });
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,

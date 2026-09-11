@@ -1,4 +1,5 @@
-import { Route } from '@/types';
+import type { Data, Route } from '@/types';
+
 import { getData, getList } from './utils';
 
 export const route: Route = {
@@ -8,13 +9,16 @@ export const route: Route = {
             source: ['grist.org/articles/'],
         },
     ],
-    name: 'Unknown',
+    name: 'Latest Articles',
     maintainers: ['Rjnishant530'],
+    categories: ['new-media'],
+    example: '/grist',
+    parameters: {},
     handler,
     url: 'grist.org/articles/',
 };
 
-async function handler() {
+async function handler(): Promise<Data> {
     const baseUrl = 'https://grist.org';
     const route = '/wp-json/wp/v2/posts?_embed';
 

@@ -1,15 +1,18 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
+import { ViewType } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
 export const route: Route = {
     path: '/hot/:bsn',
     categories: ['anime'],
+    view: ViewType.Articles,
     example: '/gamer/hot/47157',
-    parameters: { bsn: '板块 id，在 URL 可以找到' },
+    parameters: { bsn: '板塊 id，在 URL 可以找到' },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -18,33 +21,29 @@ export const route: Route = {
         supportPodcast: false,
         supportScihub: false,
     },
-    name: '熱門推薦',
-    maintainers: ['nczitzk', 'TonyRL'],
+    name: '本板推薦',
+    maintainers: ['nczitzk', 'TonyRL', 'kennyfong19931'],
     handler,
 };
 
 async function handler(ctx) {
-    const rootUrl = `https://forum.gamer.com.tw/A.php?bsn=${ctx.req.param('bsn')}`;
-    const response = await got({
-        url: rootUrl,
-        headers: {
-            Referer: 'https://forum.gamer.com.tw',
-        },
-    });
+    const rootUrl = `https://forum.gamer.com.tw/B.php?bsn=${ctx.req.param('bsn')}`;
+    const response = await got(rootUrl);
 
     const $ = load(response.data);
-    const list = $('div.FM-abox2A a.FM-abox2B')
-        .map((_, item) => {
-            item = $(item);
+    const list = $('div.popular__card-list div.popular__card-img a')
+        .toArray()
+        .map((item): DataItem => {
+            const $item = $(item);
             return {
-                link: `https:${item.attr('href')}`,
+                link: $item.attr('href'),
+                title: '',
             };
-        })
-        .get();
+        });
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     url: item.link,
                     headers: {
@@ -58,7 +57,7 @@ async function handler(ctx) {
                 item.title = content('.c-post__header__title').text();
                 item.description = content('div.c-post__body').html();
                 item.author = `${content('a.username').eq(0).text()} (${content('a.userid').eq(0).text()})`;
-                item.pubDate = timezone(parseDate(content('a.edittime').eq(0).attr('data-mtime'), +8));
+                item.pubDate = timezone(parseDate(content('a.edittime').eq(0).attr('data-mtime')!), 8);
 
                 return item;
             })

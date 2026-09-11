@@ -1,13 +1,17 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
+import cache from '@/utils/cache';
+import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/podcast/:id',
     categories: ['multimedia'],
+    view: ViewType.Audios,
     example: '/xiaoyuzhou/podcast/6021f949a789fca4eff4492c',
-    parameters: { id: '播客id，可以在小宇宙播客的 URL 中找到' },
+    parameters: { id: '播客 id 或单集 id，可以在小宇宙播客的 URL 中找到' },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -18,36 +22,81 @@ export const route: Route = {
     },
     radar: [
         {
-            source: ['xiaoyuzhoufm.com/podcast/:id'],
+            source: ['xiaoyuzhoufm.com/podcast/:id', 'xiaoyuzhoufm.com/episode/:id'],
         },
     ],
     name: '播客',
-    maintainers: ['hondajojo', 'jtsang4'],
+    maintainers: ['hondajojo', 'jtsang4', 'pseudoyu', 'cscnk52'],
     handler,
     url: 'xiaoyuzhoufm.com/',
 };
 
 async function handler(ctx) {
-    const link = `https://www.xiaoyuzhoufm.com/podcast/${ctx.req.param('id')}`;
-    const response = await got({
-        method: 'get',
-        url: link,
-    });
+    const id = ctx.req.param('id');
+    let link;
+    let response;
+    let $;
+    let page_data;
 
-    const $ = load(response.data);
+    // First try podcast URL, if that fails try episode URL
+    try {
+        link = `https://www.xiaoyuzhoufm.com/podcast/${id}`;
+        response = await ofetch(link);
 
-    const page_data = JSON.parse($('#__NEXT_DATA__')[0].children[0].data);
+        $ = load(response);
+        page_data = JSON.parse($('#__NEXT_DATA__').text());
+    } catch (error) {
+        // An episode ID may return 404 at the podcast URL. Preserve access and
+        // transport errors instead of hiding them behind a second failed request.
+        if (!(error instanceof Error) || !('status' in error) || error.status !== 404) {
+            throw error;
+        }
+    }
 
-    const episodes = page_data.props.pageProps.podcast.episodes.map((item) => ({
+    if (!page_data?.props?.pageProps?.podcast?.episodes) {
+        // Try as episode instead
+        link = `https://www.xiaoyuzhoufm.com/episode/${id}`;
+        response = await ofetch(link);
+
+        $ = load(response);
+        const podcastLink = $('a[href^="/podcast/"].name').attr('href');
+
+        if (podcastLink) {
+            const podcastId = podcastLink.split('/').pop();
+            link = `https://www.xiaoyuzhoufm.com/podcast/${podcastId}`;
+            response = await ofetch(link);
+
+            $ = load(response);
+            page_data = JSON.parse($('#__NEXT_DATA__').text());
+        }
+    }
+
+    if (!page_data?.props?.pageProps?.podcast?.episodes) {
+        throw new Error('Xiaoyuzhou did not return podcast data for this podcast or episode ID.');
+    }
+
+    let episodes = page_data.props.pageProps.podcast.episodes.map((item) => ({
         title: item.title,
         enclosure_url: item.enclosure.url,
         itunes_duration: item.duration,
         enclosure_type: 'audio/mpeg',
         link: `https://www.xiaoyuzhoufm.com/episode/${item.eid}`,
+        eid: item.eid,
         pubDate: parseDate(item.pubDate),
-        description: item.shownotes,
         itunes_item_image: (item.image || item.podcast?.image)?.smallPicUrl,
     }));
+
+    episodes = await Promise.all(
+        episodes.map((item) =>
+            cache.tryGet(item.link, async () => {
+                const episodeLink = `https://www.xiaoyuzhoufm.com/_next/data/${page_data.buildId}/episode/${item.eid}.json`;
+                const response = await ofetch(episodeLink);
+                const episodeItem = response.pageProps.episode;
+                item.description = episodeItem.shownotes || episodeItem.description || episodeItem.title || '';
+                return item;
+            })
+        )
+    );
 
     return {
         title: page_data.props.pageProps.podcast.title,

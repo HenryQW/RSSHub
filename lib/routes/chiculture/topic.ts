@@ -1,9 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 export const route: Route = {
     path: '/topic/:category?',
@@ -22,8 +23,8 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 全部 | 現代中國 | 今日香港 | 全球化 | 一周時事通識 |
-  | ---- | -------- | -------- | ------ | ------------ |
-  |      | 76       | 479      | 480    | 379          |`,
+| ---- | -------- | -------- | ------ | ------------ |
+|      | 76       | 479      | 480    | 379          |`,
 };
 
 async function handler(ctx) {
@@ -57,14 +58,16 @@ async function handler(ctx) {
                     item.pubDate = parseDate(pubDate[1]);
                 } else if (item.title.includes('一周時事通識')) {
                     for (const tag of item.pubDate) {
-                        if (/^\d{4}年$/.test(tag.title)) {
-                            const monthDayStr = item.title.split('- ')[1] ?? item.title.split('-')[1];
-                            item.pubDate = timezone(parseDate(monthDayStr, 'D/M'), +8);
-                            break;
+                        if (!/^\d{4}年$/.test(tag.title)) {
+                            continue;
                         }
+
+                        const monthDayStr = item.title.split('- ', 2)[1] ?? item.title.split('-', 2)[1];
+                        item.pubDate = timezone(parseDate(monthDayStr, 'D/M'), 8);
+                        break;
                     }
                 } else if (/^\d{4}年新聞回顧$/.test(item.title)) {
-                    item.pubDate = parseDate(`${item.title.split('年')[0]}-12-31`);
+                    item.pubDate = parseDate(`${item.title.split('年', 1)[0]}-12-31`);
                 } else {
                     item.pubDate = '';
                 }

@@ -1,110 +1,105 @@
-import type { Namespace, Route } from '@/types';
-import { directoryImport } from 'directory-import';
-import { Hono, type Handler } from 'hono';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+
 import { serveStatic } from '@hono/node-server/serve-static';
+import { Hono } from 'hono';
 
+import { config } from '@/config';
+import type { DevRegistry } from '@/registry-dev';
+import type { NamespacesType, RoutesType } from '@/registry-helpers';
+import { registerApiRoutes, registerRssRoutes } from '@/registry-helpers';
+import healthz from '@/routes/healthz';
 import index from '@/routes/index';
+import metrics from '@/routes/metrics';
 import robotstxt from '@/routes/robots.txt';
+import type { Route } from '@/types';
+import { isWorker } from '@/utils/is-worker';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+export type { NamespacesType } from '@/registry-helpers';
+export { collectNamespaceRoots, resolveModuleNamespace, sortRoutes } from '@/registry-helpers';
 
-let modules: Record<string, { route: Route } | { namespace: Namespace }> = {};
-let namespaces: Record<
-    string,
-    Namespace & {
-        routes: Record<
-            string,
-            Route & {
-                location: string;
-            }
-        >;
-    }
-> = {};
+const __dirname = import.meta.dirname;
 
-switch (process.env.NODE_ENV) {
-    case 'test':
-    case 'production':
-        // @ts-expect-error
-        namespaces = await import('../assets/build/routes.json');
-        break;
-    default:
-        modules = directoryImport({
-            targetDirectoryPath: path.join(__dirname, './routes'),
-            importPattern: /\.ts$/,
-        }) as typeof modules;
+function isSafeRoutes(routes: RoutesType): boolean {
+    return Object.values(routes).every((route: Route) => !route.features?.nsfw);
 }
 
-if (Object.keys(modules).length) {
-    for (const module in modules) {
-        const content = modules[module] as
-            | {
-                  route: Route;
-              }
-            | {
-                  namespace: Namespace;
-              };
-        const namespace = module.split(/[/\\]/)[1];
-        if ('namespace' in content) {
-            namespaces[namespace] = Object.assign(
-                {
-                    routes: {},
-                },
-                namespaces[namespace],
-                content.namespace
-            );
-        } else if ('route' in content) {
-            if (!namespaces[namespace]) {
-                namespaces[namespace] = {
-                    name: namespace,
-                    routes: {},
-                };
+function safeNamespaces(namespaces: NamespacesType): NamespacesType {
+    const safe: NamespacesType = {};
+
+    for (const [key, value] of Object.entries(namespaces)) {
+        if (value.routes === null || value.routes === undefined || isSafeRoutes(value.routes)) {
+            safe[key] = value;
+        }
+    }
+    return safe;
+}
+
+let namespaces: NamespacesType = {};
+let devRegistry: DevRegistry | undefined;
+
+if (config.isPackage) {
+    // @ts-ignore build artifact of pnpm build:routes
+    namespaces = (await import('../assets/build/routes.js')).default;
+} else {
+    switch (process.env.NODE_ENV || process.env.VERCEL_ENV) {
+        case 'production':
+            // @ts-ignore build artifact of pnpm build:routes
+            namespaces = (await import('../assets/build/routes.js')).default;
+            break;
+        case 'test':
+            // @ts-expect-error TS2322 the JSON module's inferred literal type is narrower than NamespacesType
+            namespaces = await import('../assets/build/routes.json');
+            if (namespaces.default) {
+                // @ts-expect-error TS2322 the JSON module's default export does not satisfy NamespacesType
+                namespaces = namespaces.default;
             }
-            if (Array.isArray(content.route.path)) {
-                for (const path of content.route.path) {
-                    namespaces[namespace].routes[path] = {
-                        ...content.route,
-                        location: module.split(/[/\\]/).slice(2).join('/'),
-                    };
-                }
-            } else {
-                namespaces[namespace].routes[content.route.path] = {
-                    ...content.route,
-                    location: module.split(/[/\\]/).slice(2).join('/'),
-                };
-            }
+            break;
+        default: {
+            // lazy load dev namespaces
+            const { createDevRegistry } = await import('@/registry-dev');
+            devRegistry = createDevRegistry({
+                routesDirectory: path.join(__dirname, './routes'),
+                namespaces,
+            });
         }
     }
 }
 
+if (config.feature.disable_nsfw && !devRegistry) {
+    namespaces = safeNamespaces(namespaces);
+}
+
+export const ensureAllLoaded: () => Promise<void> = devRegistry?.ensureAllLoaded ?? (() => Promise.resolve());
+
 export { namespaces };
 
 const app = new Hono();
-for (const namespace in namespaces) {
-    const subApp = app.basePath(`/${namespace}`);
-    for (const path in namespaces[namespace].routes) {
-        const wrapedHandler: Handler = async (ctx) => {
-            if (!ctx.get('data')) {
-                if (typeof namespaces[namespace].routes[path].handler !== 'function') {
-                    const { route } = await import(`./routes/${namespace}/${namespaces[namespace].routes[path].location}`);
-                    namespaces[namespace].routes[path].handler = route.handler;
-                }
-                ctx.set('data', await namespaces[namespace].routes[path].handler(ctx));
-            }
-        };
-        subApp.get(path, wrapedHandler);
-    }
+
+if (!devRegistry) {
+    registerRssRoutes(app, namespaces);
+    registerApiRoutes(app, namespaces);
 }
 
 app.get('/', index);
+app.get('/healthz', healthz);
 app.get('/robots.txt', robotstxt);
-app.use(
-    '/*',
-    serveStatic({
-        root: './lib/assets',
-        rewriteRequestPath: (path) => (path === '/favicon.ico' ? '/favicon.png' : path),
-    })
-);
+if (config.debugInfo !== 'false') {
+    // Only enable tracing in debug mode
+    app.get('/metrics', metrics);
+}
+
+if (devRegistry) {
+    app.use('*', devRegistry.middleware);
+}
+
+if (!config.isPackage && !process.env.VERCEL_ENV && !isWorker) {
+    app.use(
+        '/*',
+        serveStatic({
+            root: path.join(__dirname, 'assets'),
+            rewriteRequestPath: (path) => (path === '/favicon.ico' ? '/favicon.png' : path),
+        })
+    );
+}
 
 export default app;

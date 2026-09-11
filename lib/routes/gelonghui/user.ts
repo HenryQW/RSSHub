@@ -1,12 +1,14 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
+
 import { parseItem } from './utils';
 
 export const route: Route = {
     path: '/user/:id',
     categories: ['finance'],
+    view: ViewType.Articles,
     example: '/gelonghui/user/5273',
     parameters: { id: '用户编号，可在用户页 URL 中找到' },
     features: {
@@ -46,12 +48,12 @@ async function handler(ctx) {
         pubDate: parseDate(item.createTimestamp, 'X'),
     }));
 
-    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => parseItem(item)));
 
     return {
         title: `格隆汇 - 用户 ${data.result[0].user.nick} 的文章`,
         description: data.result.find((i) => i.user).user.brief,
-        image: data.result.find((i) => i.user).user.avatar.split('@')[0],
+        image: data.result.find((i) => i.user).user.avatar.split('@', 1)[0],
         link: data.result.find((i) => i.user).user.route.replace('https://m.gelonghui.com', 'https://www.gelonghui.com'),
         item: items,
     };

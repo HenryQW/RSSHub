@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 const languages = {
@@ -55,50 +56,50 @@ export const route: Route = {
     handler,
     description: `Categories for International site:
 
-  | WORLD | COVID-19 | BUSINESS | SPORT | TECH | OPINION |
-  | ----- | -------- | -------- | ----- | ---- | ------- |
-  | world | covid-19 | business | sport | tech | opinion |
+| WORLD | COVID-19 | BUSINESS | SPORT | TECH | OPINION |
+| ----- | -------- | -------- | ----- | ---- | ------- |
+| world | covid-19 | business | sport | tech | opinion |
 
-  Categories for Chinese site:
+Categories for Chinese site:
 
-  | 新闻 | 中国  | 俄罗斯 | 国际            | 俄中关系                 | 评论    |
-  | ---- | ----- | ------ | --------------- | ------------------------ | ------- |
-  | news | china | russia | category\_guoji | russia\_china\_relations | opinion |
+| 新闻 | 中国  | 俄罗斯 | 国际            | 俄中关系                 | 评论    |
+| ---- | ----- | ------ | --------------- | ------------------------ | ------- |
+| news | china | russia | category\\_guoji | russia\\_china\\_relations | opinion |
 
-  Language
+Language
 
-  | Language    | Id          |
-  | ----------- | ----------- |
-  | English     | english     |
-  | Spanish     | spanish     |
-  | German      | german      |
-  | French      | french      |
-  | Greek       | greek       |
-  | Italian     | italian     |
-  | Czech       | czech       |
-  | Polish      | polish      |
-  | Serbian     | serbian     |
-  | Latvian     | latvian     |
-  | Lithuanian  | lithuanian  |
-  | Moldavian   | moldavian   |
-  | Belarusian  | belarusian  |
-  | Armenian    | armenian    |
-  | Abkhaz      | abkhaz      |
-  | Ssetian     | ssetian     |
-  | Georgian    | georgian    |
-  | Azerbaijani | azerbaijani |
-  | Arabic      | arabic      |
-  | Turkish     | turkish     |
-  | Persian     | persian     |
-  | Dari        | dari        |
-  | Kazakh      | kazakh      |
-  | Kyrgyz      | kyrgyz      |
-  | Uzbek       | uzbek       |
-  | Tajik       | tajik       |
-  | Vietnamese  | vietnamese  |
-  | Japanese    | japanese    |
-  | Chinese     | chinese     |
-  | Portuguese  | portuguese  |`,
+| Language    | Id          |
+| ----------- | ----------- |
+| English     | english     |
+| Spanish     | spanish     |
+| German      | german      |
+| French      | french      |
+| Greek       | greek       |
+| Italian     | italian     |
+| Czech       | czech       |
+| Polish      | polish      |
+| Serbian     | serbian     |
+| Latvian     | latvian     |
+| Lithuanian  | lithuanian  |
+| Moldavian   | moldavian   |
+| Belarusian  | belarusian  |
+| Armenian    | armenian    |
+| Abkhaz      | abkhaz      |
+| Ssetian     | ssetian     |
+| Georgian    | georgian    |
+| Azerbaijani | azerbaijani |
+| Arabic      | arabic      |
+| Turkish     | turkish     |
+| Persian     | persian     |
+| Dari        | dari        |
+| Kazakh      | kazakh      |
+| Kyrgyz      | kyrgyz      |
+| Uzbek       | uzbek       |
+| Tajik       | tajik       |
+| Vietnamese  | vietnamese  |
+| Japanese    | japanese    |
+| Chinese     | chinese     |
+| Portuguese  | portuguese  |`,
 };
 
 async function handler(ctx) {
@@ -117,18 +118,18 @@ async function handler(ctx) {
 
     let items = $('.list__title')
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .map((item): DataItem => {
+            const $item = $(item);
 
             return {
-                title: item.text(),
-                link: `${rootUrl}${item.attr('href')}`,
+                title: $item.text(),
+                link: `${rootUrl}${$item.attr('href')}`,
             };
         });
 
     items = await Promise.all(
         items.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
@@ -136,7 +137,7 @@ async function handler(ctx) {
 
                 const content = load(detailResponse.data);
 
-                item.pubDate = parseDate(content('a[data-unixtime]').attr('data-unixtime') * 1000);
+                item.pubDate = parseDate(Number(content('a[data-unixtime]').attr('data-unixtime')) * 1000);
 
                 item.category = content('.tag__text')
                     .toArray()

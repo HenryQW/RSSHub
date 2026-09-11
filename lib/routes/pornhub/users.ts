@@ -1,15 +1,17 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
-import { isValidHost } from '@/utils/valid-host';
-import { headers, parseItems } from './utils';
+
 import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { Data, Language, Route } from '@/types';
+import got from '@/utils/got';
+import { isValidHost } from '@/utils/valid-host';
+
+import { getRadarDomin, headers, parseItems } from './utils';
 
 export const route: Route = {
-    path: '/:language?/users/:username',
+    path: '/users/:username/:language?/:img?',
     categories: ['multimedia'],
     example: '/pornhub/users/pornhubmodels',
-    parameters: { language: 'language, see below', username: 'username, part of the url e.g. `pornhub.com/users/pornhubmodels`' },
+    parameters: { language: 'language, see below. defaults to `www` (English)', username: 'username, part of the url e.g. `pornhub.com/users/pornhubmodels`', img: 'show images, set to `img=1` to enable' },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -17,20 +19,16 @@ export const route: Route = {
         supportBT: false,
         supportPodcast: false,
         supportScihub: false,
+        nsfw: true,
     },
-    radar: [
-        {
-            source: ['pornhub.com/users/:username/*'],
-            target: '/users/:username',
-        },
-    ],
+    radar: getRadarDomin('/users/:username'),
     name: 'Users',
     maintainers: ['I2IMk', 'queensferryme'],
     handler,
 };
 
-async function handler(ctx) {
-    const { language = 'www', username } = ctx.req.param();
+async function handler(ctx): Promise<Data> {
+    const { language = 'www', username, img } = ctx.req.param();
     const link = `https://${language}.pornhub.com/users/${username}/videos`;
     if (!isValidHost(language)) {
         throw new InvalidParameterError('Invalid language');
@@ -38,18 +36,17 @@ async function handler(ctx) {
 
     const { data: response } = await got(link, { headers });
     const $ = load(response);
+    const showImages = img === 'img=1';
     const items = $('.videoUList .videoBox')
         .toArray()
-        .map((e) => parseItems($(e)));
+        .map((e) => parseItems($(e), showImages));
 
     return {
-        title: $('title').first().text(),
+        title: $('.profileUserName a').text(),
         description: $('.aboutMeText').text().trim(),
         link,
-        image: $('#coverPictureDefault').attr('src'),
-        logo: $('#getAvatar').attr('src'),
-        icon: $('#getAvatar').attr('src'),
-        language: $('html').attr('lang'),
+        image: $('#getAvatar').attr('src'),
+        language: $('html').attr('lang') as Language | undefined,
         allowEmpty: true,
         item: items,
     };

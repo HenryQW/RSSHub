@@ -1,7 +1,8 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
-import utils from './utils';
 import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { Route } from '@/types';
+import got from '@/utils/got';
+
+import utils from './utils';
 
 export const route: Route = {
     path: '/user/:uid/dynamic',
@@ -9,7 +10,13 @@ export const route: Route = {
     example: '/coolapk/user/3177668/dynamic',
     parameters: { uid: '在个人界面右上分享-复制链接获取' },
     features: {
-        requireConfig: false,
+        requireConfig: [
+            {
+                name: 'ALLOW_USER_HOTLINK_TEMPLATE',
+                optional: true,
+                description: '设置为`true`并添加`image_hotlink_template`参数来代理图片',
+            },
+        ],
         requirePuppeteer: false,
         antiCrawler: false,
         supportBT: false,

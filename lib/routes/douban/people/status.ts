@@ -1,11 +1,55 @@
-import { Route } from '@/types';
+import querystring from 'node:querystring';
+
+import { config } from '@/config';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import cache from '@/utils/cache';
-import querystring from 'querystring';
 import got from '@/utils/got';
 import { fallback, queryToBoolean, queryToInteger } from '@/utils/readable-social';
-import { config } from '@/config';
 
-const headers = { Referer: `https://m.douban.com/` };
+export const route: Route = {
+    path: '/people/:userid/status/:routeParams?',
+    categories: ['social-media'],
+    view: ViewType.SocialMedia,
+    example: '/douban/people/75118396/status',
+    parameters: { userid: '整数型用户 id', routeParams: '额外参数；见下' },
+    name: '用户广播',
+    maintainers: ['alfredcai'],
+    handler,
+    description: `::: tip
+
+- **目前只支持整数型 id**
+- 字母型的 id，可以通过头像图片链接来找到其整数型 id，图片命名规则\`ul[userid]-*.jpg\`或\`u[userid]-*.jpg\`，即取文件名中间的数字
+- 例如：用户 id: \`MovieL\`他的头像图片链接：\`https://img1.doubanio.com/icon/ul1128221-98.jpg\`他的整数型 id: \`1128221\`
+
+:::
+
+对于豆瓣用户广播内容，在 \`routeParams\` 参数中以 query string 格式设置如下选项可以控制输出的样式
+
+| 键                         | 含义                                                           | 接受的值       | 默认值 |
+| -------------------------- | -------------------------------------------------------------- | -------------- | ------ |
+| readable                   | 是否开启细节排版可读性优化                                     | 0/1/true/false | false  |
+| authorNameBold             | 是否加粗作者名字                                               | 0/1/true/false | false  |
+| showAuthorInTitle          | 是否在标题处显示作者                                           | 0/1/true/false | true   |
+| showAuthorInDesc           | 是否在正文处显示作者                                           | 0/1/true/false | false  |
+| showAuthorAvatarInDesc     | 是否在正文处显示作者头像（若阅读器会提取正文图片，不建议开启） | 0/1/true/false | false  |
+| showEmojiForRetweet        | 显示 “🔁” 取代 “Fw”（转发）                                    | 0/1/true/false | false  |
+| showRetweetTextInTitle     | 在标题出显示转发评论（置为 false 则在标题只显示被转发的广播）  | 0/1/true/false | false  |
+| addLinkForPics             | 为图片添加可点击的链接                                         | 0/1/true/false | false  |
+| showTimestampInDescription | 在正文处显示广播的时间戳                                       | 0/1/true/false | false  |
+| showComments               | 在正文处显示评论                                               | 0/1/true/false | false  |
+| widthOfPics                | 广播配图宽（生效取决于阅读器）                                 | 不指定 / 数字  | 不指定 |
+| heightOfPics               | 广播配图高（生效取决于阅读器）                                 | 不指定 / 数字  | 不指定 |
+| sizeOfAuthorAvatar         | 作者头像大小                                                   | 数字           | 48     |
+
+指定更多与默认值不同的参数选项可以改善 RSS 的可读性，如
+
+<https://rsshub.app/douban/people/113894409/status/readable=1&authorNameBold=1&showAuthorInTitle=1&showAuthorInDesc=1&showAuthorAvatarInDesc=1&showEmojiForRetweet=1&showRetweetTextInTitle=1&addLinkForPics=1&showTimestampInDescription=1&showComments=1&widthOfPics=100>
+
+的效果为
+
+  <img loading="lazy" src="/img/readable-douban.png" alt="豆瓣读书的可读豆瓣广播 RSS" />`,
+};
 
 function tryFixStatus(status) {
     let result = { isFixSuccess: true, why: '' };
@@ -54,9 +98,8 @@ function tryFixStatus(status) {
         }
     }
 
-    // 接口提供的URL最后有分享追踪器，要删去，否则路由无法工作
     if (status.sharing_url) {
-        status.sharing_url = status.sharing_url.split('?')[0];
+        status.sharing_url = status.sharing_url.split('&', 1)[0];
     }
 
     if (!result.isFixSuccess) {
@@ -68,7 +111,24 @@ function tryFixStatus(status) {
     return result;
 }
 
-function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
+interface ContentParams {
+    readable?: boolean;
+    authorNameBold?: boolean;
+    showAuthorInTitle?: boolean;
+    showAuthorInDesc?: boolean;
+    showAuthorAvatarInDesc?: boolean;
+    showEmojiForRetweet?: boolean;
+    showRetweetTextInTitle?: boolean;
+    addLinkForPics?: boolean;
+    showTimestampInDescription?: boolean;
+    showComments?: boolean;
+    showColonInDesc?: boolean;
+    widthOfPics?: number;
+    heightOfPics?: number;
+    sizeOfAuthorAvatar?: number;
+}
+
+function getContentByActivity(ctx, item, params: ContentParams = {}, picsPrefixes: string[] = []) {
     const routeParams = querystring.parse(ctx.req.param('routeParams'));
 
     const mergedParams = {
@@ -90,8 +150,6 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
         sizeOfAuthorAvatar: fallback(params.sizeOfAuthorAvatar, queryToInteger(routeParams.sizeOfAuthorAvatar), 48),
     };
 
-    params = mergedParams;
-
     const {
         readable,
         authorNameBold,
@@ -109,7 +167,50 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
         widthOfPics,
         heightOfPics,
         sizeOfAuthorAvatar,
-    } = params;
+    } = mergedParams;
+
+    function prepareImages(imageUrls: Array<string | undefined>) {
+        if (!imageUrls.length) {
+            return '';
+        }
+
+        const imgTags: string[] = [];
+
+        for (const url of imageUrls) {
+            if (!url) {
+                imgTags.push('[无法显示的图片]');
+                continue;
+            }
+
+            const attributes: string[] = [];
+            const styleParts: string[] = [];
+
+            if (widthOfPics >= 0) {
+                attributes.push(`width="${widthOfPics}"`);
+                styleParts.push(`width: ${widthOfPics}px;`);
+            }
+            if (heightOfPics >= 0) {
+                attributes.push(`height="${heightOfPics}"`);
+                styleParts.push(`height: ${heightOfPics}px;`);
+            }
+
+            if (styleParts.length) {
+                attributes.push(`style="${styleParts.join(' ')}"`);
+            }
+            if (readable) {
+                attributes.push('vspace="8"', 'hspace="4"');
+            }
+
+            const imgTag = `<img ${attributes.join(' ')} src="${url}">`;
+            const wrappedImage = addLinkForPics ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${imgTag}</a>` : imgTag;
+
+            imgTags.push(wrappedImage);
+        }
+        if (readable) {
+            return imgTags.join('<br>');
+        }
+        return imgTags.join('');
+    }
 
     const { status, comments } = item;
     const { isFixSuccess, why } = tryFixStatus(status);
@@ -135,20 +236,20 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
                 activityInDesc += `<a href="${status.reshared_status.author.url}" target="_blank" rel="noopener noreferrer">`;
             }
             if (authorNameBold) {
-                activityInDesc += `<strong>`;
+                activityInDesc += '<strong>';
             }
             activityInDesc += status.reshared_status.author.name;
             if (authorNameBold) {
-                activityInDesc += `</strong>`;
+                activityInDesc += '</strong>';
             }
             if (readable) {
-                activityInDesc += `</a>`;
+                activityInDesc += '</a>';
             }
-            activityInDesc += ` 的广播`;
+            activityInDesc += ' 的广播';
             activityInTitle = `转发 ${status.reshared_status.author.name} 的广播`;
         } else {
-            activityInDesc = `转发广播`;
-            activityInTitle = `转发广播`;
+            activityInDesc = '转发广播';
+            activityInTitle = '转发广播';
         }
     } else {
         activityInDesc = status.activity;
@@ -164,16 +265,16 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
             usernameAndAvatar += `<img width="${sizeOfAuthorAvatar}" height="${sizeOfAuthorAvatar}" src="${status.author.avatar}" ${readable ? 'hspace="8" vspace="8" align="left"' : ''} />`;
         }
         if (authorNameBold) {
-            usernameAndAvatar += `<strong>`;
+            usernameAndAvatar += '<strong>';
         }
         usernameAndAvatar += status.author.name;
         if (authorNameBold) {
-            usernameAndAvatar += `</strong>`;
+            usernameAndAvatar += '</strong>';
         }
         if (readable) {
-            usernameAndAvatar += `</a>`;
+            usernameAndAvatar += '</a>';
         }
-        usernameAndAvatar += `&ensp;`;
+        usernameAndAvatar += '&ensp;';
         description += usernameAndAvatar + activityInDesc + (showColonInDesc ? ': ' : '');
     }
 
@@ -188,7 +289,7 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
 
     let text = status.text;
     let lastIndex = 0;
-    const replacedTextSegements = [];
+    const replacedTextSegements: any[] = [];
     for (const entity of status.entities) {
         replacedTextSegements.push(
             text.slice(lastIndex, entity.start),
@@ -212,7 +313,7 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
     }
 
     if (status.images && status.images.length) {
-        description += readable ? `<br clear="both" /><div style="clear: both"></div>` : `<br>`;
+        description += readable ? '<br clear="both" /><div style="clear: both"></div>' : '<br>';
 
         // 一些RSS Reader会识别所有<img>标签作为内含图片显示，我们不想要头像也作为内含图片之一
         // 让所有配图在description的最前面再次出现一次，但宽高设为0
@@ -225,37 +326,12 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
         }
         picsPrefixes.push(picsPrefix);
 
-        for (const image of status.images) {
-            if (!(image.large && image.large.url)) {
-                description += '[无法显示的图片]';
-                continue;
-            }
-
-            if (addLinkForPics) {
-                description += '<a href="' + image.large.url + '" target="_blank" rel="noopener noreferrer">';
-            }
-            if (!readable) {
-                description += '<br>';
-            }
-            let style = '';
-            description += '<img ';
-            if (widthOfPics >= 0) {
-                description += ` width="${widthOfPics}"`;
-                style += `width: ${widthOfPics}px;`;
-            }
-            if (heightOfPics >= 0) {
-                description += `height="${heightOfPics}" `;
-                style += `height: ${heightOfPics}px;`;
-            }
-            description += ` style="${style}" ` + (readable ? 'vspace="8" hspace="4" ' : '') + ' src="' + image.large.url + '">';
-            if (addLinkForPics) {
-                description += '</a>';
-            }
-        }
+        const imageUrls: Array<string | undefined> = Array.from(status.images, (image: any) => image?.large?.url);
+        description += prepareImages(imageUrls);
     }
 
     if (status.video_info) {
-        description += readable ? `<br clear="both" /><div style="clear: both"></div>` : `<br>`;
+        description += readable ? '<br clear="both" /><div style="clear: both"></div>' : '<br>';
         const videoCover = status.video_info.cover_url;
         const videoSrc = status.video_info.video_url;
         if (videoSrc) {
@@ -285,16 +361,16 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
                 usernameAndAvatar += `<a href="${status.parent_status.author.url}">`;
             }
             if (authorNameBold) {
-                usernameAndAvatar += `<strong>`;
+                usernameAndAvatar += '<strong>';
             }
             usernameAndAvatar += status.parent_status.author.name;
             if (authorNameBold) {
-                usernameAndAvatar += `</strong>`;
+                usernameAndAvatar += '</strong>';
             }
             if (readable) {
-                usernameAndAvatar += `</a>`;
+                usernameAndAvatar += '</a>';
             }
-            usernameAndAvatar += `:&ensp;`;
+            usernameAndAvatar += ':&ensp;';
             description += usernameAndAvatar + status.parent_status.text;
             if (showRetweetTextInTitle) {
                 title += status.parent_status.author.name + ': ' + status.parent_status.text;
@@ -309,39 +385,51 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
 
     // card
     if (status.card) {
-        let image;
-        if (status.card.image && (status.card.image.large || status.card.image.normal)) {
-            image = status.card.image.large || status.card.image.normal;
+        if (description) {
+            description += readable
+                ? '<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">'
+                : '<br>';
+        }
+        if (!status.card.images_block && status.card.image) {
+            description += `<img src="${status.card.image.large.url}" ${readable ? 'vspace="0" hspace="12" align="left" height="75" style="height: 75px;"' : ''} />`;
         }
 
-        description += readable ? `<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">` : `<br>`;
-        if (image) {
-            description += `<img src="${image.url}" ${readable ? 'vspace="0" hspace="12" align="left" height="75" style="height: 75px;"' : ''} />`;
+        // 直接转发 或 带文本转发
+        const isNewReshared = status.activity === '转发小组讨论' || (status.card.type === 'topic' && status.text !== '' && status.activity === '');
+        const isNewStatus = !isNewReshared && status.card.type === 'topic' && status.text === '' && status.activity === '';
+        // 覆盖sharing_url，使得RSS条目链接直接指向位于/topic/的新版动态内容
+        if (isNewStatus) {
+            status.sharing_url = status.card.url;
         }
 
-        if (!status.card.title) {
-            status.card.title = '[空]';
+        const cardContents: string[] = [];
+        if (status.card.title) {
+            let descTitle = `<strong>${status.card.title}</strong>`;
+            if (status.card.url) {
+                descTitle = `<a href="${status.card.url}" target="_blank" rel="noopener noreferrer">${descTitle}</a>`;
+            }
+            cardContents.push(descTitle);
         }
-        if (!status.card.subtitle) {
-            status.card.subtitle = '[空]';
+        if (status.card.subtitle) {
+            const prefix = isNewReshared ? `${status.card.owner_name}：` : '';
+            cardContents.push(prefix + status.card.subtitle);
         }
-        if (!status.card.url) {
-            status.card.url = 'https://www.douban.com';
-        }
-
-        description += `<a href="${status.card.url}" target="_blank" rel="noopener noreferrer"><strong>${status.card.title}</strong><br><small>${status.card.subtitle}</small>`;
         if (status.card.rating) {
-            description += `<br><small>评分：${status.card.rating.value}</small>`;
+            cardContents.push(`评分：${status.card.rating.value}`);
         }
-        description += `</a>`;
+        description += cardContents.join('<br>');
         if (readable) {
-            description += `<br clear="both" /><div style="clear: both"></div></blockquote>`;
+            description += '<br clear="both" /><div style="clear: both"></div></blockquote>';
+        }
+        if (status.card.images_block) {
+            const imageUrls: Array<string | undefined> = Array.from(status.card.images_block.images, (image: any) => image.image?.large?.url);
+            description += prepareImages(imageUrls);
         }
     }
 
     // video_card
     if (status.video_card) {
-        description += readable ? `<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">` : `<br>`;
+        description += readable ? '<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">' : '<br>';
         const videoCover = status.video_card.video_info && status.video_card.video_info.cover_url;
         const videoSrc = status.video_card.video_info && status.video_card.video_info.video_url;
 
@@ -351,13 +439,13 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
 
         description += `${videoSrc ? `<video src="${videoSrc}" ${videoCover ? `poster="${videoCover}"` : ''}></video>` : ''}<br>${status.video_card.title ? `<a href="${status.video_card.url}">${status.video_card.title}</a>` : ''}`;
         if (readable) {
-            description += `</blockquote>`;
+            description += '</blockquote>';
         }
     }
 
     // reshared_status
     if (status.reshared_status) {
-        description += readable ? `<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">` : `<br>`;
+        description += readable ? '<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">' : '<br>';
 
         if (showRetweetTextInTitle) {
             title += ' | ';
@@ -416,7 +504,7 @@ async function getFullTextItems(items) {
             } else {
                 const {
                     data: { text },
-                } = await got({ url, headers });
+                } = await got(url);
                 cache.set(url, text);
                 item.status.text = text;
             }
@@ -433,7 +521,7 @@ async function getFullTextItems(items) {
                     // 存在reshared_status字段正常，但尝试获取时返回403的情况。比如原po被炸号就可能这样。
                     const {
                         data: { text },
-                    } = await got({ url, headers });
+                    } = await got(url);
                     cache.set(url, text);
                     item.status.reshared_status.text = text;
                 } catch {
@@ -444,20 +532,13 @@ async function getFullTextItems(items) {
     );
 }
 
-export const route: Route = {
-    path: '/people/:userid/status/:routeParams?',
-    name: 'Unknown',
-    maintainers: [],
-    handler,
-};
-
 async function handler(ctx) {
     const userid = ctx.req.param('userid');
     const url = `https://m.douban.com/rexxar/api/v2/status/user_timeline/${userid}`;
     const items = await cache.tryGet(
         url,
         async () => {
-            const _r = await got({ url, headers });
+            const _r = await got(url);
             return _r.data.items;
         },
         config.cache.routeExpire,

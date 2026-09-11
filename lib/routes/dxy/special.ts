@@ -1,9 +1,11 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import { phoneBaseUrl, webBaseUrl, generateNonce, sign, getPost } from './utils';
 import { config } from '@/config';
+import type { Route } from '@/types';
+import cache from '@/utils/cache';
+import ofetch from '@/utils/ofetch';
+import { parseDate } from '@/utils/parse-date';
+
+import type { RecommendListData, SpecialBoardDetail } from './types';
+import { generateNonce, getPost, phoneBaseUrl, sign, webBaseUrl } from './utils';
 
 export const route: Route = {
     path: '/bbs/special/:specialId',
@@ -35,8 +37,8 @@ async function handler(ctx) {
             noncestr: generateNonce(8, 'number'),
         };
 
-        const { data: detail } = await got(`${phoneBaseUrl}/newh5/bbs/special/detail`, {
-            searchParams: {
+        const detail = await ofetch<{ code: string; message: string; data: SpecialBoardDetail }>(`${phoneBaseUrl}/newh5/bbs/special/detail`, {
+            query: {
                 ...detailParams,
                 sign: sign(detailParams),
             },
@@ -59,8 +61,8 @@ async function handler(ctx) {
                 noncestr: generateNonce(8, 'number'),
             };
 
-            const { data: recommendList } = await got(`${phoneBaseUrl}/newh5/bbs/special/post/recommend-list-v3`, {
-                searchParams: {
+            const recommendList = await ofetch<{ code: string; message: string; data: RecommendListData }>(`${phoneBaseUrl}/newh5/bbs/special/post/recommend-list-v3`, {
+                query: {
                     ...listParams,
                     sign: sign(listParams),
                 },
@@ -81,13 +83,13 @@ async function handler(ctx) {
             description: postInfo.simpleBody,
             pubDate: parseDate(dataTime, 'x'),
             author: postInfo.postUser.nickname,
-            category: postInfo.postSpecial.specialName,
+            category: [postInfo.postSpecial.specialName],
             link: `${webBaseUrl}/bbs/newweb/pc/post/${entityId}`,
             postId: entityId,
         };
     });
 
-    const items = await Promise.all(list.map((item) => getPost(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => getPost(item)));
 
     return {
         title: specialDetail.name,

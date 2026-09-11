@@ -1,5 +1,6 @@
 import InvalidParameterError from '@/errors/types/invalid-parameter';
-import { Route } from '@/types';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
@@ -15,8 +16,20 @@ const FILTER_NODE_TYPE_MAP = {
 export const route: Route = {
     path: '/video/:login/:filter?',
     categories: ['live'],
+    view: ViewType.Videos,
     example: '/twitch/video/riotgames/highlights',
-    parameters: { login: 'Twitch username', filter: 'Video type, Default to all' },
+    parameters: {
+        login: 'Twitch username',
+        filter: {
+            description: 'Video type, Default to all',
+            options: [
+                { value: 'archive', label: 'Archive' },
+                { value: 'highlights', label: 'Highlights' },
+                { value: 'all', label: 'All' },
+            ],
+            default: 'all',
+        },
+    },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -34,15 +47,12 @@ export const route: Route = {
     name: 'Channel Video',
     maintainers: ['hoilc'],
     handler,
-    description: `| archive           | highlights                    | all        |
-| ----------------- | ----------------------------- | ---------- |
-| Recent broadcasts | Recent highlights and uploads | All videos |`,
 };
 
 async function handler(ctx) {
     const login = ctx.req.param('login');
     const filter = ctx.req.param('filter')?.toLowerCase() || 'all';
-    if (!FILTER_NODE_TYPE_MAP[filter]) {
+    if (!Object.hasOwn(FILTER_NODE_TYPE_MAP, filter)) {
         throw new InvalidParameterError(`Unsupported filter type "${filter}", please choose from { ${Object.keys(FILTER_NODE_TYPE_MAP).join(', ')} }`);
     }
 
@@ -73,7 +83,7 @@ async function handler(ctx) {
     const channelVideoShelvesQueryData = response.data[0].data;
 
     if (!channelVideoShelvesQueryData.user.id) {
-        throw new InvalidParameterError(`Username does not exist`);
+        throw new InvalidParameterError('Username does not exist');
     }
 
     const displayName = channelVideoShelvesQueryData.user.displayName;

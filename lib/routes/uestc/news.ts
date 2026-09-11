@@ -1,8 +1,9 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
-import { parseDate } from '@/utils/parse-date';
+
 import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
 
 const dateRegex = /(20\d{2}).(\d{2})-(\d{2})/;
 
@@ -38,8 +39,8 @@ export const route: Route = {
     handler,
     url: 'news.uestc.edu.cn/',
     description: `| 学术    | 文化    | 公告         | 校内通知     |
-  | ------- | ------- | ------------ | ------------ |
-  | academy | culture | announcement | notification |`,
+| ------- | ------- | ------------ | ------------ |
+| academy | culture | announcement | notification |`,
 };
 
 async function handler(ctx) {
@@ -56,12 +57,13 @@ async function handler(ctx) {
     const items = $('div.notice-item.clearfix');
 
     const out = $(items)
-        .map((_, item) => {
-            item = $(item);
-            const newsTitle = item.find('a').text().trim();
-            const newsLink = baseUrl + item.find('a').attr('href');
-            const newsDate = parseDate(item.find('div.date-box-sm').text().replace(dateRegex, '$1-$2-$3'));
-            const newsDescription = item.find('div.content').text().trim().replace('&nbsp;', '');
+        .toArray()
+        .map((item) => {
+            const $item = $(item);
+            const newsTitle = $item.find('a').text().trim();
+            const newsLink = baseUrl + $item.find('a').attr('href');
+            const newsDate = parseDate($item.find('div.date-box-sm').text().replace(dateRegex, '$1-$2-$3'));
+            const newsDescription = $item.find('div.content').text().trim().replace('&nbsp;', '');
 
             return {
                 title: newsTitle,
@@ -69,8 +71,7 @@ async function handler(ctx) {
                 description: newsDescription,
                 pubDate: newsDate,
             };
-        })
-        .get();
+        });
 
     return {
         title: '新闻网通知',

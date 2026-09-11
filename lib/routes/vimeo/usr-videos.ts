@@ -1,15 +1,14 @@
-import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
-
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
-import { art } from '@/utils/render';
-import path from 'node:path';
+
+import { renderDescription } from './templates/description';
 
 export const route: Route = {
     path: '/user/:username/:cat?',
     categories: ['social-media'],
+    view: ViewType.Videos,
     example: '/vimeo/user/filmsupply/picks',
     parameters: {
         username: 'In this example [https://vimeo.com/filmsupply](https://vimeo.com/filmsupply)  is `filmsupply`',
@@ -26,9 +25,9 @@ export const route: Route = {
     name: 'User Profile',
     maintainers: ['MisteryMonster'],
     handler,
-    description: `:::tip Special category name attention
-  Some of the categories contain slash like \`3D/CG\` , must change the slash \`/\` to the vertical bar\`|\`.
-  :::`,
+    description: `::: tip Special category name attention
+Some of the categories contain slash like \`3D/CG\` , must change the slash \`/\` to the vertical bar\`|\`.
+:::`,
 };
 
 async function handler(ctx) {
@@ -65,7 +64,7 @@ async function handler(ctx) {
         urlfilter = '';
     }
     if (!catword && cat && cat !== 'picks') {
-        return '';
+        return null;
     }
     const picked = cat && cat === 'picks';
 
@@ -82,7 +81,7 @@ async function handler(ctx) {
     const vimeojs = picked ? contentresponse.data.data[0].videos.data : contentresponse.data.data;
 
     return {
-        title: `${profilesjs.name} ${catword ? cat.replace('|', '/') : ''} ${picked ? 'picks' : ''} | Vimeo `,
+        title: `${profilesjs.name} ${catword ? cat.replaceAll('|', '/') : ''} ${picked ? 'picks' : ''} | Vimeo `,
         link: profilesjs.link,
         description: profilesjs.bio,
 
@@ -91,7 +90,7 @@ async function handler(ctx) {
 
             return {
                 title: picked ? item.clip.name : item.name,
-                description: art(path.join(__dirname, 'templates/description.art'), {
+                description: renderDescription({
                     videoUrl: picked ? item.clip.uri.replace('/videos', '') : item.uri.replace('/videos', ''),
                     vdescription: vdescription ? vdescription.replaceAll('\n', '<br>') : '',
                 }),

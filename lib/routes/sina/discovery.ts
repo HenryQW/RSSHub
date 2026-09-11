@@ -1,6 +1,6 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
-import { getRollNewsList, parseRollNewsList, parseArticle } from './utils';
+import type { Route } from '@/types';
+
+import { getRollNewsList, parseArticle, parseRollNewsList } from './utils';
 
 const link = 'https://tech.sina.com.cn/discovery/';
 const map = new Map([
@@ -31,21 +31,21 @@ export const route: Route = {
     maintainers: ['LogicJake'],
     handler,
     description: `| 最新 | 天文航空 | 动物植物 | 自然地理 | 历史考古 | 生命医学 | 生活百科 | 科技前沿 |
-  | ---- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
-  | zx   | twhk     | dwzw     | zrdl     | lskg     | smyx     | shbk     | kjqy     |`,
+| ---- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+| zx   | twhk     | dwzw     | zrdl     | lskg     | smyx     | shbk     | kjqy     |`,
 };
 
 async function handler(ctx) {
     const type = ctx.req.param('type');
-    const lid = map.get(type).id;
-    const title = map.get(type).title;
+    const lid = map.get(type)!.id;
+    const title = map.get(type)!.title;
     const pageid = '207';
     const { limit = '50' } = ctx.req.query();
 
     const response = await getRollNewsList(pageid, lid, limit);
     const list = parseRollNewsList(response.data.result.data);
 
-    const out = await Promise.all(list.map((item) => parseArticle(item, cache.tryGet)));
+    const out = await Promise.all(list.map((item) => parseArticle(item)));
 
     return {
         title: `${title}-新浪科技科学探索`,

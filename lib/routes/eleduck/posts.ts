@@ -1,11 +1,11 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 
 const getCateName = async (cid = 0) => {
     const key = 'eleduck-categories';
     const cates = await cache.tryGet(key, async () => {
-        const res = await got(`https://svc.eleduck.com/api/v1/categories`);
+        const res = await got('https://svc.eleduck.com/api/v1/categories');
         const map = {};
         for (const item of res.data.categories) {
             map[item.id] = item.name;
@@ -33,23 +33,23 @@ export const route: Route = {
     maintainers: ['running-grass'],
     handler,
     description: `| id | 分类     |
-  | -- | -------- |
-  | 0  | 全部     |
-  | 1  | 讨论     |
-  | 2  | 分享     |
-  | 3  | 露个脸   |
-  | 4  | 访谈故事 |
-  | 5  | 招聘     |
-  | 10 | 海外移民 |
-  | 12 | 英语     |
-  | 14 | 电鸭官方 |
-  | 15 | 独立产品 |
-  | 17 | 闲话开源 |
-  | 19 | Web3     |
-  | 21 | 设计     |
-  | 22 | 人才库   |
-  | 23 | Upwork   |
-  | 24 | 经验课   |`,
+| -- | -------- |
+| 0  | 全部     |
+| 1  | 讨论     |
+| 2  | 分享     |
+| 3  | 露个脸   |
+| 4  | 访谈故事 |
+| 5  | 招聘     |
+| 10 | 海外移民 |
+| 12 | 英语     |
+| 14 | 电鸭官方 |
+| 15 | 独立产品 |
+| 17 | 闲话开源 |
+| 19 | Web3     |
+| 21 | 设计     |
+| 22 | 人才库   |
+| 23 | Upwork   |
+| 24 | 经验课   |`,
 };
 
 async function handler(ctx) {

@@ -1,5 +1,15 @@
 import jsBeautify from 'js-beautify';
 
+const routeTestFailed = 'auto: not ready to review';
+const readyToReview = 'auto: ready to review';
+
+/**
+ * @param {{ github: ReturnType<typeof import('@actions/github').getOctokit>, context: typeof import('@actions/github').context, core: typeof import('@actions/core') }} githubScript
+ * @param {string} baseUrl
+ * @param {string[]} routes
+ * @param {number} number
+ * @returns {Promise<void>}
+ */
 export default async function test({ github, context, core }, baseUrl, routes, number) {
     if (routes[0] === 'NOROUTE') {
         return;
@@ -11,6 +21,8 @@ export default async function test({ github, context, core }, baseUrl, routes, n
     });
 
     let commentList = [];
+    let successCount = 0;
+    let failCount = 0;
     let comment = `Successfully [generated](${process.env.GITHUB_SERVER_URL}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) as following:\n`;
 
     for await (const lks of links) {
@@ -23,22 +35,29 @@ export default async function test({ github, context, core }, baseUrl, routes, n
         const body = await res.text();
         if (res.ok) {
             success = true;
+            successCount++;
             detail = jsBeautify.html(body.replaceAll(/\s+(\n|$)/g, '\n'), { indent_size: 2 });
         } else {
+            if (body && !body.includes('ConfigNotFoundError')) {
+                failCount++;
+            }
             detail = `HTTPError: Response code ${res.status} (${res.statusText})`;
             const errInfoList = body && body.match(/(?<=<p class="message">)(.+?)(?=<\/p>)/gs);
             if (errInfoList) {
                 detail += '\n\n';
                 detail += errInfoList
                     .slice(0, 5)
-                    .map((e) => (e.length > 1000 ? e.slice(0, 1000) + '...' : e).trim())
+                    .map((e) => {
+                        e = e.replaceAll(/<code class="[^"]+">|<\/code>/g, '').trim();
+                        return e.length > 1000 ? e.slice(0, 1000) + '...' : e;
+                    })
                     .join('\n');
             }
         }
 
         let routeFeedback = `
 <details>
-<summary><a href="${lks}">${lks}</a> - ${success ? 'Success ✔️' : '<b>Failed ❌</b>'}</summary>
+<summary><a href="${lks}">${lks.replaceAll('&', '&amp;')}</a> - ${success ? 'Success ✔️' : '<b>Failed ❌</b>'}</summary>
 
 \`\`\`${success ? 'rss' : ''}`;
         routeFeedback += `
@@ -64,29 +83,58 @@ ${detail.slice(0, 65300 - routeFeedback.length)}
     }
 
     if (process.env.PULL_REQUEST) {
-        await github.rest.issues
-            .addLabels({
+        const resultLabel = failCount === links.length || successCount <= failCount ? routeTestFailed : readyToReview;
+
+        if (resultLabel === routeTestFailed) {
+            let issue;
+            try {
+                const response = await github.rest.issues.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: number,
+                });
+                issue = response.data;
+            } catch (error) {
+                core.warning(error);
+                throw error;
+            }
+            if (issue.labels.some((l) => l.name === readyToReview)) {
+                try {
+                    await github.rest.issues.removeLabel({
+                        issue_number: number,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        name: readyToReview,
+                    });
+                } catch (error) {
+                    core.warning(error);
+                }
+            }
+        }
+
+        try {
+            await github.rest.issues.addLabels({
                 issue_number: number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                labels: ['Auto: Route Test Complete'],
-            })
-            .catch((error) => {
-                core.warning(error);
+                labels: [resultLabel],
             });
+        } catch (error) {
+            core.warning(error);
+        }
     }
 
     for await (const comment of commentList) {
         // Intended, one at a time
-        await github.rest.issues
-            .createComment({
+        try {
+            await github.rest.issues.createComment({
                 issue_number: number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: comment,
-            })
-            .catch((error) => {
-                core.warning(error);
             });
+        } catch (error) {
+            core.warning(error);
+        }
     }
 }

@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 const host = 'https://www.sc.sdu.edu.cn/';
@@ -25,8 +26,8 @@ export const route: Route = {
     maintainers: ['Ji4n1ng'],
     handler,
     description: `| 通知公告 | 学术动态 | 本科教育 | 研究生教育 |
-  | -------- | -------- | -------- | ---------- |
-  | 0        | 1        | 2        | 3          |`,
+| -------- | -------- | -------- | ---------- |
+| 0        | 1        | 2        | 3          |`,
 };
 
 async function handler(ctx) {
@@ -37,22 +38,22 @@ async function handler(ctx) {
     const $ = load(response.data);
 
     let item = $('.newlist01 li')
-        .map((_, e) => {
-            e = $(e);
-            const a = e.find('a');
+        .toArray()
+        .map((e): DataItem => {
+            const $e = $(e);
+            const a = $e.find('a');
             let link = a.attr('href');
-            link = new URL(link, host).href;
+            link = new URL(link!, host).href;
             return {
                 title: a.text().trim(),
                 link,
-                pubDate: parseDate(e.find('.date').text().trim()),
+                pubDate: parseDate($e.find('.date').text().trim()),
             };
-        })
-        .get();
+        });
 
     item = await Promise.all(
         item.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 try {
                     const response = await got(item.link);
                     const $ = load(response.data);
@@ -62,7 +63,7 @@ async function handler(ctx) {
                         $('.pr')
                             .text()
                             .trim()
-                            .match(/作者：(.*)/)[1] || '山东大学软件学院';
+                            .match(/作者：(.*)/)![1] || '山东大学软件学院';
                     $('h3, .pr').remove();
                     item.description = $('.content').html();
 

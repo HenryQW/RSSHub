@@ -1,18 +1,20 @@
-import { baseUrl, gqlMap, gqlFeatures, consumerKey, consumerSecret } from './constants';
-import { config } from '@/config';
-import logger from '@/utils/logger';
-import got from '@/utils/got';
-import OAuth from 'oauth-1.0a';
 import CryptoJS from 'crypto-js';
+import OAuth from 'oauth-1.0a';
 import queryString from 'query-string';
-import { initToken, getToken } from './token';
-import cache from '@/utils/cache';
+
+import { config } from '@/config';
 import InvalidParameterError from '@/errors/types/invalid-parameter';
+import cache from '@/utils/cache';
+import logger from '@/utils/logger';
+import ofetch from '@/utils/ofetch';
+
+import { baseUrl, consumerKey, consumerSecret, gqlFeatures, gqlMap } from './constants';
+import { getToken } from './token';
 
 const twitterGot = async (url, params) => {
     const token = await getToken();
 
-    const oauth = OAuth({
+    const oauth = new OAuth({
         consumer: {
             key: consumerKey,
             secret: consumerSecret,
@@ -28,7 +30,7 @@ const twitterGot = async (url, params) => {
             connection: 'keep-alive',
             'content-type': 'application/json',
             'x-twitter-active-user': 'yes',
-            authority: 'api.twitter.com',
+            authority: 'api.x.com',
             'accept-encoding': 'gzip',
             'accept-language': 'en-US,en;q=0.9',
             accept: '*/*',
@@ -36,14 +38,18 @@ const twitterGot = async (url, params) => {
         },
     };
 
-    const response = await got(requestData.url, {
-        headers: oauth.toHeader(oauth.authorize(requestData, token)),
+    const { Authorization } = oauth.toHeader(oauth.authorize(requestData, token));
+    const response = await ofetch.raw(requestData.url, {
+        headers: { Authorization },
     });
+    if (response.status === 401) {
+        cache.globalCache.set(token.cacheKey, '');
+    }
 
-    return response.data;
+    return response._data;
 };
 
-const paginationTweets = async (endpoint, userId, variables, path) => {
+const paginationTweets = async (endpoint, userId, variables, path?) => {
     const { data } = await twitterGot(baseUrl + endpoint, {
         variables: JSON.stringify({
             ...variables,
@@ -113,9 +119,19 @@ const tweetDetail = (userId, params) =>
         ['threaded_conversation_with_injections_v2']
     );
 
-function gatherLegacyFromData(entries, filterNested, userId) {
-    const tweets = [];
-    const filteredEntries = [];
+const listTweets = (listId, params = {}) =>
+    paginationTweets(
+        gqlMap.ListTimeline,
+        listId,
+        {
+            ...params,
+        },
+        ['list', 'timeline_response', 'timeline']
+    );
+
+function gatherLegacyFromData(entries, filterNested?, userId?) {
+    const tweets: any[] = [];
+    const filteredEntries: any[] = [];
     for (const entry of entries) {
         const entryId = entry.entryId;
         if (entryId) {
@@ -128,34 +144,44 @@ function gatherLegacyFromData(entries, filterNested, userId) {
         }
     }
     for (const entry of filteredEntries) {
-        if (entry.entryId) {
-            const content = entry.content || entry.item;
-            let tweet = content?.content?.tweetResult?.result || content?.itemContent?.tweet_results?.result;
-            if (tweet && tweet.tweet) {
-                tweet = tweet.tweet;
-            }
-            if (tweet) {
-                const retweet = tweet.legacy?.retweeted_status_result?.result;
-                for (const t of [tweet, retweet]) {
-                    if (!t?.legacy) {
-                        continue;
-                    }
-                    t.legacy.user = t.core?.user_result?.result?.legacy || t.core?.user_results?.result?.legacy;
-                    t.legacy.id_str = t.rest_id; // avoid falling back to conversation_id_str elsewhere
-                    const quote = t.quoted_status_result?.result;
-                    if (quote) {
-                        t.legacy.quoted_status = quote.legacy;
-                        t.legacy.quoted_status.user = quote.core.user_result?.result?.legacy || quote.core.user_results?.result?.legacy;
-                    }
+        if (!entry.entryId) {
+            continue;
+        }
+
+        const content = entry.content || entry.item;
+        let tweet = content?.content?.tweetResult?.result || content?.itemContent?.tweet_results?.result;
+        if (tweet && tweet.tweet) {
+            tweet = tweet.tweet;
+        }
+        if (tweet) {
+            const retweet = tweet.legacy?.retweeted_status_result?.result;
+            for (const t of [tweet, retweet]) {
+                if (!t?.legacy) {
+                    continue;
                 }
-                const legacy = tweet.legacy;
-                if (legacy) {
-                    if (retweet) {
-                        legacy.retweeted_status = retweet.legacy;
-                    }
-                    if (userId === undefined || legacy.user_id_str === userId + '') {
-                        tweets.push(legacy);
-                    }
+                t.legacy.user = t.core?.user_result?.result?.legacy || t.core?.user_results?.result?.legacy;
+                t.legacy.id_str = t.rest_id; // avoid falling back to conversation_id_str elsewhere
+                const quote = t.quoted_status_result?.result;
+                if (quote) {
+                    t.legacy.quoted_status = quote.legacy;
+                    t.legacy.quoted_status.user = quote.core.user_result?.result?.legacy || quote.core.user_results?.result?.legacy;
+                }
+                if (t.note_tweet) {
+                    const tmp = t.note_tweet.note_tweet_results.result;
+                    t.legacy.entities.hashtags = tmp.entity_set.hashtags;
+                    t.legacy.entities.symbols = tmp.entity_set.symbols;
+                    t.legacy.entities.urls = tmp.entity_set.urls;
+                    t.legacy.entities.user_mentions = tmp.entity_set.user_mentions;
+                    t.legacy.full_text = tmp.text;
+                }
+            }
+            const legacy = tweet.legacy;
+            if (legacy) {
+                if (retweet) {
+                    legacy.retweeted_status = retweet.legacy;
+                }
+                if (userId === undefined || legacy.user_id_str === userId + '') {
+                    tweets.push(legacy);
                 }
             }
         }
@@ -169,9 +195,10 @@ const getUserTweetsAndRepliesByID = async (id, params = {}) => gatherLegacyFromD
 const getUserMediaByID = async (id, params = {}) => gatherLegacyFromData(await timelineMedia(id, params));
 // const getUserLikesByID = async (id, params = {}) => gatherLegacyFromData(await timelineLikes(id, params));
 const getUserTweetByStatus = async (id, params = {}) => gatherLegacyFromData(await tweetDetail(id, params), ['homeConversation-', 'conversationthread-']);
+const getListById = async (id, params = {}) => gatherLegacyFromData(await listTweets(id, params));
 
 const excludeRetweet = function (tweets) {
-    const excluded = [];
+    const excluded: any[] = [];
     for (const t of tweets) {
         if (t.retweeted_status) {
             continue;
@@ -226,12 +253,13 @@ const _getUserTweets = (id, params = {}) => cacheTryGet(id, params, getUserTweet
 //    a. if one replies a lot (e.g. elonmusk), there is sometimes no tweets left after filtering, caching may help
 // 2. getUserMedia return LATEST media tweets, which is a good plus
 const getUserTweets = async (id, params = {}) => {
-    let tweets = [];
+    let tweets: any[] = [];
     const rest_id = await getUserID(id);
     await Promise.all(
         [_getUserTweets, getUserTweetsAndReplies, getUserMedia].map(async (func) => {
             try {
-                tweets.push(...(await func(id, params)));
+                const result = await func(id, params);
+                tweets.push(...(result as any[]));
             } catch (error) {
                 logger.warn(`Failed to get tweets for ${id} with ${func.name}: ${error}`);
             }
@@ -258,7 +286,7 @@ const getUserTweets = async (id, params = {}) => {
             return !idSet.has(id_str) && idSet.add(id_str) && tweet;
         }) // deduplicate
         .filter(Boolean) // remove null
-        .sort((a, b) => (b.id_str || b.conversation_id_str) - (a.id_str || a.conversation_id_str)) // desc
+        .toSorted((a, b) => (b.id_str || b.conversation_id_str) - (a.id_str || a.conversation_id_str)) // desc
         .slice(0, 20);
     cache.set(cacheKey, JSON.stringify(tweets));
     return tweets;
@@ -270,6 +298,8 @@ const getUserTweet = (id, params) => cacheTryGet(id, params, getUserTweetByStatu
 
 const getSearch = async (keywords, params = {}) => gatherLegacyFromData(await timelineKeywords(keywords, params));
 
+const getList = (id, params = {}) => cache.tryGet(`twitter:${id}:getListById:${JSON.stringify(params)}`, () => getListById(id, params), config.cache.routeExpire, false);
+
 export default {
     getUser,
     getUserTweets,
@@ -278,6 +308,7 @@ export default {
     // getUserLikes,
     excludeRetweet,
     getSearch,
+    getList,
     getUserTweet,
-    init: initToken,
+    init: () => void 0,
 };

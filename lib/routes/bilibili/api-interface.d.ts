@@ -28,6 +28,7 @@ interface Generalspec {
     render_spec: Renderspec;
     size_spec: Containersize;
 }
+/* eslint-disable-next-line @typescript-eslint/no-empty-object-type */
 interface AVATARLAYER {}
 interface Webcssstyle {
     borderRadius: string;
@@ -186,7 +187,15 @@ interface Richtextnode {
     type: string;
     jump_url?: string;
     emoji?: Emoji;
+    pics?: Pic2[];
 }
+interface Pic2 {
+    height: number;
+    size: number;
+    src: string;
+    width: number;
+}
+
 interface Desc {
     rich_text_nodes: Richtextnode[];
     text: string;
@@ -465,8 +474,7 @@ export type DynamicType =
  * 更多类型请参考：https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/dynamic/dynamic_enum.md#%E5%8A%A8%E6%80%81%E4%B8%BB%E4%BD%93%E7%B1%BB%E5%9E%8B
  */
 export type MajorType =
-    | 'MAJOR_TYPE_NONE' // 动态失效, 示例: 716510857084796964
-    | 'MAJOR_TYPE_NONE' // 转发动态, 示例: 866756840240709701
+    | 'MAJOR_TYPE_NONE' // 动态失效, 示例: 716510857084796964 转发动态, 示例: 866756840240709701
     | 'MAJOR_TYPE_OPUS' // 图文动态, 示例: 870176712256651305
     | 'MAJOR_TYPE_ARCHIVE' // 视频, 示例: 716526237365829703
     | 'MAJOR_TYPE_PGC' // 剧集更新, 示例: 645981661420322824

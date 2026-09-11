@@ -1,5 +1,6 @@
-import { Route } from '@/types';
-import getContent from './utils/common';
+import type { Route } from '@/types';
+
+import { getContent } from './utils/common';
 
 export const route: Route = {
     path: '/ied/:type?/:category?/:page?',
@@ -16,7 +17,7 @@ export const route: Route = {
     },
     radar: [
         {
-            source: ['xky.hunau.edu.cn/', 'xky.hunau.edu.cntzgg_8472', 'xky.hunau.edu.cn/:category'],
+            source: ['xky.hunau.edu.cn/', 'xky.hunau.edu.cn/tzgg_8472', 'xky.hunau.edu.cn/:category'],
             target: '/:category',
         },
     ],
@@ -25,13 +26,13 @@ export const route: Route = {
     handler,
     url: 'xky.hunau.edu.cn/',
     description: `| 分类     | 公告通知 | 新闻快讯 | 其他分类... |
-  | -------- | -------- | -------- | ----------- |
-  | type     | xwzx     | xwzx     | 对应 URL    |
-  | category | tzgg     | xwkx     | 对应 URL    |`,
+| -------- | -------- | -------- | ----------- |
+| type     | xwzx     | xwzx     | 对应 URL    |
+| category | tzgg     | xwkx     | 对应 URL    |`,
 };
 
 async function handler(ctx) {
-    await getContent(ctx, {
+    return await getContent(ctx, {
         baseHost: 'https://ied.hunau.edu.cn',
         baseCategory: 'ggtz', // 默认：公告通知
         baseType: 'xwzx', // 默认：新闻中心

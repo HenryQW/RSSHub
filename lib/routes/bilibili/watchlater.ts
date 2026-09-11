@@ -1,16 +1,17 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
-import cache from './cache';
 import { config } from '@/config';
-import utils from './utils';
-import { parseDate } from '@/utils/parse-date';
 import ConfigNotFoundError from '@/errors/types/config-not-found';
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
+
+import cache from './cache';
+import utils from './utils';
 
 export const route: Route = {
-    path: '/watchlater/:uid/:disableEmbed?',
+    path: '/watchlater/:uid/:embed?',
     categories: ['social-media'],
     example: '/bilibili/watchlater/2267573',
-    parameters: { uid: '用户 id', disableEmbed: '默认为开启内嵌视频, 任意值为关闭' },
+    parameters: { uid: '用户 id', embed: '默认为开启内嵌视频, 任意值为关闭' },
     features: {
         requireConfig: [
             {
@@ -31,14 +32,14 @@ export const route: Route = {
     name: '用户稍后再看',
     maintainers: ['JimenezLi'],
     handler,
-    description: `:::warning
-  用户稍后再看需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
-  :::`,
+    description: `::: warning
+用户稍后再看需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
+:::`,
 };
 
 async function handler(ctx) {
     const uid = ctx.req.param('uid');
-    const disableEmbed = ctx.req.param('disableEmbed');
+    const embed = !ctx.req.param('embed');
     const name = await cache.getUsernameFromUID(uid);
 
     const cookie = config.bilibili.cookies[uid];
@@ -48,7 +49,7 @@ async function handler(ctx) {
 
     const response = await got({
         method: 'get',
-        url: `https://api.bilibili.com/x/v2/history/toview`,
+        url: 'https://api.bilibili.com/x/v2/history/toview',
         headers: {
             Referer: `https://space.bilibili.com/${uid}/`,
             Cookie: cookie,
@@ -62,7 +63,7 @@ async function handler(ctx) {
 
     const out = list.map((item) => ({
         title: item.title,
-        description: `${item.desc}<br><br><a href="https://www.bilibili.com/list/watchlater?bvid=${item.bvid}">在稍后再看列表中查看</a>${disableEmbed ? '' : `<br><br>${utils.iframe(item.aid)}`}<br><img src="${item.pic}">`,
+        description: utils.renderUGCDescription(embed, item.pic, `${item.desc}<br><a href="https://www.bilibili.com/list/watchlater?bvid=${item.bvid}">在稍后再看列表中查看</a>`, item.aid, undefined, item.bvid),
         pubDate: parseDate(item.add_at * 1000),
         link: item.pubdate > utils.bvidTime && item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.aid}`,
         author: item.owner.name,

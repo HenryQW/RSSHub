@@ -1,9 +1,10 @@
-import { Route } from '@/types';
 import { load } from 'cheerio';
-import { parseDate } from '@/utils/parse-date';
 import dayjs from 'dayjs';
-import puppeteer from '@/utils/puppeteer';
+
 import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { Route } from '@/types';
+import { parseDate } from '@/utils/parse-date';
+import playwright from '@/utils/playwright';
 
 const baseUrl = 'https://sise.uestc.edu.cn/';
 
@@ -55,8 +56,8 @@ export const route: Route = {
     handler,
     url: 'sise.uestc.edu.cn/',
     description: `| 最新 | 院办 | 学生科 | 教务科 | 研管科 | 组织 | 人事 | 实践教育中心 | Int'I |
-  | ---- | ---- | ------ | ------ | ------ | ---- | ---- | ------------ | ----- |
-  | 1    | 2    | 3      | 4      | 5      | 6    | 7    | 8            | 9     |`,
+| ---- | ---- | ------ | ------ | ------ | ---- | ---- | ------------ | ----- |
+| 1    | 2    | 3      | 4      | 5      | 6    | 7    | 8            | 9     |`,
 };
 
 async function handler(ctx) {
@@ -66,41 +67,41 @@ async function handler(ctx) {
         throw new InvalidParameterError('type not supported');
     }
 
-    const browser = await puppeteer({ stealth: true });
-    const page = await browser.newPage();
-    await page.setRequestInterception(true);
-    page.on('request', (request) => {
-        request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort();
+    const context = await playwright();
+    const page = await context.newPage();
+    await page.route('**/*', (route) => {
+        const request = route.request();
+        request.resourceType() === 'document' || request.resourceType() === 'script' ? route.continue() : route.abort();
     });
     await page.goto(baseUrl, {
-        waitUntil: 'networkidle2',
+        waitUntil: 'networkidle',
     });
     const content = await page.content();
-    await browser.close();
+    await context.close();
 
     const $ = load(content);
 
     const items = $(`div[id="${divId}"] p.news-item`);
 
     const out = $(items)
-        .map((_, item) => {
-            item = $(item);
+        .toArray()
+        .map((item) => {
+            const $item = $(item);
             const now = dayjs();
-            let date = dayjs(now.year() + '-' + item.find('span').text().replace('/', '-'));
+            let date = dayjs(now.year() + '-' + $item.find('span').text().replace('/', '-'));
             if (now < date) {
-                date = dayjs(now.year() - 1 + '-' + item.find('span').text().replace('/', '-'));
+                date = dayjs(now.year() - 1 + '-' + $item.find('span').text().replace('/', '-'));
             }
-            const newsTitle = item.find('a').text().replace('&amp;', '').trim();
-            const newsLink = baseUrl + item.find('a').attr('href');
-            const newsPubDate = parseDate(date);
+            const newsTitle = $item.find('a').text().replace('&amp;', '').trim();
+            const newsLink = baseUrl + $item.find('a').attr('href');
+            const newsPubDate = parseDate(date.toDate());
 
             return {
                 title: newsTitle,
                 link: newsLink,
                 pubDate: newsPubDate,
             };
-        })
-        .get();
+        });
 
     return {
         title: `信软学院通知-${mapTitle[type]}`,

@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -27,7 +28,7 @@ async function handler(ctx) {
     const grouping = ctx.req.param('grouping') === 'tag' ? 'tag' : 'category';
     const name = ctx.req.param('name');
 
-    const url = `https://${site ? 'r18.' : ''}clickme.net/${grouping.substring(0, 1)}/${encodeURIComponent(name)}`;
+    const url = `https://${site ? 'r18.' : ''}clickme.net/${grouping.slice(0, 1)}/${encodeURIComponent(name)}`;
 
     const { data: response } = await got.post('https://api.clickme.net/article/list', {
         headers: {

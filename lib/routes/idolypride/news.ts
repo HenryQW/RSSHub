@@ -1,4 +1,5 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
@@ -6,6 +7,7 @@ import timezone from '@/utils/timezone';
 export const route: Route = {
     path: '/news',
     categories: ['anime'],
+    view: ViewType.Articles,
     example: '/idolypride/news',
     parameters: {},
     features: {

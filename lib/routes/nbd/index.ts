@@ -1,9 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 export const route: Route = {
     path: '/:id?',
@@ -28,8 +29,8 @@ export const route: Route = {
     handler,
     url: 'nbd.com.cn/',
     description: `| 头条 | 要闻 | 图片新闻 | 推荐 |
-  | ---- | ---- | -------- | ---- |
-  | 2    | 3    | 4        | 5    |`,
+| ---- | ---- | -------- | ---- |
+| 2    | 3    | 4        | 5    |`,
 };
 
 async function handler(ctx) {
@@ -47,18 +48,18 @@ async function handler(ctx) {
 
     const list = $('.u-news-title a')
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .map((item): DataItem => {
+            const $item = $(item);
 
             return {
-                title: item.text(),
-                link: item.attr('href'),
+                title: $item.text(),
+                link: $item.attr('href'),
             };
         });
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
@@ -69,7 +70,7 @@ async function handler(ctx) {
                 const content = load(detailResponse.data);
 
                 item.description = content('.g-articl-text').html();
-                item.pubDate = timezone(parseDate(detailResponse.data.match(/"pubDate": "(.*)"/)[1]), +8);
+                item.pubDate = timezone(parseDate(detailResponse.data.match(/"pubDate": "(.*)"/)[1]), 8);
 
                 return item;
             })

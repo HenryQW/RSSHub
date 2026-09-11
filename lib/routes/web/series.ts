@@ -1,4 +1,5 @@
 import type { Data, Route } from '@/types';
+
 import { fetchItems, hyphen2Pascal } from './utils';
 
 export const route: Route = {
@@ -15,8 +16,8 @@ export const route: Route = {
     name: 'Series',
     maintainers: ['KarasuShin'],
     handler,
-    description: `:::tip
-    The \`seriesName\` can be extracted from the Series page URL: \`https://web.dev/series/:seriesName\`
+    description: `::: tip
+The \`seriesName\` can be extracted from the Series page URL: \`https://web.dev/series/:seriesName\`
 :::`,
 };
 

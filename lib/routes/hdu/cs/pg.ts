@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 const link = 'https://computer.hdu.edu.cn';
@@ -13,21 +14,16 @@ const getSingleRecord = async () => {
     const $ = load(res.data);
     const list = $('.posts-list').find('li');
 
-    return (
-        list &&
-        list
-            .map((index, item) => {
-                item = $(item);
-                const dateTxt = item.find('.date').text();
-                const date = dateTxt.slice(1, -1);
-                return {
-                    title: item.find('a').text(),
-                    pubDate: parseDate(date),
-                    link: link + item.find('a').attr('href'),
-                };
-            })
-            .get()
-    );
+    return list.toArray().map((item) => {
+        const $item = $(item);
+        const dateTxt = $item.find('.date').text();
+        const date = dateTxt.slice(1, -1);
+        return {
+            title: $item.find('a').text(),
+            pubDate: parseDate(date),
+            link: link + $item.find('a').attr('href'),
+        };
+    });
 };
 
 export const route: Route = {

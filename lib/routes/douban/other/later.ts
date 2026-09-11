@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 
 export const route: Route = {
     path: '/movie/later',
@@ -28,11 +29,12 @@ async function handler() {
     const $ = load(response.data);
 
     const item = $('#showing-soon .item')
-        .map((index, ele) => {
+        .toArray()
+        .map((ele) => {
             const description = $(ele).html();
             const name = $('h3', ele).text().trim();
-            const date = $('ul li', ele).eq(0).text().trim();
-            const type = $('ul li', ele).eq(1).text().trim();
+            const date = $('ul li', ele).eq(0).text();
+            const type = $('ul li', ele).eq(1).text();
             const link = $('a.thumb', ele).attr('href');
 
             return {
@@ -40,8 +42,7 @@ async function handler() {
                 link,
                 description,
             };
-        })
-        .get();
+        });
 
     return {
         title: '即将上映的电影',

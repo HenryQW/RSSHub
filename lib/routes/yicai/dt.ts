@@ -1,13 +1,11 @@
-import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
+import { load } from 'cheerio';
 
+import type { Language, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
-import { art } from '@/utils/render';
-import path from 'node:path';
+
+import { renderDescription } from './templates/description';
 
 const columns = {
     article: 2,
@@ -33,50 +31,50 @@ export const route: Route = {
     handler,
     description: `#### [文章](https://dt.yicai.com/article)
 
-  | 分类     | ID         |
-  | -------- | ---------- |
-  | 全部     | article/0  |
-  | 新流行   | article/31 |
-  | 新趋势   | article/32 |
-  | 商业黑马 | article/33 |
-  | 新品     | article/34 |
-  | 营销     | article/35 |
-  | 大公司   | article/36 |
-  | 城市生活 | article/38 |
+| 分类     | ID         |
+| -------- | ---------- |
+| 全部     | article/0  |
+| 新流行   | article/31 |
+| 新趋势   | article/32 |
+| 商业黑马 | article/33 |
+| 新品     | article/34 |
+| 营销     | article/35 |
+| 大公司   | article/36 |
+| 城市生活 | article/38 |
 
-  #### [报告](https://dt.yicai.com/report)
+#### [报告](https://dt.yicai.com/report)
 
-  | 分类       | ID        |
-  | ---------- | --------- |
-  | 全部       | report/0  |
-  | 人群观念   | report/9  |
-  | 人群行为   | report/22 |
-  | 美妆个护   | report/23 |
-  | 3C 数码    | report/24 |
-  | 营销趋势   | report/25 |
-  | 服饰鞋包   | report/27 |
-  | 互联网     | report/28 |
-  | 城市与居住 | report/29 |
-  | 消费趋势   | report/30 |
-  | 生活趋势   | report/37 |
+| 分类       | ID        |
+| ---------- | --------- |
+| 全部       | report/0  |
+| 人群观念   | report/9  |
+| 人群行为   | report/22 |
+| 美妆个护   | report/23 |
+| 3C 数码    | report/24 |
+| 营销趋势   | report/25 |
+| 服饰鞋包   | report/27 |
+| 互联网     | report/28 |
+| 城市与居住 | report/29 |
+| 消费趋势   | report/30 |
+| 生活趋势   | report/37 |
 
-  #### [可视化](https://dt.yicai.com/visualization)
+#### [可视化](https://dt.yicai.com/visualization)
 
-  | 分类     | ID               |
-  | -------- | ---------------- |
-  | 全部     | visualization/0  |
-  | 新流行   | visualization/39 |
-  | 新趋势   | visualization/40 |
-  | 商业黑马 | visualization/41 |
-  | 新品     | visualization/42 |
-  | 营销     | visualization/43 |
-  | 大公司   | visualization/44 |
-  | 城市生活 | visualization/45 |`,
+| 分类     | ID               |
+| -------- | ---------------- |
+| 全部     | visualization/0  |
+| 新流行   | visualization/39 |
+| 新趋势   | visualization/40 |
+| 商业黑马 | visualization/41 |
+| 新品     | visualization/42 |
+| 营销     | visualization/43 |
+| 大公司   | visualization/44 |
+| 城市生活 | visualization/45 |`,
 };
 
 async function handler(ctx) {
     const { column = 'article', category = '0' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const limit = ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 30;
 
     const rootUrl = 'https://dt.yicai.com';
     const apiUrl = new URL('api/getNewsList', rootUrl).href;
@@ -98,7 +96,7 @@ async function handler(ctx) {
         return {
             title: item.newstitle,
             link: new URL(item.url, rootUrl).href,
-            description: art(path.join(__dirname, 'templates/description.art'), {
+            description: renderDescription({
                 image: {
                     src: item.originPic,
                     alt: item.newstitle,
@@ -126,22 +124,22 @@ async function handler(ctx) {
                 content('div.logintips').remove();
 
                 content('img').each((_, e) => {
-                    e = content(e);
+                    const $e = content(e);
 
-                    content(e).replaceWith(
-                        art(path.join(__dirname, 'templates/description.art'), {
+                    content($e).replaceWith(
+                        renderDescription({
                             image: {
-                                src: e.prop('data-original') ?? e.prop('src'),
-                                alt: e.prop('alt'),
-                                width: e.prop('width'),
-                                height: e.prop('height'),
+                                src: $e.prop('data-original') ?? $e.prop('src'),
+                                alt: $e.prop('alt'),
+                                width: $e.prop('width'),
+                                height: $e.prop('height'),
                             },
                         })
                     );
                 });
 
-                item.description += art(path.join(__dirname, 'templates/description.art'), {
-                    description: content('div.txt').html(),
+                item.description += renderDescription({
+                    description: content('div.txt').html() ?? undefined,
                 });
                 item.author = content('div.authortime h3').text();
 
@@ -156,14 +154,14 @@ async function handler(ctx) {
 
     const title = $('title').text();
     const image = $('div.logo a img').prop('src');
-    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href;
+    const icon = new URL($('link[rel="shortcut icon"]').prop('href')!, rootUrl).href;
 
     return {
         item: items,
         title: `${$(`a[data-cid="${category}"]`).text()}${title}`,
         link: currentUrl,
         description: $('meta[name="keywords"]').prop('content'),
-        language: 'zh',
+        language: 'zh' as const satisfies Language,
         image,
         icon,
         logo: icon,

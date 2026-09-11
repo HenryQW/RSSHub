@@ -1,9 +1,19 @@
-import { MiddlewareHandler } from 'hono';
 import etagCalculate from 'etag';
-import { config } from '@/config';
-import { Data } from '@/types';
+import type { MiddlewareHandler } from 'hono';
+import { routePath } from 'hono/route';
 
-const headers: Record<string, string> = {
+import { config } from '@/config';
+import type { Data } from '@/types';
+
+type CommonResponseHeaders = {
+    'Access-Control-Allow-Methods': string;
+    'Content-Type': string;
+    'Cache-Control': string;
+    'X-Content-Type-Options': string;
+    'RSSHub-Node'?: string;
+};
+
+const headers: CommonResponseHeaders = {
     'Access-Control-Allow-Methods': 'GET',
     'Content-Type': 'application/xml; charset=utf-8',
     'Cache-Control': `public, max-age=${config.cache.routeExpire}`,
@@ -24,15 +34,19 @@ const middleware: MiddlewareHandler = async (ctx, next) => {
     ctx.header('Access-Control-Allow-Origin', config.allowOrigin || new URL(ctx.req.url).host);
 
     await next();
+    const rPath = routePath(ctx);
+
+    if (rPath !== '/*') {
+        ctx.header('X-RSSHub-Route', rPath);
+    }
 
     const data: Data = ctx.get('data');
     if (!data || ctx.res.headers.get('ETag')) {
         return;
     }
 
-    const lastBuildDate = data.lastBuildDate;
-    delete data.lastBuildDate;
-    const etag = etagCalculate(JSON.stringify(data));
+    const { lastBuildDate, ...etagData } = data;
+    const etag = etagCalculate(JSON.stringify(etagData));
 
     ctx.header('ETag', etag);
 

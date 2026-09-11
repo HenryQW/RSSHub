@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -25,8 +26,8 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 留学申请   | 找工求职 | 生活攻略  | 投资理财 | 签证移民 | 时政要闻 |
-  | ---------- | -------- | --------- | -------- | -------- | -------- |
-  | studyinusa | career   | lifestyle | invest   | visa     | news     |`,
+| ---------- | -------- | --------- | -------- | -------- | -------- |
+| studyinusa | career   | lifestyle | invest   | visa     | news     |`,
 };
 
 async function handler(ctx) {

@@ -1,8 +1,9 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import got from '@/utils/got';
-import auth from './auth';
-import utils from '../utils';
 import { parseDate } from '@/utils/parse-date';
+
+import { processImage } from '../utils';
+import auth from './auth';
 
 export const route: Route = {
     path: '/xhu/question/:questionId/:sortBy?',
@@ -29,7 +30,7 @@ export const route: Route = {
 };
 
 async function handler(ctx) {
-    const xhuCookie = await auth.getCookie(ctx);
+    const xhuCookie = await auth.getCookie();
     const {
         questionId,
         sortBy = 'default', // default,created,updated
@@ -54,7 +55,7 @@ async function handler(ctx) {
             const link = `https://www.zhihu.com/question/${questionId}/answer/${item.id}`;
             const author = item.author.name;
             const title = `${author}的回答：${item.excerpt}`;
-            const description = `${author}的回答<br/><br/>${utils.ProcessImage(item.excerpt)}`;
+            const description = `${author}的回答<br/><br/>${processImage(item.excerpt)}`;
 
             return {
                 title,

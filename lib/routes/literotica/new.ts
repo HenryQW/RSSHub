@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -16,6 +17,7 @@ export const route: Route = {
         supportBT: false,
         supportPodcast: false,
         supportScihub: false,
+        nsfw: true,
     },
     radar: [
         {
@@ -40,29 +42,29 @@ async function handler() {
     const $ = load(response.data);
 
     const list = $('.b-46t')
-        .map((_, item) => {
-            item = $(item);
+        .toArray()
+        .map((item): DataItem => {
+            const $item = $(item);
 
-            const a = item.find('.p-48y');
+            const a = $item.find('.p-48y');
 
             return {
                 title: a.text(),
                 link: a.attr('href'),
-                category: item.nextAll().eq(3).text().replaceAll(/\(|\)/g, '').trim(),
-                pubDate: parseDate(item.nextAll().eq(4).text().trim(), 'MM/DD/YY'),
-                author: item
+                category: $item.nextAll().eq(3).text().replaceAll(/\(|\)/g, '').trim(),
+                pubDate: parseDate($item.nextAll().eq(4).text().trim(), 'MM/DD/YY'),
+                author: $item
                     .nextAll()
                     .eq(2)
                     .text()
                     .replace(/Submitted by/, '')
                     .trim(),
             };
-        })
-        .get();
+        });
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,

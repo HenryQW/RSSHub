@@ -1,8 +1,9 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
-import cache from '@/utils/cache';
 import markdownit from 'markdown-it';
+
+import type { Route } from '@/types';
+import cache from '@/utils/cache';
+import got from '@/utils/got';
 
 const md = markdownit({
     html: true,
@@ -18,8 +19,8 @@ export const route: Route = {
     maintainers: ['daijinru', 'hestudy'],
     handler,
     description: `| javascript | node | react |
-  | ---------- | ---- | ----- |
-  | js         | node | react |`,
+| ---------- | ---- | ----- |
+| js         | node | react |`,
     radar: [
         {
             source: ['docschina.org/news/weekly/js/*', 'docschina.org/news/weekly/js', 'docschina.org/'],
@@ -35,7 +36,6 @@ async function handler(ctx) {
     const path = `/news/weekly/${category}`;
     const url = `${baseURL}${path}`;
     const { data: res } = await got(url);
-    // @ts-ignore
     const $ = load(res);
 
     const title = $('head title').text();

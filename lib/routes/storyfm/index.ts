@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 
 export const route: Route = {
     path: '/index',
@@ -32,11 +33,12 @@ async function handler() {
     const $ = load(response.data);
     const cnMonth = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
     const items = $('.isotope > .isotope-item')
-        .map((_, ele) => {
+        .toArray()
+        .map((ele) => {
             const $item = load(ele);
             const img = $item('.isotope-img-container img').attr('src');
             const infoNode = $item('.isotope-index-text').first();
-            const title = infoNode.find('.soundbyte-podcast-progression-title');
+            const title = infoNode.find('.soundbyte-podcast-progression-title').text();
             const link = infoNode.find('a.soundbyte-podcast-play-progression').attr('href');
             const time = infoNode.find('.fa-clock-o').text();
             const date = infoNode.find('.soundbyte-podcast-date-progression').text();
@@ -46,7 +48,7 @@ async function handler() {
                 .map((value) => {
                     if (value.includes('月')) {
                         const enMongth = cnMonth.findIndex((cnMonthStr) => value.includes(cnMonthStr));
-                        value = enMongth + 1;
+                        value = String(enMongth + 1);
                     }
                     return value;
                 });
@@ -58,8 +60,7 @@ async function handler() {
                 link,
                 pubDate,
             };
-        })
-        .get();
+        });
     return {
         title: '故事说FM',
         description: '故事说FM',

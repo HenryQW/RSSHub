@@ -1,90 +1,90 @@
-import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
+import { load } from 'cheerio';
 
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import path from 'node:path';
-import { art } from '@/utils/render';
+import ofetch from '@/utils/ofetch';
 
-import { CookieJar } from 'tough-cookie';
-const cookieJar = new CookieJar();
+import { renderDescription } from './templates/description';
+
+const ieeeHost = 'https://ieeexplore.ieee.org';
 
 export const route: Route = {
-    path: ['/:journal/latest/vol/:sortType?', '/journal/:journal/:sortType?'],
-    name: 'Unknown',
-    maintainers: [],
+    name: 'IEEE Journal Articles',
+    maintainers: ['HenryQW'],
+    categories: ['journal'],
+    path: '/journal/:punumber/:earlyAccess?',
+    parameters: {
+        punumber: 'Publication Number, look for `punumber` in the URL',
+        earlyAccess: 'Optional, set any value to get early access articles',
+    },
+    example: '/ieee/journal/6287639/preprint',
     handler,
 };
 
 async function handler(ctx) {
-    const punumber = ctx.req.param('journal');
-    const sortType = ctx.req.param('sortType') ?? 'vol-only-seq';
-    const host = 'https://ieeexplore.ieee.org';
-    const jrnlUrl = `${host}/xpl/mostRecentIssue.jsp?punumber=${punumber}`;
+    const publicationNumber = ctx.req.param('punumber');
+    const earlyAccess = !!ctx.req.param('earlyAccess');
 
-    const response = await got(`${host}/rest/publication/home/metadata?pubid=${punumber}`, {
-        cookieJar,
-    }).json();
-    const volume = response.currentIssue.volume;
-    const isnumber = response.currentIssue.issueNumber;
-    const jrnlName = response.displayTitle;
+    const metadata = await fetchMetadata(publicationNumber);
+    const { displayTitle, currentIssue, preprintIssue, coverImagePath } = metadata;
+    const { issueNumber, volume } = earlyAccess ? preprintIssue : currentIssue;
 
-    const response2 = await got
-        .post(`${host}/rest/search/pub/${punumber}/issue/${isnumber}/toc`, {
-            cookieJar,
-            json: {
-                punumber,
-                isnumber,
-                sortType,
-                rowsPerPage: '100',
-            },
-        })
-        .json();
-    let list = response2.records.map((item) => {
-        const $2 = load(item.articleTitle);
-        const title = $2.text();
-        const link = item.htmlLink;
-        const doi = item.doi;
-        let authors = 'Do not have author';
-        if (Object.hasOwn(item, 'authors')) {
-            authors = item.authors.map((itemAuth) => itemAuth.preferredName).join('; ');
-        }
-        let abstract = '';
-        Object.hasOwn(item, 'abstract') ? (abstract = item.abstract) : (abstract = '');
-        return {
-            title,
-            link,
-            authors,
-            doi,
-            volume,
-            abstract,
-        };
+    const tocData = await fetchTOCData(publicationNumber, issueNumber);
+    const list = tocData.records.map((item) => {
+        const mappedItem = mapRecordToItem(volume)(item);
+
+        return mappedItem;
     });
 
-    const renderDesc = (item) =>
-        art(path.join(__dirname, 'templates/description.art'), {
-            item,
-        });
-    list = await Promise.all(
+    const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                if (item.abstract !== '') {
-                    const response3 = await got(`${host}${item.link}`);
-                    const { abstract } = JSON.parse(response3.body.match(/metadata=(.*);/)[1]);
-                    const $3 = load(abstract);
-                    item.abstract = $3.text();
-                    item.description = renderDesc(item);
-                }
+                const response = await ofetch(`https://ieeexplore.ieee.org${item.link}`);
+
+                const $ = load(response);
+
+                const target = $('script[type="text/javascript"]:contains("xplGlobal.document.metadata")');
+                const code = target.text();
+
+                // 捕获等号右侧的 JSON（最小匹配直到紧随的分号）
+                const m = code.match(/xplGlobal\.document\.metadata\s*=\s*(\{[\s\S]*?\})\s*;/);
+                item.abstract = m ? ((JSON.parse(m[1]) as { abstract?: string }).abstract ?? ' ') : ' ';
+                item.description = renderDescription(item);
+
                 return item;
             })
         )
     );
 
     return {
-        title: jrnlName,
-        link: jrnlUrl,
-        item: list,
+        title: displayTitle,
+        link: `${ieeeHost}/xpl/tocresult.jsp?isnumber=${issueNumber}`,
+        item: items,
+        image: `${ieeeHost}${coverImagePath}`,
     };
+}
+
+async function fetchMetadata(punumber) {
+    const response = await got(`${ieeeHost}/rest/publication/home/metadata?pubid=${punumber}`);
+    return response.data;
+}
+
+async function fetchTOCData(punumber, isnumber) {
+    const response = await got.post(`${ieeeHost}/rest/search/pub/${punumber}/issue/${isnumber}/toc`, {
+        json: { punumber, isnumber, rowsPerPage: '100' },
+    });
+    return response.data;
+}
+
+function mapRecordToItem(volume) {
+    return (item) => ({
+        abstract: item.abstract || '',
+        authors: item.authors ? item.authors.map((author) => author.preferredName).join('; ') : '',
+        description: '',
+        doi: item.doi,
+        link: item.htmlLink,
+        title: item.articleTitle || '',
+        volume,
+    });
 }

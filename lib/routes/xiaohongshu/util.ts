@@ -1,31 +1,105 @@
+import type { CheerioAPI } from 'cheerio';
+import { load } from 'cheerio';
+
 import { config } from '@/config';
+import CaptchaError from '@/errors/types/captcha';
+import cache from '@/utils/cache';
 import logger from '@/utils/logger';
+import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
-import puppeteer from '@/utils/puppeteer';
+import playwright, { getPlaywrightPage } from '@/utils/playwright';
+
+declare global {
+    interface Window {
+        __INITIAL_SSR_STATE__: { Main: any };
+    }
+}
+
+// Common headers for requests
+const getHeaders = (cookie?: string) => ({
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    Host: 'www.xiaohongshu.com',
+    Pragma: 'no-cache',
+    'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"Windows"',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    ...(cookie && { Cookie: cookie }),
+});
+
+// Fetch HTML through proxy when configured
+async function fetchWithProxy(url: string, cookie?: string): Promise<string> {
+    const proxy = config.xiaohongshu.proxy;
+    if (proxy) {
+        const proxyUrl = `${proxy}?url=${encodeURIComponent(url)}`;
+        logger.http(`Requesting ${url} via proxy`);
+        return await ofetch(proxyUrl, { parseResponse: (txt) => txt });
+    }
+    logger.http(`Requesting ${url}`);
+    return await ofetch(url, {
+        headers: getHeaders(cookie),
+    });
+}
 
 const getUser = (url, cache) =>
     cache.tryGet(
         url,
         async () => {
-            const browser = await puppeteer();
+            // Use proxy if configured
+            if (config.xiaohongshu.proxy) {
+                const res = await fetchWithProxy(url);
+                const $ = load(res);
+                const script = extractInitialState($);
+                const state = JSON.parse(script);
+
+                let { userPageData, notes } = state.user;
+                userPageData = userPageData._rawValue || userPageData;
+                notes = notes._rawValue || notes;
+
+                // Cannot get collect data without Playwright
+                return { userPageData, notes, collect: '' };
+            }
+
+            // Use Playwright
+            const { page, destroy } = await getPlaywrightPage(url, {
+                onBeforeLoad: async (page) => {
+                    await page.route('**/*', (route) => {
+                        const request = route.request();
+                        request.resourceType() === 'document' || request.resourceType() === 'script' || request.resourceType() === 'xhr' || request.resourceType() === 'other' ? route.continue() : route.abort();
+                    });
+                },
+            });
             try {
-                const page = await browser.newPage();
-                await page.setRequestInterception(true);
                 let collect = '';
-                page.on('request', (request) => {
-                    request.resourceType() === 'document' || request.resourceType() === 'script' || request.resourceType() === 'xhr' || request.resourceType() === 'other' ? request.continue() : request.abort();
-                });
                 logger.http(`Requesting ${url}`);
                 await page.goto(url, {
                     waitUntil: 'domcontentloaded',
                 });
-                await page.waitForSelector('div.reds-tab-item:nth-child(2)');
+                try {
+                    await page.waitForSelector('div.reds-tab-item:nth-child(2), .fe-verify-box', { timeout: 3000 });
+                } catch {
+                    //
+                }
 
-                const initialState = await page.evaluate(() => window.__INITIAL_STATE__);
+                if (await page.$('.fe-verify-box')) {
+                    throw new CaptchaError('小红书风控校验，请稍后再试');
+                }
+
+                const content = await page.content();
+                const initialState = JSON.parse(extractInitialState(load(content)));
 
                 if (!(await page.$('.lock-icon'))) {
-                    await page.click('div.reds-tab-item:nth-child(2)');
                     try {
+                        await page.click('div.reds-tab-item:nth-child(2)', { timeout: 3000 });
                         const response = await page.waitForResponse(
                             (res) => {
                                 const req = res.request();
@@ -43,9 +117,13 @@ const getUser = (url, cache) =>
                 userPageData = userPageData._rawValue || userPageData;
                 notes = notes._rawValue || notes;
 
+                if (!userPageData.basicInfo) {
+                    throw new Error(`小红书未返回用户数据，请稍后再试: ${JSON.stringify(userPageData.result)}`);
+                }
+
                 return { userPageData, notes, collect };
             } finally {
-                browser.close();
+                await destroy();
             }
         },
         config.cache.routeExpire,
@@ -56,12 +134,22 @@ const getBoard = (url, cache) =>
     cache.tryGet(
         url,
         async () => {
-            const browser = await puppeteer();
+            // Use proxy if configured
+            if (config.xiaohongshu.proxy) {
+                const res = await fetchWithProxy(url);
+                const $ = load(res);
+                const script = extractInitialSsrState($);
+                const state = JSON.parse(script);
+                return state.Main;
+            }
+
+            // Use Playwright
+            const context = await playwright();
             try {
-                const page = await browser.newPage();
-                await page.setRequestInterception(true);
-                page.on('request', (request) => {
-                    request.resourceType() === 'document' || request.resourceType() === 'script' || request.resourceType() === 'xhr' ? request.continue() : request.abort();
+                const page = await context.newPage();
+                await page.route('**/*', (route) => {
+                    const request = route.request();
+                    request.resourceType() === 'document' || request.resourceType() === 'script' || request.resourceType() === 'xhr' ? route.continue() : route.abort();
                 });
                 logger.http(`Requesting ${url}`);
                 await page.goto(url);
@@ -69,110 +157,8 @@ const getBoard = (url, cache) =>
                 const initialSsrState = await page.evaluate(() => window.__INITIAL_SSR_STATE__);
                 return initialSsrState.Main;
             } finally {
-                browser.close();
+                await context.close();
             }
-        },
-        config.cache.routeExpire,
-        false
-    );
-
-const setPageFilter = async (page) => {
-    await page.setRequestInterception(true);
-    page.on('request', (req) => {
-        req.resourceType() === 'document' || req.resourceType() === 'script' || req.resourceType() === 'xhr' || req.resourceType() === 'other' ? req.continue() : req.abort();
-    });
-};
-
-const getNotes = (url, cache) =>
-    cache.tryGet(
-        url + '/notes', // To avoid mixing with the cache for `user.js`
-        async () => {
-            let user = '';
-            let notes = [];
-
-            const browser = await puppeteer({ stealth: true });
-            try {
-                const page = await browser.newPage();
-                await setPageFilter(page);
-
-                logger.http(`Requesting ${url}`);
-                await page.goto(url);
-
-                let otherInfo = {};
-                let userPosted = {};
-                try {
-                    [otherInfo, userPosted] = await Promise.all(
-                        ['/api/sns/web/v1/user/otherinfo', '/api/sns/web/v1/user_posted'].map((p) =>
-                            page
-                                .waitForResponse((res) => {
-                                    const req = res.request();
-                                    return req.url().includes(p) && req.method() === 'GET';
-                                })
-                                .then((r) => r.json())
-                        )
-                    );
-                } catch (error) {
-                    throw new Error(`Could not get user information and note list\n${error}`);
-                }
-
-                await page.close();
-
-                // Get full text for each note
-                const notesPromise = userPosted.data.notes.map((n) => {
-                    const noteUrl = url + '/' + n.note_id;
-
-                    return cache.tryGet(noteUrl, async () => {
-                        const notePage = await browser.newPage();
-                        await setPageFilter(notePage);
-
-                        logger.http(`Requesting ${noteUrl}`);
-                        await notePage.goto(noteUrl);
-
-                        let feed = {};
-                        try {
-                            feed = await notePage.evaluate(() => window.__INITIAL_STATE__);
-
-                            // Sometimes the page is not server-side rendered
-                            if (feed?.note?.note === undefined || JSON.stringify(feed?.note?.note) === '{}') {
-                                const res = await notePage.waitForResponse((res) => {
-                                    const req = res.request();
-                                    return req.url().includes('/api/sns/web/v1/feed') && req.method() === 'POST';
-                                });
-
-                                const json = await res.json();
-                                const note_card = json.data.items[0].note_card;
-                                feed.note.note = {
-                                    title: note_card.title,
-                                    noteId: note_card.id,
-                                    desc: note_card.desc,
-                                    tagList: note_card.tag_list,
-                                    imageList: note_card.image_list,
-                                    user: note_card.user,
-                                    time: note_card.time,
-                                    lastUpdateTime: note_card.last_update_time,
-                                };
-                            }
-                        } catch (error) {
-                            throw new Error(`Could not get note ${n.note_id}\n${error}`);
-                        }
-
-                        await notePage.close();
-
-                        if (feed?.note?.note !== undefined && JSON.stringify(feed?.note?.note) !== '{}') {
-                            return feed.note.note;
-                        } else {
-                            throw new Error(`Could not get note ${n.note_id}`);
-                        }
-                    });
-                });
-
-                user = otherInfo.data.basic_info;
-                notes = await Promise.all(notesPromise);
-            } finally {
-                await browser.close();
-            }
-
-            return { user, notes };
         },
         config.cache.routeExpire,
         false
@@ -181,9 +167,9 @@ const getNotes = (url, cache) =>
 const formatText = (text) => text.replaceAll(/(\r\n|\r|\n)/g, '<br>').replaceAll('\t', '&emsp;');
 
 // tag_list.id has nothing to do with its url
-const formatTagList = (tagList) => tagList.reduce((acc, item) => acc + `#${item.name} `, ``);
+const formatTagList = (tagList) => tagList.map((item) => `#${item.name} `).join('');
 
-const formatImageList = (imageList) => imageList.reduce((acc, item) => acc + `<img src="${item.url}"><br>`, ``);
+const formatImageList = (imageList) => imageList.map((item) => `<img src="${item.url}"><br>`).join('');
 
 const formatNote = (url, note) => ({
     title: note.title,
@@ -194,4 +180,180 @@ const formatNote = (url, note) => ({
     updated: parseDate(note.lastUpdateTime, 'x'),
 });
 
-export { getUser, getBoard, getNotes, formatText, formatNote };
+async function renderNotesFulltext(notes, urlPrex, displayLivePhoto) {
+    const data: Array<{
+        title: string;
+        link: string;
+        description: string;
+        author: string;
+        guid: string;
+        pubDate: Date;
+        updated: Date;
+    }> = [];
+    const promises = notes.flatMap((note) =>
+        note.map(async ({ noteCard, id }) => {
+            const link = `${urlPrex}/${id}`;
+            const guid = `${urlPrex}/${noteCard.noteId}`;
+            const { title, description, pubDate, updated } = await getFullNote(link, displayLivePhoto);
+            return {
+                title,
+                link,
+                description,
+                author: noteCard.user.nickName,
+                guid,
+                pubDate,
+                updated,
+            };
+        })
+    );
+    data.push(...(await Promise.all(promises)));
+    return data;
+}
+
+async function getFullNote(link, displayLivePhoto) {
+    const data = await cache.tryGet(link, async () => {
+        const res = await fetchWithProxy(link, config.xiaohongshu.cookie);
+        const $ = load(res);
+        const script = extractInitialState($);
+        const state = JSON.parse(script);
+        const note = state.note.noteDetailMap[state.note.firstNoteId].note;
+        const title = note.title;
+        let desc = note.desc;
+        desc = desc.replaceAll(/\[.*?\]/g, '');
+        desc = desc.replaceAll(/#(.*?)#/g, '#$1');
+        desc = desc.replaceAll('\n', '<br>');
+        const pubDate = parseDate(note.time, 'x');
+        const updated = parseDate(note.lastUpdateTime, 'x');
+
+        let mediaContent = '';
+        if (note.type === 'video') {
+            const originVideoKey = note.video?.consumer?.originVideoKey;
+            const videoUrls: string[] = [];
+
+            if (originVideoKey) {
+                videoUrls.push(`http://sns-video-al.xhscdn.com/${originVideoKey}`);
+            }
+
+            const streamTypes = ['av1', 'h264', 'h265', 'h266'];
+            for (const type of streamTypes) {
+                const streams = note.video?.media?.stream?.[type];
+                if (streams?.length > 0) {
+                    const stream = streams[0];
+                    if (stream.masterUrl) {
+                        videoUrls.push(stream.masterUrl);
+                    }
+                    if (stream.backupUrls?.length) {
+                        videoUrls.push(...stream.backupUrls);
+                    }
+                }
+            }
+
+            const posterUrl = note.imageList?.[0]?.urlDefault;
+
+            if (videoUrls.length > 0) {
+                mediaContent = `<video controls ${posterUrl ? `poster="${posterUrl}"` : ''}>
+                    ${videoUrls.map((url) => `<source src="${url}" type="video/mp4">`).join('\n')}
+                </video><br>`;
+            }
+        } else {
+            mediaContent = note.imageList
+                .map((image) => {
+                    if (image.livePhoto && displayLivePhoto) {
+                        const videoUrls: string[] = [];
+
+                        const streamTypes = ['av1', 'h264', 'h265', 'h266'];
+                        for (const type of streamTypes) {
+                            const streams = image.stream?.[type];
+                            if (streams?.length > 0) {
+                                if (streams[0].masterUrl) {
+                                    videoUrls.push(streams[0].masterUrl);
+                                }
+                                if (streams[0].backupUrls?.length) {
+                                    videoUrls.push(...streams[0].backupUrls);
+                                }
+                            }
+                        }
+
+                        if (videoUrls.length > 0) {
+                            return `<video controls poster="${image.urlDefault}">
+                            ${videoUrls.map((url) => `<source src="${url}" type="video/mp4">`).join('\n')}
+                        </video>`;
+                        }
+                    }
+                    return `<img src="${image.urlDefault}">`;
+                })
+                .join('<br>');
+        }
+
+        const description = `${mediaContent}<br>${desc}`;
+        return {
+            title: title || note.desc,
+            description,
+            pubDate,
+            updated,
+        };
+    });
+    return data;
+}
+
+async function getUserWithCookie(url: string) {
+    const cookie = config.xiaohongshu.cookie;
+    const res = await fetchWithProxy(url, cookie);
+    const $ = load(res);
+    const script = extractInitialState($);
+    const state = JSON.parse(script);
+
+    const tokenizedPaths = new Map<string, string>();
+
+    $('#userPostedFeeds a[href*="xsec_token"]').each((_, item) => {
+        const href = $(item).attr('href');
+        if (!href) {
+            return;
+        }
+
+        const match = href.match(/\/([0-9a-f]{24})(?:\?|$)/i);
+        if (match && href.includes('?')) {
+            tokenizedPaths.set(match[1], href);
+        }
+    });
+
+    for (const item of state.user.notes.flat()) {
+        const path = tokenizedPaths.get(item.id);
+
+        if (path) {
+            item.id += path.slice(path.indexOf('?'));
+        }
+    }
+    return state.user;
+}
+
+// Add helper function to extract initial state
+function extractInitialState($: CheerioAPI) {
+    let script = $('script:contains("window.__INITIAL_STATE__=")').text();
+
+    script = script.slice(script.indexOf('window.__INITIAL_STATE__=') + 'window.__INITIAL_STATE__='.length);
+
+    script = script.replaceAll('undefined', 'null').replaceAll(/new Map\(\s*\[\s*\]\s*\)/g, 'null');
+
+    return script;
+}
+
+// Add helper function to extract initial SSR state
+function extractInitialSsrState($: CheerioAPI) {
+    const script = $('script:contains("window.__INITIAL_SSR_STATE__=")').text();
+    const match = script.match(/window\.__INITIAL_SSR_STATE__\s*=\s*(\{[\s\S]*?\})\s*(?:;|$)/);
+    if (match) {
+        return match[1].replaceAll('undefined', 'null');
+    }
+    throw new Error('Cannot extract __INITIAL_SSR_STATE__');
+}
+
+async function checkCookie() {
+    const cookie = config.xiaohongshu.cookie;
+    const res = await ofetch('https://edith.xiaohongshu.com/api/sns/web/v2/user/me', {
+        headers: getHeaders(cookie),
+    });
+    return res.code === 0 && !!res.data.user_id;
+}
+
+export { checkCookie, formatNote, formatText, getBoard, getFullNote, getUser, getUserWithCookie, renderNotesFulltext };

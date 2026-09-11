@@ -1,34 +1,37 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
-import * as url from 'node:url';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 
 const host = 'https://www.douban.com/explore/column/';
 export const route: Route = {
     path: '/explore/column/:id',
-    name: 'Unknown',
-    maintainers: [],
+    categories: ['social-media'],
+    example: '/douban/explore/column/2',
+    parameters: { id: '分栏目id' },
+    name: '浏览发现分栏目',
+    maintainers: ['LogicJake'],
     handler,
 };
 
 async function handler(ctx) {
     const id = ctx.req.param('id');
-    const link = url.resolve(host, id);
+    const link = new URL(id, host).href;
     const response = await got.get(link);
     const $ = load(response.data);
     const title = $('div.h1').text();
 
     const list = $('div.item')
         .slice(0, 10)
-        .map(function () {
+        .toArray()
+        .map((item) => {
             const info = {
-                title: $(this).find('div.title a').text(),
-                link: $(this).find('div.title a').attr('href'),
-                author: $(this).find('div.usr-pic a').text(),
+                title: $(item).find('div.title a').text(),
+                link: $(item).find('div.title a').attr('href'),
+                author: $(item).find('div.usr-pic a').text(),
             };
             return info;
-        })
-        .get();
+        });
 
     for (let i = list.length - 1; i >= 0; i--) {
         if (list[i].author === '[已注销]') {

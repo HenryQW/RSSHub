@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import ofetch from '@/utils/ofetch';
 
 export const route: Route = {
     path: '/recent-actions/:minrating?',
@@ -22,7 +23,7 @@ export const route: Route = {
         },
     ],
     name: 'Recent actions',
-    maintainers: [],
+    maintainers: ['ftiasch'],
     handler,
     url: 'codeforces.com/recent-actions',
 };
@@ -30,7 +31,7 @@ export const route: Route = {
 async function handler(ctx) {
     const minRating = ctx.req.param('minrating') || 1;
 
-    const rsp = await got.get('https://codeforces.com/api/recentActions?maxCount=100').json();
+    const rsp = await ofetch('https://codeforces.com/api/recentActions?maxCount=100');
 
     const actions = rsp.result.map((action) => {
         const pubDate = new Date(action.timeSeconds * 1000);

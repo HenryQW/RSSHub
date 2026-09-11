@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 
 export const route: Route = {
     path: '/citations/:id',
@@ -15,17 +16,17 @@ export const route: Route = {
         supportPodcast: false,
         supportScihub: false,
     },
-    name: 'Author Citations',
+    name: 'Scholar Author Citations',
     maintainers: ['KellyHwong', 'const7'],
     handler,
     description: `The parameter id in the route is the id in the URL of the user's Google Scholar reference page, for example \`https://scholar.google.com/citations?user=mlmE4JMAAAAJ\` to \`mlmE4JMAAAAJ\`.
 
-  Query parameters are also supported here, for example \`https://scholar.google.com/citations?user=mlmE4JMAAAAJ&sortby=pubdate\` to \`mlmE4JMAAAAJ&sortby=pubdate\`. Please make sure that the user id (\`mlmE4JMAAAAJ\` in this case) should be the first parameter in the query string.`,
+Query parameters are also supported here, for example \`https://scholar.google.com/citations?user=mlmE4JMAAAAJ&sortby=pubdate\` to \`mlmE4JMAAAAJ&sortby=pubdate\`. Please make sure that the user id (\`mlmE4JMAAAAJ\` in this case) should be the first parameter in the query string.`,
 };
 
 async function handler(ctx) {
     const id = ctx.req.param('id');
-    const BASE_URL = `https://scholar.google.com`;
+    const BASE_URL = 'https://scholar.google.com';
     const url = `https://scholar.google.com/citations?user=${id}`;
 
     const response = await got({
@@ -40,7 +41,7 @@ async function handler(ctx) {
     const name = $('#gsc_prf_in').text();
     const description = `Google Scholar Citation Monitor: ${name}; Profile: ${profile}; HomePage: ${homePage}`;
 
-    const list = $('#gsc_a_b .gsc_a_tr').get();
+    const list = $('#gsc_a_b .gsc_a_tr').toArray();
 
     const out = list.map((item) => {
         const $ = load(item);

@@ -1,4 +1,5 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
+
 import utils from './utils';
 
 export const route: Route = {
@@ -25,5 +26,5 @@ async function handler(ctx) {
 
     const title = `Dribbble - keyword ${keyword}`;
 
-    return await utils.getData(ctx, url, title);
+    return await utils.getData(url, title);
 }

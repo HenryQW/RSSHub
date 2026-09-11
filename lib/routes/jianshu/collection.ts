@@ -1,12 +1,16 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
+
 import util from './utils';
 
 export const route: Route = {
     path: '/collection/:id',
     categories: ['social-media'],
+    view: ViewType.Articles,
     example: '/jianshu/collection/xYuZYD',
     parameters: { id: '专题 id, 可在专题页 URL 中找到' },
     features: {
@@ -41,7 +45,7 @@ async function handler(ctx) {
     const data = response.data;
 
     const $ = load(data);
-    const list = $('.note-list li').get();
+    const list = $('.note-list li').toArray();
 
     const result = await util.ProcessFeed(list, cache);
 

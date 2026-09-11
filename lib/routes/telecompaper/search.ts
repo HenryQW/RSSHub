@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 
 export const route: Route = {
     path: '/search/:keyword?/:company?/:sort?/:period?',
@@ -21,15 +22,15 @@ export const route: Route = {
     handler,
     description: `Sorting
 
-  | Date Ascending | Date Descending |
-  | -------------- | --------------- |
-  | 1              | 2               |
+| Date Ascending | Date Descending |
+| -------------- | --------------- |
+| 1              | 2               |
 
-  Date selection
+Date selection
 
-  | 1 month | 3 months | 6 months | 12 months | 24 months |
-  | ------- | -------- | -------- | --------- | --------- |
-  | 1       | 3        | 6        | 12        | 24        |`,
+| 1 month | 3 months | 6 months | 12 months | 24 months |
+| ------- | -------- | -------- | --------- | --------- |
+| 1       | 3        | 6        | 12        | 24        |`,
 };
 
 async function handler(ctx) {
@@ -72,20 +73,20 @@ async function handler(ctx) {
 
     const list = $('table.details_rows tbody tr')
         .slice(0, 15)
-        .map((_, item) => {
-            item = $(item);
-            const a = item.find('a');
+        .toArray()
+        .map((item): DataItem => {
+            const $item = $(item);
+            const a = $item.find('a');
             return {
                 title: a.text(),
                 link: a.attr('href'),
-                pubDate: new Date(item.find('span.source').text().split(' | ')[0] + ' GMT+1').toUTCString(),
+                pubDate: new Date($item.find('span.source').text().split(' | ', 1)[0] + ' GMT+1').toUTCString(),
             };
-        })
-        .get();
+        });
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,

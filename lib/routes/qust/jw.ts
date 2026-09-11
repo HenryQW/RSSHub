@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 
 const baseUrl = 'https://jw.qust.edu.cn/';
 
@@ -35,17 +36,17 @@ async function handler() {
     });
     const $ = load(response.data);
     const items = $('.winstyle60982 tr a.c60982')
-        .map((_, element) => {
+        .toArray()
+        .map((element) => {
             const linkElement = $(element);
             const itemTitle = linkElement.text().trim();
             const path = linkElement.attr('href');
-            const itemUrl = path.startsWith('http') ? path : `${baseUrl}${path}`;
+            const itemUrl = path!.startsWith('http') ? path : `${baseUrl}${path}`;
             return {
                 title: itemTitle,
                 link: itemUrl,
             };
-        })
-        .get();
+        });
 
     return {
         title: '青岛科技大学 - 教务通知',

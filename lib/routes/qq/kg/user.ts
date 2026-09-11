@@ -1,8 +1,11 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import got from '@/utils/got';
-import { JSDOM } from 'jsdom';
-import cache from './cache';
 import { parseDate } from '@/utils/parse-date';
+import { parseScriptData } from '@/utils/parse-script-data';
+
+import cache from './cache';
 
 export const route: Route = {
     path: '/kg/:userId',
@@ -17,7 +20,7 @@ export const route: Route = {
         supportPodcast: true,
         supportScihub: false,
     },
-    name: '用户作品列表',
+    name: '全民K歌 - 用户作品列表',
     maintainers: ['zhangxiang012'],
     handler,
 };
@@ -27,10 +30,20 @@ async function handler(ctx) {
     const url = `https://node.kg.qq.com/personal?uid=${userId}`;
     const response = await got(url);
 
-    const { window } = new JSDOM(response.data, {
-        runScripts: 'dangerously',
-    });
-    const data = window.__DATA__;
+    const $ = load(response.data);
+    const script = $('script')
+        .toArray()
+        .map((element) => $(element).text())
+        .filter((source) => source.includes('__DATA__'))
+        .join('\n');
+    const data = parseScriptData<{
+        data: {
+            nickname: string;
+            head_img_url: string;
+            ugclist: Array<{ shareid: string; ksong_mid: string; title?: string; ctime: number; avatar: string }>;
+        };
+        share: { content: string };
+    }>(script, 'window.__DATA__');
     const author = data.data.nickname;
     const authorimg = data.data.head_img_url;
     const ugcList = data.data.ugclist;

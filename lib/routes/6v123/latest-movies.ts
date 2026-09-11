@@ -1,4 +1,5 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
+
 import { processItems } from './utils';
 
 const baseURL = 'https://www.hao6v.cc/gvod/zx.html';
@@ -28,7 +29,7 @@ export const route: Route = {
 };
 
 async function handler(ctx) {
-    const item = await processItems(ctx, baseURL);
+    const item = await processItems(ctx, baseURL, [/第*集/, /第*季/, /(ep)\d+/i, /(s)\d+/i, /更新/]);
 
     return {
         title: '6v电影-最新电影',

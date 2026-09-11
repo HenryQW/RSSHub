@@ -1,8 +1,9 @@
+import { load } from 'cheerio';
+
 import InvalidParameterError from '@/errors/types/invalid-parameter';
-import { Route } from '@/types';
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 
 export const route: Route = {
     path: '/ranking/:type',
@@ -21,8 +22,8 @@ export const route: Route = {
     maintainers: ['immmortal', 'luyuhuang'],
     handler,
     description: `| 24h           | 7days    | monthly |
-  | ------------- | -------- | ------- |
-  | 24 小时阅读榜 | 7 天最热 | 月榜    |`,
+| ------------- | -------- | ------- |
+| 24 小时阅读榜 | 7 天最热 | 月榜    |`,
 };
 
 async function handler(ctx) {
@@ -54,18 +55,18 @@ async function handler(ctx) {
     }
 
     const list = $(`#${id} > li`)
-        .map(function () {
-            const info = {
-                title: $(this).find('a').text(),
-                link: $(this).find('a').attr('href'),
+        .toArray()
+        .map((item) => {
+            const info: DataItem = {
+                title: $(item).find('a').text(),
+                link: $(item).find('a').attr('href'),
             };
             return info;
-        })
-        .get();
+        });
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const res = await got({
                     method: 'get',
                     url: item.link,
@@ -73,10 +74,10 @@ async function handler(ctx) {
                 const content = load(res.data);
                 const paragraph = content('#paragraph');
                 paragraph.find('img[data-original]').each((_, ele) => {
-                    ele = $(ele);
-                    ele.attr('src', ele.attr('data-original'));
-                    ele.removeAttr('class');
-                    ele.removeAttr('data-original');
+                    const $ele = $(ele);
+                    $ele.attr('src', $ele.attr('data-original'));
+                    $ele.removeAttr('class');
+                    $ele.removeAttr('data-original');
                 });
                 item.description = paragraph.html();
                 item.pubDate = new Date(content('#pubtime_baidu').text() + ' GMT+8').toUTCString();

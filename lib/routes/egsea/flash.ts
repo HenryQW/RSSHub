@@ -1,4 +1,4 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
@@ -34,7 +34,7 @@ async function handler() {
 
     const out = response.data.data.map((item) => {
         const pubDate = parseDate(item.pageTime, 'X');
-        const link = 'https://www.egsea.com' + item.url;
+        const link = item.url;
         const title = item.title;
         const description = item.content;
 
@@ -43,7 +43,7 @@ async function handler() {
             link,
             pubDate,
             description,
-            category: item.tags.map((tag) => tag.name),
+            category: item.tags?.map((tag) => tag.name),
         };
     });
 

@@ -1,7 +1,8 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
-import utils from './utils';
 import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { Route } from '@/types';
+import got from '@/utils/got';
+
+import utils from './utils';
 
 export const route: Route = {
     path: '/dyh/:dyhId',
@@ -9,7 +10,13 @@ export const route: Route = {
     example: '/coolapk/dyh/1524',
     parameters: { dyhId: '看看号ID' },
     features: {
-        requireConfig: false,
+        requireConfig: [
+            {
+                name: 'ALLOW_USER_HOTLINK_TEMPLATE',
+                optional: true,
+                description: '设置为`true`并添加`image_hotlink_template`参数来代理图片',
+            },
+        ],
         requirePuppeteer: false,
         antiCrawler: false,
         supportBT: false,
@@ -19,9 +26,9 @@ export const route: Route = {
     name: '看看号',
     maintainers: ['xizeyoupan'],
     handler,
-    description: `:::tip
-  仅限于采集**站内订阅**的看看号的内容。看看号 ID 可在看看号界面右上分享 - 复制链接得到。
-  :::`,
+    description: `::: tip
+仅限于采集**站内订阅**的看看号的内容。看看号 ID 可在看看号界面右上分享 - 复制链接得到。
+:::`,
 };
 
 async function handler(ctx) {

@@ -1,13 +1,26 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import got from '@/utils/got';
-import { baseUrl, favicon, getBuildId, parseList, parseItem } from './utils';
+
+import { baseUrl, favicon, getBuildId, parseItem, parseList } from './utils';
 
 export const route: Route = {
     path: '/news/:lang?',
     categories: ['finance'],
+    view: ViewType.Articles,
     example: '/followin/news',
-    parameters: { lang: 'Language, see table above, `en` by default' },
+    parameters: {
+        lang: {
+            description: 'Language',
+            options: [
+                { value: 'en', label: 'English' },
+                { value: 'zh-Hans', label: '简体中文' },
+                { value: 'zh-Hant', label: '繁體中文' },
+                { value: 'vi', label: 'Tiếng Việt' },
+            ],
+            default: 'en',
+        },
+    },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -30,11 +43,11 @@ async function handler(ctx) {
     const { lang = 'en' } = ctx.req.param();
     const { limit = 20 } = ctx.req.query();
 
-    const buildId = await getBuildId(cache.tryGet);
+    const buildId = await getBuildId();
     const { data: response } = await got(`${baseUrl}/_next/data/${buildId}/${lang}/news.json`);
 
     const list = parseList(response.pageProps.dehydratedState.queries.find((q) => q.queryKey[0] === '/feed/list/recommended/news').state.data.pages[0].list.slice(0, limit), lang, buildId);
-    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => parseItem(item)));
 
     return {
         title: `${lang === 'en' ? 'News' : lang === 'vi' ? 'Bản tin' : '快讯'} - Followin`,

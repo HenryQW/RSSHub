@@ -1,4 +1,4 @@
-import { Route } from '@/types';
+import type { DataItem, Route } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
@@ -42,19 +42,19 @@ export const route: Route = {
     handler,
     description: `Provides a way to get an specific rss feed by date and category over the official one.
 
-  | Category             | \`:category\` |
-  | -------------------- | ----------- |
-  | Capital              | capital     |
-  | Cartones             | cartones    |
-  | Ciencia y Tecnología | ciencia     |
-  | Cultura              | cultura     |
-  | Deportes             | deportes    |
-  | Economía             | economia    |
-  | Estados              | estados     |
-  | Mundo                | mundo       |
-  | Opinión              | opinion     |
-  | Política             | politica    |
-  | Sociedad             | sociedad    |`,
+| Category             | \`:category\` |
+| -------------------- | ----------- |
+| Capital              | capital     |
+| Cartones             | cartones    |
+| Ciencia y Tecnología | ciencia     |
+| Cultura              | cultura     |
+| Deportes             | deportes    |
+| Economía             | economia    |
+| Estados              | estados     |
+| Mundo                | mundo       |
+| Opinión              | opinion     |
+| Política             | politica    |
+| Sociedad             | sociedad    |`,
 };
 
 async function handler(ctx) {
@@ -65,7 +65,7 @@ async function handler(ctx) {
     const response = await got(url);
     const data = response.data;
 
-    let items = {};
+    let items: DataItem[];
 
     if (category) {
         const newsFilteredByCategory = data.filter((item) => item.category === categories[category]);

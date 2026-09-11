@@ -1,4 +1,4 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import got from '@/utils/got';
 
 export const route: Route = {
@@ -17,12 +17,12 @@ export const route: Route = {
     name: '今日热榜',
     maintainers: ['nczitzk'],
     handler,
-    description: `:::tip
-  全部站点请见 [此处](https://hot.zyw.asia/#/list)
-  :::
+    description: `::: tip
+全部站点请见 [此处](https://hot.zyw.asia/#/list)
+:::
 
-  | 哔哩哔哩 | 微博 | 知乎 | 36 氪 | 百度 | 少数派 | IT 之家 | 澎湃新闻 | 今日头条 | 百度贴吧 | 稀土掘金 | 腾讯新闻 |
-  | -------- | ---- | ---- | ----- | ---- | ------ | ------- | -------- | -------- | -------- | -------- | -------- |`,
+| 哔哩哔哩 | 微博 | 知乎 | 36 氪 | 百度 | 少数派 | IT 之家 | 澎湃新闻 | 今日头条 | 百度贴吧 | 稀土掘金 | 腾讯新闻 |
+| -------- | ---- | ---- | ----- | ---- | ------ | ------- | -------- | -------- | -------- | -------- | -------- |`,
 };
 
 async function handler(ctx) {
@@ -56,7 +56,7 @@ async function handler(ctx) {
 
     const currentUrl = `${rootUrl}${site ? `/#/list?type=${sites[0].value}` : ''}`;
 
-    const items = [];
+    const items: any[] = [];
 
     await Promise.all(
         sites.map(async (a) => {

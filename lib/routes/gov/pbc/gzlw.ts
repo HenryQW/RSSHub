@@ -1,12 +1,14 @@
-import { Route } from '@/types';
-import { processItems } from './utils';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
+
+import { processItems } from './utils';
 
 const host = 'http://www.pbc.gov.cn';
 
 export const route: Route = {
-    path: '/pbc/gzlw',
+    path: '/gzlw',
     categories: ['finance'],
     example: '/gov/pbc/gzlw',
     parameters: {},
@@ -35,12 +37,12 @@ async function handler() {
     const response = await got.post(url);
     const $ = load(response.data);
     const list = $('li.clearfix')
-        .map((_index, item) => ({
+        .toArray()
+        .map((item) => ({
             title: $(item).find('a').text(),
-            link: new URL($(item).find('a').attr('href'), host).href,
+            link: new URL($(item).find('a').attr('href')!, host).href,
             author: $(item).find('span.fr').text().replaceAll('…', ''),
-        }))
-        .get();
+        }));
 
     const items = await processItems(list);
 

@@ -1,7 +1,11 @@
-import CryptoJS from 'crypto-js';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+import CryptoJS from 'crypto-js';
+
+import cache from '@/utils/cache';
+import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
+
+import type { PostData } from './types';
 
 const APP_SIGN_KEY = '4bTogwpz7RzNO2VTFtW7zcfRkAE97ox6ZSgcQi7FgYdqrHqKB7aGqEZ4o7yssa2aEXoV3bQwh12FFgVNlpyYk2Yjm9d2EZGeGu3';
 const phoneBaseUrl = 'https://3g.dxy.cn';
@@ -30,8 +34,8 @@ const sign = (params) => {
     return CryptoJS.SHA1(searchParams.toString()).toString();
 };
 
-const getPost = (item, tryGet) =>
-    tryGet(item.link, async () => {
+const getPost = (item) =>
+    cache.tryGet(item.link, async () => {
         const postParams = {
             postId: item.postId,
             serverTimestamp: Date.now(),
@@ -39,8 +43,8 @@ const getPost = (item, tryGet) =>
             noncestr: generateNonce(8, 'number'),
         };
 
-        const { data: post } = await got('https://www.dxy.cn/bbs/newweb/post/detail', {
-            searchParams: {
+        const post = await ofetch<PostData>('https://www.dxy.cn/bbs/newweb/post/detail', {
+            query: {
                 ...postParams,
                 sign: sign(postParams),
             },
@@ -52,15 +56,25 @@ const getPost = (item, tryGet) =>
         const $ = load(post.data.body, null, false);
 
         $('img').each((_, img) => {
-            img = $(img);
-            img.removeAttr('data-osrc');
-            img.removeAttr('data-hsrc');
+            const $img = $(img);
+            const hsrc = $img.attr('data-hsrc');
+            const osrc = $img.attr('data-osrc');
+            if (hsrc) {
+                $img.attr('src', hsrc);
+                $img.removeAttr('data-hsrc');
+            }
+            if (osrc) {
+                $img.attr('src', osrc);
+                $img.removeAttr('data-osrc');
+            }
         });
 
         item.description = $.html();
-        item.updated = parseDate(post.data.lastEditTime, 'x');
+        item.pubDate = parseDate(post.data.createTime, 'x');
+        item.updated = post.data.lastEditTime ? parseDate(post.data.lastEditTime, 'x') : item.pubDate;
+        item.category = [...new Set([...item.category, ...post.data.tagInfos.map((tag) => tag.tagName)])];
 
         return item;
     });
 
-export { phoneBaseUrl, webBaseUrl, generateNonce, sign, getPost };
+export { generateNonce, getPost, phoneBaseUrl, sign, webBaseUrl };

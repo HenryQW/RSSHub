@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
+
 import { calculate } from './util';
 
 export const route: Route = {
@@ -22,9 +23,10 @@ export const route: Route = {
 };
 
 async function handler() {
+    const feedUrl = calculate('https://api.xiaoheihe.cn/bbs/app/feeds/news?os_type=web&app=heybox&client_type=mobile&version=999.0.3&x_client_type=web&x_os_type=Mac&x_app=heybox&heybox_id=-1&appid=900018355&offset=0&limit=20');
     const response = await got({
         method: 'get',
-        url: `https://api.xiaoheihe.cn/bbs/app/feeds/news?lang=zh-cn&limit=20&offset=0&tag=-1&version=1.3.303`,
+        url: feedUrl,
     });
     const data = response.data.result.links.filter((item) => item.linkid !== undefined);
     let items = data.map((item) => ({
@@ -53,8 +55,8 @@ async function handler() {
     );
 
     return {
-        title: `小黑盒游戏新闻`,
-        link: `https://xiaoheihe.cn`,
+        title: '小黑盒游戏新闻',
+        link: 'https://xiaoheihe.cn',
         item: items,
     };
 }

@@ -1,12 +1,14 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import queryString from 'query-string';
-import { parseDate } from '@/utils/parse-date';
+import pMap from 'p-map';
 import sanitizeHtml from 'sanitize-html';
+
 import { parseToken } from '@/routes/xueqiu/cookies';
+import type { Route } from '@/types';
+import cache from '@/utils/cache';
+import ofetch from '@/utils/ofetch';
+import { parseDate } from '@/utils/parse-date';
 
 const rootUrl = 'https://xueqiu.com';
+const apiUrl = 'https://api.xueqiu.com';
 
 export const route: Route = {
     path: '/user/:id/:type?',
@@ -16,7 +18,7 @@ export const route: Route = {
     features: {
         requireConfig: false,
         requirePuppeteer: false,
-        antiCrawler: false,
+        antiCrawler: true,
         supportBT: false,
         supportPodcast: false,
         supportScihub: false,
@@ -31,8 +33,70 @@ export const route: Route = {
     maintainers: ['imlonghao'],
     handler,
     description: `| 原发布 | 长文 | 问答 | 热门 | 交易 |
-  | ------ | ---- | ---- | ---- | ---- |
-  | 0      | 2    | 4    | 9    | 11   |`,
+| ------ | ---- | ---- | ---- | ---- |
+| 0      | 2    | 4    | 9    | 11   |`,
+};
+
+interface Status {
+    id: number;
+    target: string;
+    created_at: number;
+    mark?: number;
+    legal_user_visible?: boolean;
+    user?: { screen_name?: string; profile_image_url?: string; photo_domain?: string };
+}
+
+interface ApiError {
+    error_code?: number | string;
+}
+
+const stripHtml = (html: string): string => sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} });
+
+// Build a feed item from the timeline list data alone (no detail request).
+const buildListItem = (item: any) => ({
+    title: item.title || stripHtml(item.description || ''),
+    description: item.description || '',
+    pubDate: parseDate(item.created_at),
+    link: rootUrl + item.target,
+});
+
+const buildTitle = (item: any, detail: any): string => {
+    if (item.title) {
+        return item.title;
+    }
+    return stripHtml(item.text || item.description || detail.text || '');
+};
+
+const buildDescription = (detail: any): string => {
+    let text = detail.text ?? detail.description;
+    const images = detail.image_info_list ?? [];
+    for (const img of images) {
+        if (img?.filename) {
+            text += `<br><img src="https://xqimg.imedao.com/${img.filename}">`;
+        }
+    }
+    if (detail.retweeted_status) {
+        text += `<blockquote>${detail.retweeted_status.user.screen_name}:&nbsp;${detail.retweeted_status.text}</blockquote>`;
+    }
+    return text;
+};
+
+const extractProfileImage = (user: any): string | undefined => {
+    if (!user?.profile_image_url || !user?.photo_domain) {
+        return undefined;
+    }
+
+    const imageUrls = user.profile_image_url.split(',').filter(Boolean);
+    if (imageUrls.length === 0) {
+        return undefined;
+    }
+
+    // Priority order for image sizes
+    const sizePriority = ['!180x180.png', '!50x50.png', '!30x30.png'];
+    const selectedImageUrl = sizePriority.map((size) => imageUrls.find((url) => url.includes(size))).find(Boolean) || imageUrls[0];
+    const baseDomain = user.photo_domain.startsWith('//') ? `https:${user.photo_domain}` : user.photo_domain;
+
+    return `${baseDomain}${selectedImageUrl}`;
 };
 
 async function handler(ctx) {
@@ -48,54 +112,72 @@ async function handler(ctx) {
         11: '交易',
     };
 
-    const token = await parseToken();
-    const res2 = await got({
-        method: 'get',
-        url: `${rootUrl}/v4/statuses/user_timeline.json`,
-        searchParams: queryString.stringify({
+    const link = `${rootUrl}/u/${id}`;
+    const cookie = await parseToken(link);
+
+    const response = await ofetch(`${apiUrl}/v4/statuses/user_timeline.json`, {
+        query: {
             user_id: id,
             type,
             source,
-        }),
+        },
         headers: {
-            Cookie: token,
-            Referer: `${rootUrl}/u/${id}`,
+            Cookie: cookie,
+            Referer: link,
         },
     });
-    const data = res2.data.statuses.filter((s) => s.mark !== 1); // 去除置顶动态
 
-    const items = await Promise.all(
-        data.map((item) =>
-            cache.tryGet(item.target, async () => {
-                const detailResponse = await got({
-                    method: 'get',
-                    url: rootUrl + item.target,
-                    headers: {
-                        Referer: `${rootUrl}/u/${id}`,
-                        Cookie: token,
-                    },
+    const data: Status[] = response.statuses.filter((s) => s.mark !== 1); // 去除置顶动态
+
+    // Use p-map to limit concurrency and avoid triggering Xueqiu show.json rate limiting.
+    const items = await pMap(
+        data,
+        async (item) => {
+            try {
+                return await cache.tryGet(item.target, async () => {
+                    // legal_user_visible 为 true 时列表已含完整内容，无需再请求详情
+                    if (item.legal_user_visible) {
+                        return buildListItem(item);
+                    }
+
+                    try {
+                        const detail = await ofetch(`${apiUrl}/statuses/show.json`, {
+                            query: { id: item.id },
+                            headers: { Cookie: cookie, Referer: link },
+                        });
+
+                        return {
+                            title: buildTitle(item, detail),
+                            description: buildDescription(detail),
+                            pubDate: parseDate(item.created_at),
+                            link: rootUrl + item.target,
+                        };
+                    } catch (error: any) {
+                        // Permanent failures (post deleted / not found): cache the fallback.
+                        const data: ApiError | undefined = error.response?._data || error.data;
+                        if (data?.error_code) {
+                            return buildListItem(item);
+                        }
+                        // Transient failures (rate limit / WAF): throw to skip caching, retry next request.
+                        throw error;
+                    }
                 });
-
-                const data = JSON.parse(detailResponse.data.match(/SNOWMAN_STATUS = (.*?});/)[1]);
-                item.text = data.text;
-
-                const retweetedStatus = item.retweeted_status ? `<blockquote>${item.retweeted_status.user.screen_name}:&nbsp;${item.retweeted_status.description}</blockquote>` : '';
-                const description = item.description + retweetedStatus;
-
-                return {
-                    title: item.title ?? sanitizeHtml(description, { allowedTags: [], allowedAttributes: {} }),
-                    description: item.text ? item.text + retweetedStatus : description,
-                    pubDate: parseDate(item.created_at),
-                    link: rootUrl + item.target,
-                };
-            })
-        )
+            } catch {
+                // Transient failure: provide a fallback item without caching, retry next request.
+                return buildListItem(item);
+            }
+        },
+        { concurrency: 3 }
     );
 
+    const user = data[0]?.user;
+
     return {
-        title: `${data[0].user.screen_name} 的雪球${typename[type]}动态`,
-        link: `${rootUrl}/u/${id}`,
-        description: `${data[0].user.screen_name} 的雪球${typename[type]}动态`,
+        title: `${user?.screen_name ?? id} 的雪球${typename[type]}动态`,
+        link,
+        description: `${user?.screen_name ?? id} 的雪球${typename[type]}动态`,
+        image: extractProfileImage(user),
         item: items,
+        allowEmpty: true,
     };
 }

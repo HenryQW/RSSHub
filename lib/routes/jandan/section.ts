@@ -1,59 +1,107 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
-import { load } from 'cheerio';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types';
+
+import { handleCommentSection, handleForumSection, handleTopSection } from './utils';
 
 export const route: Route = {
-    path: '/:category',
-    name: 'Unknown',
-    maintainers: [],
+    path: '/:category/:type?',
+    example: '/jandan/top',
+    name: 'Section',
+    maintainers: ['kobemtl', 'Xuanwo', 'xyqfer', '9uanhuo', 'nczitzk', 'pseudoyu'],
+    parameters: {
+        category: {
+            description: '板块',
+            options: [
+                {
+                    label: '热榜',
+                    value: 'top',
+                },
+                {
+                    label: '问答',
+                    value: 'qa',
+                },
+                {
+                    label: '树洞',
+                    value: 'treehole',
+                },
+                {
+                    label: '随手拍',
+                    value: 'ooxx',
+                },
+                {
+                    label: '女装',
+                    value: 'beauty',
+                },
+                {
+                    label: '无聊图',
+                    value: 'pic',
+                },
+                {
+                    label: '鱼塘',
+                    value: 'bbs',
+                },
+            ],
+        },
+        type: {
+            description: '热榜类型，仅当 category 选择 `top` 时有效',
+            default: '4hr',
+            options: [
+                {
+                    label: '4小时热门',
+                    value: '4hr',
+                },
+                {
+                    label: '3天内无聊图',
+                    value: 'pic3days',
+                },
+                {
+                    label: '7天内无聊图',
+                    value: 'pic7days',
+                },
+            ],
+        },
+    },
+    features: {
+        requireConfig: false,
+        requirePuppeteer: false,
+        antiCrawler: false,
+        supportBT: false,
+        supportPodcast: false,
+        supportScihub: false,
+    },
+    radar: [
+        {
+            source: ['i.jandan.net/:category'],
+            target: '/jandan/:category?',
+        },
+    ],
     handler,
 };
 
-async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'top';
+async function handler(ctx): Promise<{
+    title: string;
+    link: string;
+    item: DataItem[];
+}> {
+    let category = ctx.req.param('category') ?? 'top';
+    category = category.replace(/#.*$/, '');
 
-    const rootUrl = 'http://i.jandan.net';
+    const type = ctx.req.param('type') ?? '4hr';
+    const rootUrl = 'https://i.jandan.net';
     const currentUrl = `${rootUrl}/${category}`;
 
-    const response = await got({
-        method: 'get',
-        url: currentUrl,
-    });
+    let result: { title: string; items: DataItem[]; link?: string };
 
-    const $ = load(response.data);
-
-    const items = $('ol.commentlist li')
-        .not('.row')
-        .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50)
-        .toArray()
-        .map((item) => {
-            item = $(item);
-
-            item.find('.commenttext img, .tucao-report').remove();
-
-            item.find('.commenttext .view_img_link').each(function () {
-                const url = new URL($(this).attr('href'), rootUrl);
-                url.protocol = 'https:';
-                url.host = url.host.replace('moyu.im', 'sinaimg.cn');
-                $(this).replaceWith(`<img src="${url}">`);
-            });
-
-            const author = item.find('b').first().text();
-            const description = item.find('.commenttext');
-
-            return {
-                author,
-                description: description.html(),
-                title: `${author}: ${description.text()}`,
-                pubDate: parseDate(item.find('.time').text()),
-                link: `${rootUrl}/t/${item.attr('id').split('-').pop()}`,
-            };
-        });
+    if (category === 'top') {
+        result = await handleTopSection(rootUrl, type);
+    } else if (category === 'bbs') {
+        result = await handleForumSection(rootUrl);
+    } else {
+        result = await handleCommentSection(rootUrl, category);
+    }
 
     return {
-        title: `${$('title').text()} - 煎蛋`,
-        link: currentUrl,
-        item: items,
+        title: result.title,
+        link: result.link ?? currentUrl,
+        item: result.items,
     };
 }

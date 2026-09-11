@@ -1,4 +1,4 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import buildData from '@/utils/common-config';
 
 export const route: Route = {
@@ -18,10 +18,10 @@ export const route: Route = {
     maintainers: ['zxx-457'],
     handler,
     description: `| Time frame |
-  | ---------- |
-  | upcoming   |
-  | past       |
-  | both       |`,
+| ---------- |
+| upcoming   |
+| past       |
+| both       |`,
 };
 
 async function handler(ctx) {
@@ -49,15 +49,12 @@ async function handler(ctx) {
     return await buildData({
         link,
         url: link,
-        title: `%title%`,
-        params: {
-            title: 'AIEA Seminars',
-        },
+        title: 'AIEA Seminars',
         item: {
             item: `.seminar-contents .seminar-partWrap:nth-child(${nth_child}) > .seminar-list`,
-            title: `$('.seminar-list-title > span').text()`,
-            link: `$('a[href^="/0504"]').attr('href')`,
-            description: `$('.seminar-list .txt > .title').text()`,
+            title: ($) => $('.seminar-list-title > span').text(),
+            link: ($) => $('a[href^="/0504"]').attr('href'),
+            description: ($) => $('.seminar-list .txt > .title').text(),
         },
     });
 }

@@ -1,9 +1,12 @@
 import { destr } from 'destr';
+
 import ofetch from '@/utils/ofetch';
 
+import { getSearchParamsString } from './helpers';
+
 const getFakeGot = (defaultOptions?: any) => {
-    const fakeGot = (request, options?: any) => {
-        if (!(typeof request === 'string' || request instanceof Request) && request.url) {
+    const fakeGot = async (request, options?: any) => {
+        if (!(request instanceof Request) && request.url) {
             options = {
                 ...request,
                 ...options,
@@ -27,7 +30,7 @@ const getFakeGot = (defaultOptions?: any) => {
             delete options.json;
         }
         if (options?.form && !options.body) {
-            options.body = new URLSearchParams(options.form as Record<string, string>).toString();
+            options.body = new URLSearchParams(options.form).toString();
             if (!options.headers) {
                 options.headers = {};
             }
@@ -35,7 +38,7 @@ const getFakeGot = (defaultOptions?: any) => {
             delete options.form;
         }
         if (options?.searchParams) {
-            request += '?' + new URLSearchParams(options.searchParams).toString();
+            request += '?' + getSearchParamsString(options.searchParams);
             delete options.searchParams;
         }
 
@@ -64,10 +67,11 @@ const getFakeGot = (defaultOptions?: any) => {
         const response = ofetch(request, options);
 
         if (options?.responseType === 'arrayBuffer') {
-            return response.then((responseData) => ({
+            const responseData = await response;
+            return {
                 data: Buffer.from(responseData),
                 body: Buffer.from(responseData),
-            }));
+            };
         }
         return response;
     };

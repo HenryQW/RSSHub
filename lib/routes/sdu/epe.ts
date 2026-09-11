@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -26,8 +27,8 @@ export const route: Route = {
     maintainers: ['Ji4n1ng'],
     handler,
     description: `| 学院动态 | 通知公告 | 学术论坛 |
-  | -------- | -------- | -------- |
-  | 0        | 1        | 2        |`,
+| -------- | -------- | -------- |
+| 0        | 1        | 2        |`,
 };
 
 async function handler(ctx) {
@@ -38,31 +39,31 @@ async function handler(ctx) {
     const $ = load(response.data);
 
     let item = $('#page_right_main li a')
-        .map((_, e) => {
-            e = $(e);
+        .toArray()
+        .map((e): DataItem => {
+            const $e = $(e);
             return {
-                title: e.attr('title'),
-                link: e.attr('href'),
+                title: $e.attr('title')!,
+                link: $e.attr('href'),
             };
-        })
-        .get();
+        });
 
     item = await Promise.all(
         item
-            .filter((e) => e.link.startsWith('../info'))
+            .filter((e) => e.link!.startsWith('../info'))
             .map((item) => {
-                item.link = new URL(item.link.slice('3'), host).href;
+                item.link = new URL(item.link!.slice(3), host).href;
                 return cache.tryGet(item.link, async () => {
                     const response = await got(item.link);
                     const $ = load(response.data);
 
                     const info = $('#show_info').text().split(/\s{4}/);
-                    const date = info[0].split('：')[1];
+                    const date = info[0].split('：', 2)[1];
 
                     item.title = $('#show_title').text().trim();
                     item.author = info[1].replace('编辑：', '') || '山东大学能源与动力工程学院';
                     item.description = $('#show_content').html();
-                    item.pubDate = timezone(parseDate(date), +8);
+                    item.pubDate = timezone(parseDate(date), 8);
 
                     return item;
                 });

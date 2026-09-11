@@ -1,7 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+import pMap from 'p-map';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
+
 import { rootUrl } from './utils';
 
 export const route: Route = {
@@ -36,35 +39,38 @@ async function handler() {
 
     const list = $('.video_item')
         .toArray()
-        .map((item) => {
-            item = $(item);
-            const link = item.find('a').attr('href').replace('http://', 'https://');
+        .map((item): DataItem => {
+            const $item = $(item);
+            const link = $item.find('a').attr('href')!.replace('http://', 'https://');
             return {
-                title: item.text(),
+                title: $item.text(),
                 link,
-                guid: `${link}#${item.find('.video_item--info').text()}`,
+                guid: `${link}#${$item.find('.video_item--info').text()}`,
             };
         });
 
-    const items = await Promise.all(
-        list.map((item) =>
-            cache.tryGet(item.link, async () => {
+    const items: DataItem[] = await pMap(
+        list,
+        (item) =>
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got(item.link);
                 const content = load(detailResponse.data);
 
                 content('img').each((_, ele) => {
-                    if (ele.attribs['data-original']) {
-                        ele.attribs.src = ele.attribs['data-original'];
-                        delete ele.attribs['data-original'];
+                    if (!ele.attribs['data-original']) {
+                        return;
                     }
+
+                    ele.attribs.src = ele.attribs['data-original'];
+                    delete ele.attribs['data-original'];
                 });
                 content('.video_detail_collect').remove();
 
                 item.description = content('.video_detail_left').html();
 
                 return item;
-            })
-        )
+            }),
+        { concurrency: 3 }
     );
 
     return {

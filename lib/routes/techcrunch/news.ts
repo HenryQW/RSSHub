@@ -1,8 +1,11 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
-import parser from '@/utils/rss-parser';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
+
+import { renderDescription } from './templates/description';
+
 const host = 'https://techcrunch.com';
 export const route: Route = {
     path: '/news',
@@ -23,39 +26,27 @@ export const route: Route = {
         },
     ],
     name: 'News',
-    maintainers: ['EthanWng97'],
+    maintainers: ['IvanWng97'],
     handler,
     url: 'techcrunch.com/',
 };
 
 async function handler() {
-    const rssUrl = `${host}/feed/`;
-    const feed = await parser.parseURL(rssUrl);
-    const items = await Promise.all(
-        feed.items.map((item) =>
-            cache.tryGet(item.link, async () => {
-                const url = item.link;
-                const response = await got({
-                    url,
-                    method: 'get',
-                });
-                const html = response.data;
-                const $ = load(html);
-                const description = $('#root');
-                description.find('.article__title').remove();
-                description.find('.article__byline__meta').remove();
-                description.find('.mobile-header-nav').remove();
-                description.find('.desktop-nav').remove();
-                return {
-                    title: item.title,
-                    pubDate: item.pubDate,
-                    link: item.link,
-                    category: item.categories,
-                    description: description.html(),
-                };
-            })
-        )
-    );
+    const { data } = await got(`${host}/wp-json/wp/v2/posts`);
+    const items = data.map((item) => {
+        const head = item.yoast_head_json;
+        const $ = load(item.content.rendered, null, false);
+        $('.wp-block-techcrunch-inline-cta').remove();
+        return {
+            title: item.title.rendered,
+            description: renderDescription({
+                head,
+                rendered: $.html(),
+            }),
+            link: item.link,
+            pubDate: parseDate(item.date_gmt),
+        };
+    });
 
     return {
         title: 'TechCrunch',

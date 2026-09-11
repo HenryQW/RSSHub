@@ -1,7 +1,8 @@
-import { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/',
@@ -24,7 +25,8 @@ async function handler() {
     const $ = load(response.data);
 
     const list = $("article[class='post-outer-container']")
-        .map((i, e) => {
+        .toArray()
+        .map((e) => {
             const element = $(e);
             const title = element.find('h3 > a').text();
             const link = element.find('h3 > a').attr('href');
@@ -35,10 +37,9 @@ async function handler() {
                 title,
                 description,
                 link,
-                pubDate: parseDate(dateraw, 'YYYY-MM-DDTHH:mm:ss+08:00'),
+                pubDate: parseDate(dateraw!, 'YYYY-MM-DDTHH:mm:ss+08:00'),
             };
-        })
-        .get();
+        });
 
     return {
         title: '电脑玩物',

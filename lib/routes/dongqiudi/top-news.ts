@@ -1,12 +1,13 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import utils from './utils';
 import { parseDate } from '@/utils/parse-date';
+
+import { processFeedType2 } from './utils';
 
 export const route: Route = {
     path: '/top_news/:id?',
-    categories: ['new-media'],
+    categories: ['sport'],
     example: '/dongqiudi/top_news/1',
     parameters: { id: '类别 id，不填默认头条新闻' },
     features: {
@@ -27,8 +28,8 @@ export const route: Route = {
     maintainers: ['HendricksZheng'],
     handler,
     description: `| 头条 | 深度 | 闲情 | D 站 | 中超 | 国际 | 英超 | 西甲 | 意甲 | 德甲 |
-  | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
-  | 1    | 55   | 37   | 219  | 56   | 120  | 3    | 5    | 4    | 6    |`,
+| ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| 1    | 55   | 37   | 219  | 56   | 120  | 3    | 5    | 4    | 6    |`,
 };
 
 async function handler(ctx) {
@@ -41,14 +42,14 @@ async function handler(ctx) {
         title: item.title,
         link: `https://www.dongqiudi.com/articles/${item.id}.html`,
         category: [item.category, ...(item.secondary_category ?? [])],
-        pubDate: parseDate(item.show_time),
+        pubDate: parseDate(item.show_time, 'X'),
     }));
 
     const out = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 const { data: response } = await got(item.link);
-                utils.ProcessFeedType2(item, response);
+                processFeedType2(item, response);
                 return item;
             })
         )

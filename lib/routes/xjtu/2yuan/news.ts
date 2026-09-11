@@ -1,9 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 export const route: Route = {
     path: '/2yuan/news/:id?',
@@ -22,17 +23,17 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 分类     | 编号 |
-  | -------- | ---- |
-  | 通知公告 | 110  |
-  | 综合新闻 | 6    |
-  | 科室动态 | 8    |
-  | 教学动态 | 45   |
-  | 科研动态 | 51   |
-  | 护理动态 | 57   |
-  | 党群活动 | 63   |
-  | 外事活动 | 13   |
-  | 媒体二院 | 14   |
-  | 理论政策 | 16   |`,
+| -------- | ---- |
+| 通知公告 | 110  |
+| 综合新闻 | 6    |
+| 科室动态 | 8    |
+| 教学动态 | 45   |
+| 科研动态 | 51   |
+| 护理动态 | 57   |
+| 党群活动 | 63   |
+| 外事活动 | 13   |
+| 媒体二院 | 14   |
+| 理论政策 | 16   |`,
 };
 
 async function handler(ctx) {
@@ -50,18 +51,18 @@ async function handler(ctx) {
 
     let items = $('.column_list h2')
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .map((item): DataItem => {
+            const $item = $(item);
             return {
-                title: item.find('a').attr('title'),
-                link: `${rootUrl}${item.find('a').attr('href')}`,
-                pubDate: timezone(parseDate(item.find('.dy_date').text()), +8),
+                title: $item.find('a').attr('title')!,
+                link: `${rootUrl}${$item.find('a').attr('href')}`,
+                pubDate: timezone(parseDate($item.find('.dy_date').text()), 8),
             };
         });
 
     items = await Promise.all(
         items.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
@@ -77,7 +78,7 @@ async function handler(ctx) {
                             .text()
                             .replace(/发布时间：/, '')
                     ),
-                    +8
+                    8
                 );
 
                 return item;

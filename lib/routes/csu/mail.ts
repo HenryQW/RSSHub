@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -28,8 +29,8 @@ export const route: Route = {
     maintainers: ['j1g5awi'],
     handler,
     description: `| 类型 | 校长信箱 | 党委信箱 |
-  | ---- | -------- | -------- |
-  | 参数 | 01       | 02       |`,
+| ---- | -------- | -------- |
+| 参数 | 01       | 02       |`,
 };
 
 async function handler(ctx) {

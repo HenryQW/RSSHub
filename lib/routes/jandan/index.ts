@@ -1,24 +1,49 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
+import cache from '@/utils/cache';
+import ofetch from '@/utils/ofetch';
 import parser from '@/utils/rss-parser';
 
 export const route: Route = {
     path: '/',
-    name: 'Unknown',
-    maintainers: ['nczitzk', 'bigfei'],
+    example: '/jandan',
+    name: 'Feed',
+    maintainers: ['lonelykid', 'nczitzk', 'bigfei', 'pseudoyu'],
+    parameters: {},
+    features: {
+        requireConfig: false,
+        requirePuppeteer: false,
+        antiCrawler: false,
+        supportBT: false,
+        supportPodcast: false,
+        supportScihub: false,
+    },
+    radar: [
+        {
+            source: ['i.jandan.net'],
+            target: '/jandan',
+        },
+    ],
     handler,
 };
 
-async function handler() {
-    const rootUrl = 'http://i.jandan.net';
+async function handler(): Promise<{
+    title: string;
+    link: string;
+    item: DataItem[];
+}> {
+    const rootUrl = 'https://i.jandan.net';
     const feed = await parser.parseURL(`${rootUrl}/feed/`);
     const items = await Promise.all(
-        feed.items.map((item) =>
-            cache.tryGet(item.link, async () => {
-                const response = await got(item.link);
-                const $ = load(response.data);
+        feed.items.map((item) => {
+            const link = item.link;
+            if (!link) {
+                return;
+            }
+            return cache.tryGet(link, async () => {
+                const response = await ofetch(link);
+                const $ = load(response);
                 $('.wechat-hide').prev().nextAll().remove();
                 $('img').replaceWith((i, e) => {
                     const src = $(e).attr('src');
@@ -26,8 +51,8 @@ async function handler() {
                     const newSrc = src?.replace(/https?:\/\/(\w+)\.moyu\.im/, 'https://$1.sinaimg.cn');
                     return `<img src="${newSrc}" alt="${alt}">`;
                 });
-                const single = {
-                    title: item.title,
+                const single: DataItem = {
+                    title: item.title || '',
                     description: $('.entry').html(),
                     pubDate: item.pubDate,
                     link: item.link,
@@ -35,12 +60,13 @@ async function handler() {
                     category: item.categories,
                 };
                 return single;
-            })
-        )
+            });
+        })
     );
+
     return {
         title: '煎蛋',
         link: rootUrl,
-        item: items,
+        item: items.filter((item): item is DataItem => item !== undefined),
     };
 }

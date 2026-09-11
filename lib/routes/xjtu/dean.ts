@@ -1,7 +1,8 @@
-import { Route, Data, DataItem } from '@/types';
+import { load } from 'cheerio';
+
+import type { Data, DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import ofetch from '@/utils/ofetch';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -10,17 +11,13 @@ const parseContent = (htmlString) => {
 
     const info = $('.detail_main_content > h1')
         .contents()
-        .filter(function () {
-            return this.nodeType === 3;
-        })
-        .map(function () {
-            return $(this).text().trim();
-        })
-        .get();
+        .filter((_, element) => element.nodeType === 3)
+        .toArray()
+        .map((element) => $(element).text().trim());
 
     const content = $('[id^="vsb_content"]');
-    $('form > div > ul a').each(function () {
-        $(this).appendTo(content);
+    $('form > div > ul a').each((_, el) => {
+        $(el).appendTo(content);
         $('<br>').appendTo(content);
     });
 
@@ -56,13 +53,13 @@ async function handler(ctx) {
     const list = $('#ny-main > div.ny.wp > ul > li')
         .toArray()
         .map((item: any) => {
-            item = $(item);
-            const title = item.find('a').text();
-            const link = new URL(item.find('a').attr('href'), base).href;
+            const $item = $(item);
+            const title = $item.find('a').text();
+            const link = new URL($item.find('a').attr('href')!, base).href;
             return {
                 title,
                 link,
-                pubDate: timezone(parseDate(item.find('span').text(), 'YYYY-MM-DD'), +8),
+                pubDate: timezone(parseDate($item.find('span').text(), 'YYYY-MM-DD'), 8),
             };
         });
 
@@ -86,6 +83,6 @@ async function handler(ctx) {
     return {
         title: `西安交大教务处 - ${subName}`,
         link: url,
-        item: out.filter((item) => item !== ''),
-    } as Data;
+        item: out.filter((item) => (item as DataItem | string) !== ''),
+    } satisfies Data;
 }

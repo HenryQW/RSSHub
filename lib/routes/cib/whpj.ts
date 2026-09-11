@@ -1,11 +1,13 @@
-import { Route } from '@/types';
+import crypto from 'node:crypto';
+import https from 'node:https';
+
+import { load } from 'cheerio';
+
+import { config } from '@/config';
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
-import https from 'https';
-import crypto from 'crypto';
-import { config } from '@/config';
 
 export const route: Route = {
     path: '/whpj/:format?',
@@ -31,8 +33,8 @@ export const route: Route = {
     handler,
     url: 'cib.com.cn/',
     description: `| 短格式 | 现汇买卖 | 现钞买卖 | 现汇买入 | 现汇卖出 | 现钞买入 | 现钞卖出 |
-  | ------ | -------- | -------- | -------- | -------- | -------- | -------- |
-  | short  | xh       | xc       | xhmr     | xhmc     | xcmr     | xcmc     |`,
+| ------ | -------- | -------- | -------- | -------- | -------- | -------- |
+| short  | xh       | xc       | xhmr     | xhmc     | xcmr     | xcmc     |`,
 };
 
 async function handler(ctx) {
@@ -42,12 +44,12 @@ async function handler(ctx) {
     });
 
     const response = await got('https://personalbank.cib.com.cn/pers/main/pubinfo/ifxQuotationQuery.do', { agent: { https: agent } });
-    const cookies = response.headers['set-cookie'].map((item) => item.split(';')[0]).join(';');
+    const cookies = response.headers['set-cookie'].map((item) => item.split(';', 1)[0]).join(';');
 
     const $ = load(response.data);
     let date = $('div.main-body').find('div.labe_text').text();
-    date = date.split('\n\t')[1].replace('日期：', '').trim();
-    date = date.substring(0, 11) + date.substring(15);
+    date = date.split('\n\t', 2)[1].replace('日期：', '').trim();
+    date = date.slice(0, 11) + date.slice(15);
 
     const link = 'https://personalbank.cib.com.cn/pers/main/pubinfo/ifxQuotationQuery/list?_search=false&dataSet.rows=80&dataSet.page=1&dataSet.sidx=&dataSet.sord=asc';
     const data = await cache.tryGet(

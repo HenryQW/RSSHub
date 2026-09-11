@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -31,7 +32,7 @@ async function handler(ctx) {
     const baseUrl = 'https://www.macupdate.com';
     const link = `${baseUrl}/app/mac/${appId}${appSlug ? `/${appSlug}` : ''}`;
 
-    const { data: response } = await got(link);
+    const response = await ofetch(link);
     const $ = load(response);
 
     const nextData = JSON.parse($('#__NEXT_DATA__').text());
@@ -39,7 +40,7 @@ async function handler(ctx) {
     const {
         asPath,
         appData: { data: appData },
-    } = nextData.props.initialProps.pageProps;
+    } = nextData.props.pageProps;
 
     const item = {
         title: `${appData.title} ${appData.version}`,
@@ -51,10 +52,6 @@ async function handler(ctx) {
         author: appData.developer.name,
     };
 
-    ctx.set('json', {
-        pageProps: nextData.props.initialProps.pageProps,
-    });
-
     return {
         title: appData.title,
         description: appData.description,
@@ -62,6 +59,6 @@ async function handler(ctx) {
         logo: appData.logo.source,
         icon: appData.logo.source,
         item: [item],
-        language: 'en',
+        language: 'en' as const,
     };
 }

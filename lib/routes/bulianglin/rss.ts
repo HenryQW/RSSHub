@@ -1,7 +1,8 @@
-import { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/',
@@ -24,7 +25,8 @@ async function handler() {
     const $ = load(response.data);
 
     const list = $('div.single-post')
-        .map((i, e) => {
+        .toArray()
+        .map((e) => {
             const element = $(e);
             const title = element.find('h2 > a').text();
             const link = element.find('h2 > a').attr('href');
@@ -37,8 +39,7 @@ async function handler() {
                 link,
                 pubDate: parseDate(dateraw, 'YYYY 年 MM 月 DD 日'),
             };
-        })
-        .get();
+        });
 
     return {
         title: '不良林',

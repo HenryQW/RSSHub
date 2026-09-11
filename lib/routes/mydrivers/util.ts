@@ -1,7 +1,10 @@
-import got from '@/utils/got';
 import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
+
+import type { Language } from '@/types';
+import cache from '@/utils/cache';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 const domain = 'mydrivers.com';
 const rootUrl = `https://m.${domain}`;
@@ -23,17 +26,14 @@ const categories = {
  */
 const convertToQueryString = (path) => {
     const parts = path.split('/');
-    const queryStringParams = [];
+    const queryStringParams: string[] = [];
 
-    for (const [key, value] of parts.reduce((acc, part, index) => {
-        if (index % 2 === 0) {
-            acc.push([part]);
-        } else {
-            acc.at(-1).push(part);
+    for (let i = 0; i < parts.length; i += 2) {
+        const key = parts[i];
+        const value = parts[i + 1];
+        if (key !== undefined && value !== undefined) {
+            queryStringParams.push(`${key}=${value}`);
         }
-        return acc;
-    }, [])) {
-        queryStringParams.push(`${key}=${value}`);
     }
 
     return `?${queryStringParams.join('&')}`;
@@ -42,17 +42,16 @@ const convertToQueryString = (path) => {
 /**
  * Retrieves information from a given URL using a provided tryGet function.
  * @param {string} url - The URL to retrieve information from.
- * @param {function} tryGet - The tryGet function that handles the retrieval process.
  * @param {number|undefined} [range] - The index value of the range (optional).
  * @returns {Promise<Object>} - A promise that resolves to an object containing the retrieved information.
  */
-const getInfo = (url, tryGet, range) =>
-    tryGet(url, async () => {
+const getInfo = (url, range?) =>
+    cache.tryGet(url, async () => {
         const { data: response } = await got(url);
 
         const $ = load(response);
 
-        const icon = new URL($('link[rel="apple-touch-icon-precomposed"]').prop('href'), rootUrl).href;
+        const icon = new URL($('link[rel="apple-touch-icon-precomposed"]').prop('href')!, rootUrl).href;
         const image = `https:${$('div.logo a img').prop('src')}`;
         const ranges = $('div.hottime a')
             .toArray()
@@ -62,7 +61,7 @@ const getInfo = (url, tryGet, range) =>
             title: `${title} - ${range !== undefined && ranges ? ranges[range] : $(`a[data-id="${url.split(/=/).pop()}"]`).text() || $('#newsEventSwitch a.cur').text()}`,
             link: url,
             description: $('meta[name="description"]').prop('content'),
-            language: 'zh-cn',
+            language: 'zh-CN' as const satisfies Language,
             image,
             icon,
             logo: icon,
@@ -76,13 +75,12 @@ const getInfo = (url, tryGet, range) =>
  * Process items asynchronously.
  *
  * @param {Array<Object>} items - The array of items to process.
- * @param {function} tryGet - The tryGet function that handles the retrieval process.
  * @returns {Promise<Array<Object>>} Returns a Promise that resolves to an array of processed items.
  */
-const processItems = async (items, tryGet) =>
+const processItems = async (items) =>
     await Promise.all(
         items.map((item) =>
-            tryGet(`${domain}#${item.guid}`, async () => {
+            cache.tryGet(`${domain}#${item.guid}`, async () => {
                 const { data: detailResponse } = await got(`${rootUrl}/newsview/${item.guid}.html`);
 
                 const { data: voteResponse } = await got.post(apiVoteUrl, {
@@ -103,14 +101,14 @@ const processItems = async (items, tryGet) =>
                         .map((c) => content(c).contents().last().text().trim()),
                 ].filter(Boolean);
                 item.guid = `${domain}#${item.guid}`;
-                item.pubDate = item.pubDate ?? timezone(parseDate(content('li.writer').next().text().trim(), 'YYYY年MM月DD日 HH:mm'), +8);
-                item.upvotes = voteResponse.NewsSupport ? Number.parseInt(voteResponse.NewsSupport, 10) : 0;
-                item.downvotes = voteResponse.NewsOppose ? Number.parseInt(voteResponse.NewsOppose, 10) : 0;
-                item.comments = content('#tpinglun').text() ? Number.parseInt(content('#tpinglun').text(), 10) : 0;
+                item.pubDate ??= timezone(parseDate(content('li.writer').next().text().trim(), 'YYYY年MM月DD日 HH:mm'), 8);
+                item.upvotes = voteResponse.NewsSupport ? Number(voteResponse.NewsSupport) : 0;
+                item.downvotes = voteResponse.NewsOppose ? Number(voteResponse.NewsOppose) : 0;
+                item.comments = content('#tpinglun').text() ? Number(content('#tpinglun').text()) : 0;
 
                 return item;
             })
         )
     );
 
-export { rootUrl, rootRSSUrl, title, categories, convertToQueryString, getInfo, processItems };
+export { categories, convertToQueryString, getInfo, processItems, rootRSSUrl, rootUrl, title };

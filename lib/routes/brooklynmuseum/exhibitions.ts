@@ -1,4 +1,4 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import buildData from '@/utils/common-config';
 
 export const route: Route = {
@@ -15,7 +15,7 @@ export const route: Route = {
         supportScihub: false,
     },
     name: 'Exhibitions',
-    maintainers: [],
+    maintainers: ['chazeon'],
     handler,
 };
 
@@ -38,9 +38,9 @@ async function handler(ctx) {
         title: 'Brooklyn Museum - Exhibitions',
         item: {
             item: '.exhibitions .image-card',
-            title: `$('h2 > a, h3 > a').text()`,
-            link: `$('h2 > a, h3 > a').attr('href')`,
-            description: `$('h6').text()`,
+            title: ($) => $('h2 > a, h3 > a').text(),
+            link: ($) => $('h2 > a, h3 > a').attr('href'),
+            description: ($) => $('h6').text(),
         },
     });
 }

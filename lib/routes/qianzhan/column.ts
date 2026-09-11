@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -22,8 +23,8 @@ export const route: Route = {
     maintainers: ['moke8'],
     handler,
     description: `| 全部 | 研究员专栏 | 规划师专栏 | 观察家专栏 |
-  | ---- | ---------- | ---------- | ---------- |
-  | all  | 220        | 627        | 329        |`,
+| ---- | ---------- | ---------- | ---------- |
+| all  | 220        | 627        | 329        |`,
 };
 
 async function handler(ctx) {
@@ -51,15 +52,15 @@ async function handler(ctx) {
                 const $ = load(detailResponse.data);
                 const description = $('#divArtBody').html();
                 const title = $('#h_title').text();
-                const pubDate = timezone(parseDate($('#pubtime_baidu').text().split('• ')[1], 'YYYY-MM-DD HH:mm:ss'), +8);
-                const author = $('.bljjxue').text().match(/\S+/)[0];
+                const pubDate = timezone(parseDate($('#pubtime_baidu').text().split('• ', 2)[1], 'YYYY-MM-DD HH:mm:ss'), 8);
+                const author = $('.bljjxue').text().match(/\S+/)![0];
                 return {
                     title,
                     link: item,
                     description,
                     pubDate,
                     author,
-                    category: $('meta[name="Keywords"]').attr('content').split(','),
+                    category: $('meta[name="Keywords"]').attr('content')!.split(','),
                 };
             })
         )

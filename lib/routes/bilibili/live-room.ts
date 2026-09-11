@@ -1,5 +1,10 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
+import { decodeHTML } from 'entities';
+
+import type { DataItem, Route } from '@/types';
+import ofetch from '@/utils/ofetch';
+import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
+
 import cache from './cache';
 
 export const route: Route = {
@@ -29,36 +34,35 @@ async function handler(ctx) {
     let roomID = ctx.req.param('roomID');
 
     // 短号查询长号
-    if (Number.parseInt(roomID, 10) < 10000) {
+    if (Number(roomID) < 10000) {
         roomID = await cache.getLiveIDFromShortID(roomID);
     }
-    const name = await cache.getUsernameFromLiveID(roomID);
+    const info = await cache.getUserInfoFromLiveID(roomID);
 
-    const response = await got({
-        method: 'get',
-        url: `https://api.live.bilibili.com/room/v1/Room/get_info?room_id=${roomID}&from=room`,
+    const response = await ofetch(`https://api.live.bilibili.com/room/v1/Room/get_info?room_id=${roomID}&from=room`, {
         headers: {
             Referer: `https://live.bilibili.com/${roomID}`,
         },
     });
-    const data = response.data.data;
+    const data = response.data;
 
-    const liveItem = [];
+    const liveItem: DataItem[] = [];
 
     if (data.live_status === 1) {
         liveItem.push({
             title: `${data.title} ${data.live_time}`,
-            description: `${data.title}<br>${data.description}`,
-            pubDate: new Date(data.live_time.replace(' ', 'T') + '+08:00').toUTCString(),
+            description: `<img src="${data.keyframe}"><br>${decodeHTML(data.description)}`,
+            pubDate: timezone(parseDate(data.live_time), 8),
             guid: `https://live.bilibili.com/${roomID} ${data.live_time}`,
             link: `https://live.bilibili.com/${roomID}`,
         });
     }
 
     return {
-        title: `${name} 直播间开播状态`,
+        title: `${info.uname} 直播间开播状态`,
         link: `https://live.bilibili.com/${roomID}`,
-        description: `${name} 直播间开播状态`,
+        description: `${info.uname} 直播间开播状态`,
+        image: info.face,
         item: liveItem,
         allowEmpty: true,
     };

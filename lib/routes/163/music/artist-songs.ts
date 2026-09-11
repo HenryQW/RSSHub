@@ -1,10 +1,7 @@
-import { Route } from '@/types';
-import { getCurrentPath } from '@/utils/helpers';
-const __dirname = getCurrentPath(import.meta.url);
-
+import type { Route } from '@/types';
 import got from '@/utils/got';
-import { art } from '@/utils/render';
-import path from 'node:path';
+
+import { renderPlaylistDescription } from '../templates/music/playlist';
 
 export const route: Route = {
     path: '/music/artist/songs/:id',
@@ -15,10 +12,17 @@ export const route: Route = {
         requireConfig: false,
         requirePuppeteer: false,
         antiCrawler: false,
+        supportRadar: true,
         supportBT: false,
         supportPodcast: false,
         supportScihub: false,
     },
+    radar: [
+        {
+            source: ['music.163.com/artist'],
+            target: '/music/artist/songs/:id',
+        },
+    ],
     name: '歌手歌曲',
     maintainers: ['ZhongMingKun'],
     handler,
@@ -27,10 +31,7 @@ export const route: Route = {
 async function handler(ctx) {
     const id = ctx.req.param('id');
 
-    const { data } = await got(`https://music.163.com/api/v1/artist/songs`, {
-        headers: {
-            Referer: 'https://music.163.com/',
-        },
+    const { data } = await got('https://music.163.com/api/v1/artist/songs', {
         searchParams: {
             id,
             private_cloud: 'true',
@@ -44,7 +45,7 @@ async function handler(ctx) {
     const artist = data.songs.find(({ ar }) => ar[0].id === Number.parseInt(id)).ar[0];
     const items = data.songs.map((song) => ({
         title: `${song.name} - ${song.ar.map(({ name }) => name).join(' / ')}`,
-        description: art(path.join(__dirname, '../templates/music/playlist.art'), {
+        description: renderPlaylistDescription({
             singer: song.ar.map(({ name }) => name).join(' / '),
             album: song.al.name,
             picUrl: song.al.picUrl,

@@ -1,12 +1,16 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
+
 import util from './utils';
 
 export const route: Route = {
     path: '/home',
     categories: ['social-media'],
+    view: ViewType.Articles,
     example: '/jianshu/home',
     parameters: {},
     features: {
@@ -32,15 +36,12 @@ async function handler() {
     const response = await got({
         method: 'get',
         url: 'https://www.jianshu.com',
-        headers: {
-            Referer: 'https://www.jianshu.com',
-        },
     });
 
     const data = response.data;
 
     const $ = load(data);
-    const list = $('.note-list li').get();
+    const list = $('.note-list li').toArray();
 
     const result = await util.ProcessFeed(list, cache);
 

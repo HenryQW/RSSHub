@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 const rootUrl = 'http://www.nifd.cn';
@@ -37,7 +38,7 @@ export const route: Route = {
     handler,
     description: `资讯类型可以从网址中获取，如：
 
-  \`http://www.nifd.cn/Research?categoryGuid=7a6a826d-b525-42aa-b550-4236e524227f\` 对应 \`/nifd/research/7a6a826d-b525-42aa-b550-4236e524227f\``,
+\`http://www.nifd.cn/Research?categoryGuid=7a6a826d-b525-42aa-b550-4236e524227f\` 对应 \`/nifd/research/7a6a826d-b525-42aa-b550-4236e524227f\``,
 };
 
 async function handler(ctx) {
@@ -47,20 +48,36 @@ async function handler(ctx) {
     const response = await got.get(url);
     const $ = load(response.data);
     const list = $('div.qr-main-item')
-        .map((_, item) => ({
+        .toArray()
+        .map((item): DataItem => ({
             title: $(item).find('h2').text(),
             link: rootUrl + $(item).find('a').attr('href'),
             author: $(item).find('p > span:nth-child(2)').text(),
             pubDate: parseDate($(item).find('p > span:nth-child(1)').text(), 'YYYY-MM-DD'),
-        }))
-        .get();
+        }));
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got.get(item.link);
                 const content = load(detailResponse.data);
                 item.description = content('div.qrd-content').html();
+
+                const $enclosureEl = content('div.report-bottom a').first();
+                const enclosureUrl = $enclosureEl.attr('href');
+
+                if (enclosureUrl) {
+                    const enclosureItem = {
+                        enclosure_url: new URL(enclosureUrl, rootUrl).href,
+                        enclosure_type: `application/${enclosureUrl.split(/\./).pop() ?? 'pdf'}`,
+                        enclosure_title: $enclosureEl.prev().text(),
+                    };
+
+                    item = {
+                        ...item,
+                        ...enclosureItem,
+                    };
+                }
 
                 return item;
             })

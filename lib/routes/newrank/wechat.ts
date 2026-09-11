@@ -1,10 +1,12 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
-import { finishArticleItem } from '@/utils/wechat-mp';
 import { load } from 'cheerio';
-import utils from './utils';
+
 import { config } from '@/config';
 import ConfigNotFoundError from '@/errors/types/config-not-found';
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { finishArticleItem } from '@/utils/wechat-mp';
+
+import utils from './utils';
 
 export const route: Route = {
     path: '/wechat/:wxid',
@@ -25,7 +27,7 @@ export const route: Route = {
         supportScihub: false,
     },
     name: '微信公众号',
-    maintainers: ['lessmoe'],
+    maintainers: ['lessmoe', 'pseudoyu'],
     handler,
 };
 
@@ -46,7 +48,7 @@ async function handler(ctx) {
     const summary$ = load(summaryHTML);
     const mainsrc = summary$('script')
         .toArray()
-        .find((item) => (item.attribs.src || '').startsWith('/new/static/js/main.')).attribs.src;
+        .find((item) => (item.attribs.src || '').startsWith('/new/static/js/main.'))!.attribs.src;
     const { data: mainScript } = await got({
         method: 'get',
         url: `https://www.newrank.cn${mainsrc}`,
@@ -70,16 +72,21 @@ async function handler(ctx) {
             xyz: utils.decrypt_wechat_detail_xyz(uid, nonce),
         },
     });
+
     const name = response.data.value.user.name;
     const realTimeArticles = utils.flatten(response.data.value.realTimeArticles);
     const articles = utils.flatten(response.data.value.articles);
     const newArticles = [...realTimeArticles, ...articles];
+
     const items = newArticles.map((item) => ({
+        id: item.id,
         title: item.title,
         description: '',
         link: item.url,
         pubDate: item.publicTime,
     }));
+
+    // TODO: link is empty
     await Promise.all(items.map((item) => finishArticleItem(item)));
 
     return {

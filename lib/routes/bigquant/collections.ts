@@ -1,7 +1,10 @@
-import { Route } from '@/types';
+import MarkdownIt from 'markdown-it';
+
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
-import MarkdownIt from 'markdown-it';
+
 const md = MarkdownIt({
     html: true,
 });
@@ -9,6 +12,7 @@ const md = MarkdownIt({
 export const route: Route = {
     path: '/collections',
     categories: ['finance'],
+    view: ViewType.Articles,
     example: '/bigquant/collections',
     parameters: {},
     features: {

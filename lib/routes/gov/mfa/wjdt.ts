@@ -1,9 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 const categories = {
     gjldrhd: 'gjldrhd_674881',
@@ -18,21 +19,26 @@ const categories = {
 };
 
 export const route: Route = {
-    path: ['/fmprc/:category?', '/mfa/wjdt/:category?'],
-    name: 'Unknown',
+    path: '/wjdt/:category?',
+    categories: ['government'],
+    example: '/gov/mfa/wjdt/fyrbt',
+    parameters: {
+        category: '分类，见下表，默认为领导人活动',
+    },
+    name: '外交动态',
     maintainers: ['nicolaszf', 'nczitzk'],
     handler,
     description: `| 分类       | category |
-  | ---------- | -------- |
-  | 领导人活动 | gjldrhd  |
-  | 外事日程   | wsrc     |
-  | 部领导活动 | wjbxw    |
-  | 业务动态   | sjxw     |
-  | 发言人表态 | fyrbt    |
-  | 吹风会     | cfhsl    |
-  | 大使任免   | dsrm     |
-  | 驻外报道   | zwbd     |
-  | 政策解读   | zcjd     |`,
+| ---------- | -------- |
+| 领导人活动 | gjldrhd  |
+| 外事日程   | wsrc     |
+| 部领导活动 | wjbxw    |
+| 业务动态   | sjxw     |
+| 发言人表态 | fyrbt    |
+| 吹风会     | cfhsl    |
+| 大使任免   | dsrm     |
+| 驻外报道   | zwbd     |
+| 政策解读   | zcjd     |`,
 };
 
 async function handler(ctx) {
@@ -51,12 +57,12 @@ async function handler(ctx) {
     let items = $('ul.list1 li a')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 35)
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .map((item): DataItem & { link: string } => {
+            const $item = $(item);
 
             return {
-                title: item.text(),
-                link: item.attr('href').replace(/^\./, currentUrl),
+                title: $item.text(),
+                link: $item.attr('href')!.replace(/^\./, () => currentUrl),
             };
         });
 
@@ -71,7 +77,7 @@ async function handler(ctx) {
                 const content = load(detailResponse.data);
 
                 item.description = content('#News_Body_Txt_A').html();
-                item.pubDate = timezone(parseDate(content('.time span').last().text()), +8);
+                item.pubDate = timezone(parseDate(content('.time span').text()), 8);
                 item.category = content('meta[name="Keywords"]').attr('content')?.split(';') ?? [];
 
                 return item;

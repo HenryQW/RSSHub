@@ -1,4 +1,4 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import buildData from '@/utils/common-config';
 
 export const route: Route = {
@@ -28,8 +28,8 @@ async function handler() {
         title: 'Jewish Museums - Exhibitions',
         item: {
             item: '#current article.exhibition, #upcoming article, #past article.exhibition',
-            title: `$('article.exhibition h3').text()`,
-            link: `$('article.exhibition > a').attr('href')`,
+            title: ($) => $('h3').text(),
+            link: ($) => $('h3').parent().attr('href'),
         },
     });
 }

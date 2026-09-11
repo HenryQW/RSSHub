@@ -1,8 +1,10 @@
-import { Data, DataItem, Route } from '@/types';
-import { Context } from 'hono';
-import { baseURL } from './const';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+import type { Context } from 'hono';
+
+import type { Data, DataItem, Route } from '@/types';
+import got from '@/utils/got';
+
+import { baseURL } from './const';
 
 export const route: Route = {
     path: '/apps/:handle/reviews/:page?',
@@ -28,7 +30,6 @@ async function handler(ctx: Context): Promise<Data> {
         headers: {
             accept: 'text/html, application/xhtml+xml',
             'accept-language': 'en-US;q=0.9',
-            referer: baseURL,
             dnt: '1',
         },
     });
@@ -59,8 +60,8 @@ async function handler(ctx: Context): Promise<Data> {
                 description,
 
                 _extra: {
-                    ratting_value: Number($review1.find('div[role="img"]').attr('aria-label')?.substring(0, 1)),
-                    location: $review2.find('div.tw-text-fg-primary + div').text().trim(),
+                    ratting_value: Number($review1.find('div[role="img"]').attr('aria-label')?.slice(0, 1)),
+                    location: $review2.find('div.tw-text-fg-primary + div').text(),
                     author,
                 },
             };
@@ -72,7 +73,7 @@ async function handler(ctx: Context): Promise<Data> {
         title: `Reviews handle:${handle} page:${page} – Shopify App Store`,
         link: `${baseURL}/${handle}/reviews`,
         allowEmpty: true,
-        language: 'en-US',
+        language: 'en-us',
         item: items,
     };
 }

@@ -1,6 +1,8 @@
-import { Route } from '@/types';
-import util from './utils';
 import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { Route } from '@/types';
+
+import util from './utils';
+
 const baseUrl = 'https://lib.nua.edu.cn';
 
 export const route: Route = {
@@ -25,11 +27,11 @@ export const route: Route = {
     maintainers: ['evnydd0sf'],
     handler,
     description: `| News Type | Parameters |
-  | --------- | ---------- |
-  | 新闻动态  | xwdt       |
-  | 党建动态  | djdt       |
-  | 资源动态  | zydt       |
-  | 服务动态  | fwdt       |`,
+| --------- | ---------- |
+| 新闻动态  | xwdt       |
+| 党建动态  | djdt       |
+| 资源动态  | zydt       |
+| 服务动态  | fwdt       |`,
 };
 
 async function handler(ctx) {

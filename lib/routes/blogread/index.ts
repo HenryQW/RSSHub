@@ -1,6 +1,7 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import got from '@/utils/got';
-import * as cheerio from 'cheerio';
 
 export const route: Route = {
     path: '/newest',
@@ -22,21 +23,20 @@ async function handler() {
         method: 'get',
         url,
     });
-    const $ = cheerio.load(response.data);
+    const $ = load(response.data);
     const resultItem = $('.media')
-        .map((index, elem) => {
-            elem = $(elem);
-            const $link = elem.find('dt a');
+        .toArray()
+        .map((elem) => {
+            const $elem = $(elem);
+            const $link = $elem.find('dt a');
             return {
                 title: $link.text(),
-                description: elem.find('dd').eq(0).text(),
+                description: $elem.find('dd').eq(0).text(),
                 link: $link.attr('href'),
-                author: elem.find('.small a').eq(0).text(),
-                pubDate: elem.find('dd').eq(1).text().split('\n')[2],
+                author: $elem.find('.small a').eq(0).text(),
+                pubDate: $elem.find('dd').eq(1).text().split('\n', 3)[2],
             };
-        })
-        .get();
-
+        });
     return {
         title: '技术头条',
         link: url,

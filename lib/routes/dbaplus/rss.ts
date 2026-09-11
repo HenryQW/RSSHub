@@ -1,7 +1,8 @@
-import { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/',
@@ -24,7 +25,8 @@ async function handler() {
     const $ = load(response.data);
 
     const list = $('div.col-xs-12.col-md-8.pd30 > div.panel.panel-default.categeay > div.panel-body > ul.media-list.clearfix > li.media')
-        .map((i, e) => {
+        .toArray()
+        .map((e) => {
             const element = $(e);
             const title = element.find('h3 > a').text();
             const link = element.find('h3 > a').attr('href');
@@ -37,9 +39,7 @@ async function handler() {
                 link,
                 pubDate: parseDate(dateraw, 'YYYY年MM月DD日'),
             };
-        })
-        .get();
-
+        });
     return {
         title: 'dbaplus社群',
         link: url,

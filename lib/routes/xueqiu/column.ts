@@ -1,8 +1,11 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
-import { JSDOM } from 'jsdom';
+import { load } from 'cheerio';
 import { CookieJar } from 'tough-cookie';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
+import { parseScriptData } from '@/utils/parse-script-data';
+
 const cookieJar = new CookieJar();
 const baseUrl = 'https://xueqiu.com';
 
@@ -14,7 +17,7 @@ export const route: Route = {
     features: {
         requireConfig: false,
         requirePuppeteer: false,
-        antiCrawler: false,
+        antiCrawler: true,
         supportBT: false,
         supportPodcast: false,
         supportScihub: false,
@@ -25,7 +28,7 @@ export const route: Route = {
         },
     ],
     name: '用户专栏',
-    maintainers: ['TonyRL'],
+    maintainers: ['TonyRL', 'pseudoyu'],
     handler,
 };
 
@@ -33,13 +36,21 @@ async function handler(ctx) {
     const id = ctx.req.param('id');
     const pageUrl = `${baseUrl}/${id}/column`;
 
+    // Get cookie first
+    await got(baseUrl, {
+        cookieJar,
+    });
+
     const pageData = await got(pageUrl, {
         cookieJar,
     });
-    const { window } = new JSDOM(pageData.data, {
-        runScripts: 'dangerously',
-    });
-    const SNOWMAN_TARGET = window.SNOWMAN_TARGET;
+    const $ = load(pageData.data);
+    const script = $('script')
+        .toArray()
+        .map((element) => $(element).text())
+        .filter((source) => source.includes('SNOWMAN_TARGET'))
+        .join('\n');
+    const snowmanTarget = parseScriptData<{ screen_name: string; description: string }>(script, 'SNOWMAN_TARGET');
 
     const { data } = await got(`${baseUrl}/statuses/original/timeline.json`, {
         cookieJar,
@@ -49,18 +60,22 @@ async function handler(ctx) {
         },
     });
 
+    if (!data.list) {
+        throw new Error('Error occurred, please refresh the page or try again after logging back into your account');
+    }
+
     const items = data.list.map((item) => ({
         title: item.title,
         description: item.description,
         pubDate: parseDate(item.created_at, 'x'),
         link: `${baseUrl}${item.target}`,
-        author: SNOWMAN_TARGET.screen_name,
+        author: snowmanTarget.screen_name,
     }));
 
     return {
-        title: `${SNOWMAN_TARGET.screen_name} - 雪球`,
+        title: `${snowmanTarget.screen_name} - 雪球`,
         link: pageUrl,
-        description: SNOWMAN_TARGET.description,
+        description: snowmanTarget.description,
         item: items,
     };
 }

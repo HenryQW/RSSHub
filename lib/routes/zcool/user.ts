@@ -1,15 +1,19 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
-import { extractArticle, extractWork } from './utils';
 import { isValidHost } from '@/utils/valid-host';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
+
+import { extractArticle, extractWork } from './utils';
 
 export const route: Route = {
     path: '/user/:uid',
     categories: ['design'],
+    view: ViewType.Pictures,
     example: '/zcool/user/baiyong',
     parameters: { uid: '个性域名前缀或者用户ID' },
     features: {
@@ -27,11 +31,11 @@ export const route: Route = {
         },
     ],
     name: '用户作品',
-    description: `  例如:
+    description: `例如:
 
-    站酷的个人主页 \`https://baiyong.zcool.com.cn\` 对应 rss 路径 \`/zcool/user/baiyong\`
+站酷的个人主页 \`https://baiyong.zcool.com.cn\` 对应 rss 路径 \`/zcool/user/baiyong\`
 
-    站酷的个人主页 \`https://www.zcool.com.cn/u/568339\` 对应 rss 路径 \`/zcool/user/568339\``,
+站酷的个人主页 \`https://www.zcool.com.cn/u/568339\` 对应 rss 路径 \`/zcool/user/568339\``,
     maintainers: ['junbaor'],
     handler,
 };
@@ -39,7 +43,7 @@ export const route: Route = {
 async function handler(ctx) {
     const uid = ctx.req.param('uid');
     let pageUrl = `https://www.zcool.com.cn/u/${uid}`;
-    if (isNaN(uid)) {
+    if (Number.isNaN(uid)) {
         if (!isValidHost(uid)) {
             throw new InvalidParameterError('Invalid uid');
         }
@@ -77,7 +81,7 @@ async function handler(ctx) {
     return {
         title: data.props.pageProps.seo.title,
         description: data.props.pageProps.seo.description,
-        image: data.props.pageProps.userInfo.avatar.includes('?x-oss-process') ? data.props.pageProps.userInfo.avatar.split('?')[0] : data.props.pageProps.userInfo.avatar,
+        image: data.props.pageProps.userInfo.avatar.includes('?x-oss-process') ? data.props.pageProps.userInfo.avatar.split('?', 1)[0] : data.props.pageProps.userInfo.avatar,
         link: pageUrl,
         item: items,
     };

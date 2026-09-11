@@ -1,9 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 export const route: Route = {
     path: '/:id?',
@@ -22,8 +23,8 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 樊纲观点 | 综研国策 | 综研观察 | 综研专访 | 综研视点 | 银湖新能源 |
-  | -------- | -------- | -------- | -------- | -------- | ---------- |
-  | 102      | 152      | 150      | 153      | 154      | 151        |`,
+| -------- | -------- | -------- | -------- | -------- | ---------- |
+| 102      | 152      | 150      | 153      | 154      | 151        |`,
 };
 
 async function handler(ctx) {
@@ -41,17 +42,18 @@ async function handler(ctx) {
 
     let items = $('.a-full')
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .map((item): DataItem => {
+            const $item = $(item);
 
             return {
-                link: `${rootUrl}${item.attr('href')}`,
+                link: `${rootUrl}${$item.attr('href')}`,
+                title: '',
             };
         });
 
     items = await Promise.all(
         items.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
@@ -65,10 +67,10 @@ async function handler(ctx) {
                     parseDate(
                         content('.head p')
                             .text()
-                            .match(/时间：(.*)/)[1]
+                            .match(/时间：(.*)/)![1]
                             .replaceAll(/年|月/g, '-')
                     ),
-                    +8
+                    8
                 );
 
                 return item;

@@ -1,10 +1,13 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
+
 import { cookieJar, processArticle } from './utils';
+
 const baseUrl = 'http://www.playno1.com';
 
 export const route: Route = {
@@ -19,17 +22,18 @@ export const route: Route = {
         supportBT: false,
         supportPodcast: false,
         supportScihub: false,
+        nsfw: true,
     },
     name: 'AV',
     maintainers: ['TonyRL'],
     handler,
-    description: `:::warning
+    description: `::: warning
 目前观测到该博客可能禁止日本 IP 访问。建议部署在日本区以外的服务器上。
 :::
 
-  | 全部文章 | AV 新聞 | AV 導覽 |
-  | -------- | ------- | ------- |
-  | 78       | 3       | 5       |`,
+| 全部文章 | AV 新聞 | AV 導覽 |
+| -------- | ------- | ------- |
+| 78       | 3       | 5       |`,
 };
 
 async function handler(ctx) {
@@ -44,15 +48,15 @@ async function handler(ctx) {
         .toArray()
         .filter((i) => $(i).text().length)
         .map((item) => {
-            item = $(item);
+            const $item = $(item);
             return {
-                title: item.find('h3 a').attr('title'),
-                link: item.find('h3 a').attr('href'),
-                pubDate: timezone(parseDate(item.find('.fire_left').text()), 8),
-                author: item
+                title: $item.find('h3 a').attr('title')!,
+                link: $item.find('h3 a').attr('href'),
+                pubDate: timezone(parseDate($item.find('.fire_left').text()), 8),
+                author: $item
                     .find('.fire_right')
                     .text()
-                    .match(/作者：(.*)\s*\|/)[1]
+                    .match(/作者：([^|]*)\|/)![1]
                     .trim(),
             };
         });
@@ -63,6 +67,6 @@ async function handler(ctx) {
         title: $('head title').text(),
         link: url,
         item: items,
-        language: 'zh-TW',
+        language: 'zh-TW' as const,
     };
 }

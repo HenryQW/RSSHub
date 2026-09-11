@@ -1,20 +1,20 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
 import { load } from 'cheerio';
 
+import type { DataItem, Route } from '@/types';
+import cache from '@/utils/cache';
+import got from '@/utils/got';
+
 export const route: Route = {
-    path: ['/all', '/'],
+    name: 'Award Winners',
+    example: '/darwinawards',
+    path: '/',
     radar: [
         {
             source: ['darwinawards.com/darwin', 'darwinawards.com/'],
-            target: '',
         },
     ],
-    name: 'Unknown',
     maintainers: ['zoenglinghou', 'nczitzk'],
     handler,
-    url: 'darwinawards.com/darwin',
     url: 'darwinawards.com/darwin',
 };
 
@@ -31,24 +31,24 @@ async function handler() {
 
     $('.cameo').remove();
 
-    $('.topvote_title_desc, .topvote_title_minimal, .topvote_minimal').each(function () {
-        $(this).find('a').first().remove();
+    $('.topvote_title_desc, .topvote_title_minimal, .topvote_minimal').each((_, el) => {
+        $(el).find('a').first().remove();
     });
 
     let items = $('#article_index a')
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .map((item): DataItem => {
+            const $item = $(item);
 
             return {
-                title: item.text(),
-                link: item.attr('href'),
+                title: $item.text(),
+                link: $item.attr('href'),
             };
         });
 
     items = await Promise.all(
         items.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,

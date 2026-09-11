@@ -1,6 +1,15 @@
-import { Route } from '@/types';
+import MarkdownIt from 'markdown-it';
+
+import type { Route } from '@/types';
 import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
+
+const md = MarkdownIt({
+    breaks: true,
+    html: true,
+    linkify: true,
+    typographer: true,
+});
 
 export const route: Route = {
     path: '/characters',
@@ -9,15 +18,22 @@ export const route: Route = {
     name: 'Characters',
     maintainers: ['flameleaf'],
     handler,
+    features: {
+        nsfw: true,
+    },
 };
+
+function convertUndefinedToString(value: any): string {
+    return value === undefined ? '' : value.toString();
+}
 
 async function handler() {
     const hostURL = 'https://www.chub.ai/characters';
-    const apiURL = 'https://api.chub.ai/api/characters/search';
-    const data = await ofetch(apiURL, {
+    const apiURL = 'https://api.chub.ai/search';
+    const { data } = await ofetch(apiURL, {
         headers: { Accept: 'application/json' },
         query: {
-            query: '',
+            search: '',
             first: 200,
             page: 1,
             sort: 'last_activity_at',
@@ -31,8 +47,6 @@ async function handler() {
             require_alternate_greetings: 'false',
             require_custom_prompt: 'false',
             exclude_mine: 'false',
-            venus: 'true',
-            chub: 'true',
             min_tokens: 50,
             require_expressions: 'false',
             require_lore: 'false',
@@ -51,13 +65,13 @@ async function handler() {
         link: hostURL,
         item: nodes.map((item) => ({
             title: item.name,
-            description: `${item.tagline}<br><br>${item.description}`,
+            description: `<div><img src="${item.avatar_url}" /></div><div>${item.tagline}</div><div>${md.render(convertUndefinedToString(item.description))}</div>`,
             pubDate: parseDate(item.createdAt),
             updated: parseDate(item.lastActivityAt),
             link: `${hostURL}/${item.fullPath}`,
             author: String(item.fullPath.split('/', 1)),
-            enclosure_url: item.avatar_url,
-            enclosure_type: `image/webp`,
+            enclosure_url: item.max_res_url,
+            enclosure_type: 'image/png',
             category: item.topics,
         })),
     };

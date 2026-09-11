@@ -1,6 +1,8 @@
-import { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import ofetch from '@/utils/ofetch';
+
 import { baseUrl, parseItem } from './utils';
 
 export const route: Route = {
@@ -18,8 +20,8 @@ export const route: Route = {
         },
     ],
     description: `| 所有新聞 | 攝影器材 | 手機通訊 | 汽車熱話 | 攝影文化    | 影片攝錄    | 測試報告 | 生活科技 | 攝影技巧  |
-  | -------- | -------- | -------- | -------- | ----------- | ----------- | -------- | -------- | --------- |
-  |          | camera   | mobile   | auto     | photography | videography | reviews  | gadget   | technique |`,
+| -------- | -------- | -------- | -------- | ----------- | ----------- | -------- | -------- | --------- |
+|          | camera   | mobile   | auto     | photography | videography | reviews  | gadget   | technique |`,
 };
 
 async function handler(ctx) {
@@ -33,10 +35,10 @@ async function handler(ctx) {
     const list = $('.col-md-left .title a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            const $item = $(item);
             return {
-                title: item.text(),
-                link: new URL(item.attr('href'), link.href).href,
+                title: $item.text(),
+                link: new URL($item.attr('href')!, link.href).href,
             };
         });
 

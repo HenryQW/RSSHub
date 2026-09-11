@@ -1,12 +1,14 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
+
 import { parseItem } from './utils';
 
 export const route: Route = {
     path: '/keyword/:keyword',
     categories: ['finance'],
+    view: ViewType.Articles,
     example: '/gelonghui/keyword/早报',
     parameters: { keyword: '搜索关键字' },
     features: {
@@ -24,7 +26,7 @@ export const route: Route = {
 
 async function handler(ctx) {
     const keyword = ctx.req.param('keyword');
-    const currentUrl = `https://www.gelonghui.com/api/post/search/v4`;
+    const currentUrl = 'https://www.gelonghui.com/api/post/search/v4';
     const { data } = await got(currentUrl, {
         searchParams: {
             keyword,
@@ -43,7 +45,7 @@ async function handler(ctx) {
         pubDate: parseDate(item.timestamp, 'X'),
     }));
 
-    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => parseItem(item)));
 
     return {
         title: `格隆汇 - 关键词 “${keyword}” 的文章`,

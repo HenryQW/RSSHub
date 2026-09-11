@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -30,7 +31,7 @@ export const route: Route = {
     handler,
     description: `参数均可在官网获取，如：
 
-  \`https://www.ntdtv.com/b5/prog1201\` 对应 \`/ntdtv/b5/prog1201\``,
+\`https://www.ntdtv.com/b5/prog1201\` 对应 \`/ntdtv/b5/prog1201\``,
 };
 
 async function handler(ctx) {
@@ -42,22 +43,22 @@ async function handler(ctx) {
     const $ = load(response.data);
     const title = $('h1.block_title').text();
     const list = $('div.list_wrapper > div')
-        .map((_, item) => ({
+        .toArray()
+        .map((item): DataItem => ({
             title: $(item).find('div.title').text(),
             link: $(item).find('div.title > a').attr('href'),
             description: $(item).find('div.excerpt').text(),
         }))
-        .get()
         .filter((item) => item.link);
 
     const items = await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got.get(item.link);
                 const content = load(detailResponse.data);
 
-                item.description = content('div.post_content').html();
-                item.pubDate = timezone(parseDate(content('div.time > span').text()), +8);
+                item.description = content('div.post_content').html() ?? '';
+                item.pubDate = timezone(parseDate(content('div.time > span').text()), 8);
 
                 return item;
             })

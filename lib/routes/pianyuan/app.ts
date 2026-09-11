@@ -1,6 +1,8 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import cache from '@/utils/cache';
+
 import utils from './utils';
 
 export const route: Route = {
@@ -55,7 +57,7 @@ async function handler(ctx) {
     const response = await utils.request(link, cache);
     const $ = load(response.data);
     const detailLinks = $('#main-container > div > div.col-md-10 > table > tbody > tr')
-        .get()
+        .toArray()
         .map((tr) => $(tr).find('td.dt.prel.nobr > a').attr('href'));
     detailLinks.shift();
     const items = await utils.ProcessFeed(detailLinks, cache);

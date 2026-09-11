@@ -1,8 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import * as url from 'node:url';
 
 const baseUrl = 'http://www.wsyu.edu.cn';
 
@@ -38,8 +38,8 @@ export const route: Route = {
     maintainers: ['Derekmini'],
     handler,
     description: `| 学校要闻 | 综合新闻 | 媒体聚焦 |
-  | -------- | -------- | -------- |
-  | xxyw     | zhxw     | mtjj     |`,
+| -------- | -------- | -------- |
+| xxyw     | zhxw     | mtjj     |`,
 };
 
 async function handler(ctx) {
@@ -56,22 +56,22 @@ async function handler(ctx) {
 
     const urlList = $('.mainContent li')
         .slice(0, 10)
-        .map((i, e) => $('a', e).attr('href'))
-        .get();
+        .toArray()
+        .map((e) => $('a', e).attr('href'));
 
     const titleList = $('.mainContent li')
         .slice(0, 10)
-        .map((i, e) => $('a', e).text())
-        .get();
+        .toArray()
+        .map((e) => $('a', e).text());
 
     const dateList = $('.mainContent li')
         .slice(0, 10)
-        .map((i, e) => $('span', e).text())
-        .get();
+        .toArray()
+        .map((e) => $('span', e).text());
 
     const out = await Promise.all(
         urlList.map(async (itemUrl, index) => {
-            itemUrl = url.resolve(baseUrl, itemUrl);
+            itemUrl = new URL(itemUrl!, baseUrl).href;
             if (itemUrl.includes('.htm')) {
                 const cacheIn = await cache.get(itemUrl);
                 if (cacheIn) {
@@ -88,15 +88,14 @@ async function handler(ctx) {
                 };
                 cache.set(itemUrl, JSON.stringify(single));
                 return single;
-            } else {
-                const single = {
-                    title: titleList[index],
-                    link: itemUrl,
-                    description: '此链接为文件，请点击下载',
-                    pubDate: dateList[index],
-                };
-                return single;
             }
+            const single = {
+                title: titleList[index],
+                link: itemUrl,
+                description: '此链接为文件，请点击下载',
+                pubDate: dateList[index],
+            };
+            return single;
         })
     );
 

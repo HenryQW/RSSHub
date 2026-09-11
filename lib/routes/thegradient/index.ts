@@ -1,0 +1,77 @@
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
+import cache from '@/utils/cache';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
+
+export const route: Route = {
+    path: '/posts',
+    categories: ['blog'],
+    example: '/thegradient/posts',
+    radar: [
+        {
+            source: ['thegradient.pub/'],
+        },
+    ],
+    url: 'thegradient.pub/',
+    name: 'Posts',
+    maintainers: ['liyaozhong'],
+    handler,
+    description: 'The Gradient Blog Posts',
+};
+
+async function handler() {
+    const rootUrl = 'https://thegradient.pub';
+    const currentUrl = rootUrl;
+
+    const response = await got(currentUrl);
+    const $ = load(response.data);
+
+    const posts = $('.c-post-card-wrap')
+        .toArray()
+        .map((item) => {
+            const $item = $(item);
+            const $link = $item.find('.c-post-card__title-link');
+            const $meta = $item.find('.c-post-card__meta');
+
+            const href = $link.attr('href');
+            const title = $link.text().trim();
+            const dateStr = $meta.find('time').attr('datetime');
+
+            if (!href || !title || !dateStr) {
+                return null;
+            }
+
+            const link = new URL(href, rootUrl).href;
+            const pubDate = parseDate(dateStr);
+
+            return {
+                title,
+                link,
+                pubDate,
+            };
+        })
+        .filter((post) => post !== null);
+
+    const items = await Promise.all(
+        posts.map((post) =>
+            cache.tryGet(post.link, async (): Promise<DataItem> => {
+                try {
+                    const detailResponse = await got(post.link);
+                    const $detail = load(detailResponse.data);
+
+                    return { ...post, description: $detail('.c-content').html() };
+                } catch {
+                    return post;
+                }
+            })
+        )
+    );
+
+    return {
+        title: 'The Gradient Blog',
+        link: rootUrl,
+        item: items,
+    };
+}

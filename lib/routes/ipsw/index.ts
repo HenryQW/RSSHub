@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 
 const host = 'https://ipsw.me/';
 
@@ -20,7 +21,7 @@ export const route: Route = {
 
 function replaceurl(e) {
     e = e.replace("';", '');
-    e = e.replace("window.location = '/", host);
+    e = e.replace("window.location = '/", () => host);
     return e;
 }
 
@@ -44,31 +45,27 @@ async function handler(ctx) {
     const response = await got({
         method: 'get',
         url: link,
-        headers: {
-            Referer: host,
-        },
     });
     const $ = load(response.data);
-    let list = {};
-    list = pname.includes(',')
+    const list = pname.includes(',')
         ? $('.firmware')
-              .map(function () {
+              .toArray()
+              .map((item) => {
                   const info = {
-                      title: $(this).find('td').eq(1).text(),
-                      link: replaceurl($(this).attr('onclick')),
+                      title: $(item).find('td').eq(1).text(),
+                      link: replaceurl($(item).attr('onclick')),
                   };
                   return info;
               })
-              .get()
         : $('.products a')
-              .map(function () {
+              .toArray()
+              .map((item) => {
                   const info = {
-                      title: $(this).find('img').attr('alt'),
-                      link: $(this).attr('href'),
+                      title: $(item).find('img').attr('alt'),
+                      link: $(item).attr('href'),
                   };
                   return info;
-              })
-              .get();
+              });
 
     const out = await Promise.all(
         list.map((info) => {
@@ -79,14 +76,11 @@ async function handler(ctx) {
                 const response = await got({
                     method: 'get',
                     url: itemUrl,
-                    headers: {
-                        Referer: host,
-                    },
                 });
                 const $ = load(response.data);
                 const description = $('div.selector__wizard').html();
                 let removeString;
-                removeString = pname.includes(',') ? $('div.table-responsive table tr').first().find('td').text().trim() : $('tr.firmware').first().find('td').eq(2).text().trim();
+                removeString = pname.includes(',') ? $('div.table-responsive table tr').first().find('td').text().trim() : $('tr.firmware').first().find('td').eq(2).text();
                 // 处理发布日期,以表格第一行的日期为最新的发布日期
                 removeString = removeString.replace('th', '').replace('nd', '').replace('st', '').replace('rd', '');
                 const rdate = removeString.replaceAll(' ', ',');

@@ -1,22 +1,20 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
-import { getSimple, getDetails, getTorrents } from './util';
+
+import { getDetails, getSimple, getTorrents } from './util';
 
 export const route: Route = {
     path: '/search/:keyword/:mode?',
-    categories: ['anime'],
     example: '/nhentai/search/language%3Ajapanese+-scat+-yaoi+-guro+-"mosaic+censorship"',
     parameters: {
         keyword: 'Keywords for search. You can copy the content after `q=` after searching on the original website, or you can enter it directly. See the [official website](https://nhentai.net/info/) for details',
         mode: 'mode, `simple` to only show cover, `detail` to show all pages, `torrent` to include Magnet URI, need login, refer to [Route-specific Configurations](https://docs.rsshub.app/deploy/config#route-specific-configurations), default to `simple`',
     },
     features: {
-        requireConfig: false,
         requirePuppeteer: false,
         antiCrawler: true,
         supportBT: true,
-        supportPodcast: false,
-        supportScihub: false,
+        nsfw: true,
     },
     radar: [
         {
@@ -25,7 +23,7 @@ export const route: Route = {
         },
     ],
     name: 'Advanced Search',
-    maintainers: ['MegrezZhu', 'hoilc'],
+    maintainers: ['MegrezZhu', 'hoilc', 'pseudoyu'],
     handler,
 };
 

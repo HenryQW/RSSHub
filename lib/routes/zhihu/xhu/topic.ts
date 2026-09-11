@@ -1,8 +1,9 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import got from '@/utils/got';
-import auth from './auth';
-import utils from '../utils';
 import { parseDate } from '@/utils/parse-date';
+
+import { processImage } from '../utils';
+import auth from './auth';
 
 export const route: Route = {
     path: '/xhu/topic/:topicId',
@@ -28,7 +29,7 @@ export const route: Route = {
 };
 
 async function handler(ctx) {
-    const xhuCookie = await auth.getCookie(ctx);
+    const xhuCookie = await auth.getCookie();
     const topicId = ctx.req.param('topicId');
     const link = `https://www.zhihu.com/topic/${topicId}/newest`;
     const url = `https://api.zhihuvvv.workers.dev/topics/${topicId}/feeds/timeline_activity?before_id=0&limit=20`;
@@ -48,16 +49,16 @@ async function handler(ctx) {
         link,
         item: listRes.map(({ target: item }) => {
             const type = item.type;
-            let title = '';
-            let description = '';
-            let link = '';
-            let pubDate = '';
-            let author = '';
+            let title: string | undefined;
+            let description: string;
+            let link: string | undefined;
+            let pubDate: Date | undefined;
+            let author: string | undefined;
 
             switch (type) {
                 case 'answer':
                     title = `${item.question.title}-${item.author.name}的回答：${item.excerpt}`;
-                    description = `<strong>${item.question.title}</strong><br>${item.author.name}的回答<br/>${utils.ProcessImage(item.content)}`;
+                    description = `<strong>${item.question.title}</strong><br>${item.author.name}的回答<br/>${processImage(item.content)}`;
                     link = `https://www.zhihu.com/question/${item.question.id}/answer/${item.id}`;
                     pubDate = parseDate(item.updated_time * 1000);
                     author = item.author.name;

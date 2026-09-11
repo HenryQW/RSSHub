@@ -1,9 +1,12 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
+
 import getCookie from '../utils/pypasswaf';
+
 const host = 'http://www.graduate.nuaa.edu.cn/';
 
 const map = new Map([
@@ -30,14 +33,14 @@ export const route: Route = {
     maintainers: ['junfengP', 'Seiry', 'Xm798'],
     handler,
     description: `| 通知公告 | 新闻动态 | 学术信息 | 师生风采 |
-  | -------- | -------- | -------- | -------- |
-  | tzgg     | xwdt     | xsxx     | ssfc     |`,
+| -------- | -------- | -------- | -------- |
+| tzgg     | xwdt     | xsxx     | ssfc     |`,
 };
 
 async function handler(ctx) {
     const type = ctx.req.param('type');
-    const suffix = map.get(type).suffix;
-    const getDescription = Boolean(ctx.req.param('getDescription')) || false;
+    const suffix = map.get(type)!.suffix;
+    const getDescription = Boolean(ctx.req.param('getDescription'));
     const link = new URL(suffix, host).href;
     const cookie = await getCookie(host);
     const gotConfig = {
@@ -50,21 +53,21 @@ async function handler(ctx) {
 
     const list = $('#wp_news_w6 ul li')
         .slice(0, 10)
-        .map(function () {
+        .toArray()
+        .map((element) => {
             const info = {
-                title: $(this).find('a').text(),
-                link: $(this).find('a').attr('href'),
-                date: $(this).find('span').text(),
+                title: $(element).find('a').text(),
+                link: $(element).find('a').attr('href'),
+                date: $(element).find('span').text(),
             };
             return info;
-        })
-        .get();
+        });
 
     const out = await Promise.all(
         list.map(async (info) => {
             const title = info.title || 'tzgg';
             const date = info.date;
-            const itemUrl = new URL(info.link, host).href;
+            const itemUrl = new URL(info.link!, host).href;
             let description = title + '<br><a href="' + itemUrl + '" target="_blank">查看原文</a>';
 
             if (getDescription) {
@@ -76,6 +79,7 @@ async function handler(ctx) {
                         const $ = load(response.data);
                         return $('.wp_articlecontent').html() + '<br><hr /><a href="' + itemUrl + '" target="_blank">查看原文</a>';
                     }
+                    return '';
                 });
             }
 
@@ -89,7 +93,7 @@ async function handler(ctx) {
     );
 
     return {
-        title: map.get(type).title,
+        title: map.get(type)!.title,
         link,
         description: '南京航空航天大学研究生院RSS',
         item: out,

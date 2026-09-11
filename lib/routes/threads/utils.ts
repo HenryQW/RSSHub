@@ -1,79 +1,58 @@
-import ofetch from '@/utils/ofetch';
-import { load } from 'cheerio';
+import type { CheerioAPI } from 'cheerio';
 import dayjs from 'dayjs';
-import cache from '@/utils/cache';
-import { destr } from 'destr';
-import NotFoundError from '@/errors/types/not-found';
 
-const profileUrl = (user: string) => `https://www.threads.net/@${user}`;
-const threadUrl = (code: string) => `https://www.threads.net/t/${code}`;
+import { queryToBoolean } from '@/utils/readable-social';
 
-const apiUrl = 'https://www.threads.net/api/graphql';
-// const PROFILE_QUERY = 23_996_318_473_300_828; // no longer works
-const THREADS_QUERY = 6_232_751_443_445_612;
-const REPLIES_QUERY = 6_307_072_669_391_286;
-const USER_AGENT = 'Barcelona 289.0.0.77.109 Android';
-const appId = '238260118697367';
-const asbdId = '129477';
+export const profileUrl = (user: string) => `https://www.threads.com/@${user}`;
+export const threadUrl = (code: string) => `https://www.threads.com/t/${code}`;
 
-const extractTokens = async (user): Promise<{ lsd: string }> => {
-    const response = await ofetch(profileUrl(user), {
-        headers: {
-            'User-Agent': USER_AGENT,
-            'X-IG-App-ID': appId,
-        },
-    });
-    const $ = load(response);
+export interface ThreadItem {
+    post: {
+        user?: {
+            username: string;
+            profile_pic_url: string;
+        };
+        taken_at: number;
+        code: string;
+        caption?: {
+            text: string;
+        };
+    };
+}
 
-    const data = $('script:contains("LSD"):first').text();
-
-    const lsd = data.match(/"LSD",\[],{"token":"([\w@-]+)"},/)?.[1];
-    if (!lsd) {
-        throw new NotFoundError('LSD token not found');
+const findThreadItems = (node, acc: ThreadItem[] = []): ThreadItem[] => {
+    if (node instanceof Object) {
+        if (Array.isArray(node.thread_items)) {
+            acc.push(...node.thread_items);
+        }
+        for (const value of Object.values(node)) {
+            findThreadItems(value, acc);
+        }
     }
-
-    // const userId = data.match(/{"user_id":"(\d+)"},/)?.[1];
-
-    const ret = { lsd };
-    return ret;
+    return acc;
 };
 
-const makeHeader = (user: string, lsd: string) => ({
-    Accept: '*/*',
-    Host: 'www.threads.net',
-    Origin: 'https://www.threads.net',
-    Referer: profileUrl(user),
-    'User-Agent': USER_AGENT,
-    'X-FB-LSD': lsd,
-    'X-IG-App-ID': appId,
-    'Sec-Fetch-Site': 'same-origin',
+export const extractThreadItems = ($: CheerioAPI): ThreadItem[] => {
+    let threadsData: ThreadItem[] = [];
+    $('script[data-sjs]:contains("thread_items")').each((_, script) => {
+        threadsData = findThreadItems(JSON.parse($(script).text()));
+        return threadsData.length === 0;
+    });
+    return threadsData;
+};
+
+export const parseRouteOptions = (params: URLSearchParams) => ({
+    showAuthorInTitle: queryToBoolean(params.get('showAuthorInTitle')) ?? true,
+    showAuthorInDesc: queryToBoolean(params.get('showAuthorInDesc')) ?? true,
+    showAuthorAvatarInDesc: queryToBoolean(params.get('showAuthorAvatarInDesc')) ?? false,
+    showQuotedInTitle: queryToBoolean(params.get('showQuotedInTitle')) ?? true,
+    showQuotedAuthorAvatarInDesc: queryToBoolean(params.get('showQuotedAuthorAvatarInDesc')) ?? false,
+    showEmojiForQuotesAndReply: queryToBoolean(params.get('showEmojiForQuotesAndReply')) ?? true,
+    replies: queryToBoolean(params.get('replies')) ?? false,
 });
 
-const getUserId = (user: string, lsd: string): Promise<string> =>
-    cache.tryGet(`threads:userId:${user}`, async () => {
-        const pathName = `/@${user}`;
-        const payload: any = {
-            'route_urls[0]': pathName,
-            __a: '1',
-            __comet_req: '29',
-            lsd,
-        };
-        const response = await ofetch('https://www.threads.net/ajax/bulk-route-definitions/', {
-            method: 'POST',
-            headers: {
-                ...makeHeader(user, lsd),
-                'content-type': 'application/x-www-form-urlencoded',
-                'X-ASBD-ID': asbdId,
-            },
-            body: new URLSearchParams(payload).toString(),
-            parseResponse: (txt) => destr(txt.slice(9)), // remove "for (;;);"
-        });
-
-        const userId = response.payload.payloads[pathName].result.exports.rootView.props.user_id;
-        return userId;
-    });
-
 const hasMedia = (post) => post.image_versions2 || post.carousel_media || post.video_versions;
+
 const buildMedia = (post) => {
     let html = '';
 
@@ -81,32 +60,20 @@ const buildMedia = (post) => {
         for (const media of post.carousel_media) {
             const firstImage = media.image_versions2?.candidates[0];
             const firstVideo = media.video_versions?.[0];
-            if (firstVideo) {
-                html += `<video controls autoplay loop poster="${firstImage.url}">`;
-                html += `<source src="${firstVideo.url}"/>`;
-                html += '</video>';
-            } else {
-                html += `<img src="${firstImage.url}"/>`;
-            }
+            html += firstVideo ? `<video controls autoplay loop poster="${firstImage.url}"><source src="${firstVideo.url}"/></video>` : `<img src="${firstImage.url}"/>`;
         }
     } else {
         const mainImage = post.image_versions2?.candidates?.[0];
         const mainVideo = post.video_versions?.[0];
         if (mainImage) {
-            if (mainVideo) {
-                html += `<video controls autoplay loop poster="${mainImage.url}">`;
-                html += `<source src="${mainVideo.url}"/>`;
-                html += '</video>';
-            } else {
-                html += `<img src="${mainImage.url}"/>`;
-            }
+            html += mainVideo ? `<video controls autoplay loop poster="${mainImage.url}"><source src="${mainVideo.url}"/></video>` : `<img src="${mainImage.url}"/>`;
         }
     }
 
     return html;
 };
 
-const buildContent = (item, options) => {
+export const buildContent = (item, options) => {
     let title = '';
     let description = '';
     const quotedPost = item.post.text_post_app_info?.share_info?.quoted_post;
@@ -162,5 +129,3 @@ const buildContent = (item, options) => {
     }
     return { title, description };
 };
-
-export { apiUrl, profileUrl, threadUrl, THREADS_QUERY, REPLIES_QUERY, USER_AGENT, extractTokens, getUserId, makeHeader, hasMedia, buildMedia, buildContent };

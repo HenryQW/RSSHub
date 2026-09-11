@@ -1,9 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Data, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate, parseRelativeDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 /**
  * Convert an array into a dictionary object.
@@ -39,13 +40,13 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 最新报道 | 晚点独家 | 人物访谈 | 晚点早知道 | 长报道 |
-  | -------- | -------- | -------- | ---------- | ------ |
-  |          | 1        | 2        | 3          | 4      |`,
+| -------- | -------- | -------- | ---------- | ------ |
+|          | 1        | 2        | 3          | 4      |`,
 };
 
-async function handler(ctx) {
+async function handler(ctx): Promise<Data> {
     const proma = ctx.req.param('proma');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5;
+    const limit = ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 5;
 
     const title = '晚点';
     const defaultTitle = '最新报道';
@@ -65,14 +66,14 @@ async function handler(ctx) {
         form: {
             page: 1,
             limit,
-            programa: Number.parseInt(proma, 10),
+            programa: Number(proma),
         },
     });
 
     let items = response.data.slice(0, limit).map((item) => ({
         title: item.title,
         link: new URL(item.detail_url, rootUrl).href,
-        category: [item.is_dj ? exclusiveCategory : undefined, item.programa ? columns[item.programa].title : undefined, ...item.label.map((c) => c.label)],
+        category: [item.is_dj ? exclusiveCategory : undefined, item.programa ? columns[item.programa]?.title : undefined, ...item.label.map((c) => c.label)],
         guid: item.id,
         pubDate: parseDate(item.release_time, ['MM月DD日', 'YYYY年MM月DD日']),
     }));
@@ -92,8 +93,8 @@ async function handler(ctx) {
 
                 const content = load(detailResponse);
 
-                item.title = item.title ?? content('div.article-header-title').text();
-                item.description = content('#select-main').html().replaceAll('<p><br></p>', '');
+                item.title ??= content('div.article-header-title').text();
+                item.description = content('#select-main').html()!.replaceAll('<p><br></p>', '');
                 item.author = content('div.article-header-author div.author-link a.label').first().text();
                 item.category = item.category.filter(Boolean);
                 item.guid = `latepost-${item.guid}`;
@@ -101,10 +102,10 @@ async function handler(ctx) {
                 const pubDate = content('div.article-header-date').text();
 
                 if (pubDate) {
-                    item.pubDate = /\d+月\d+日/.test(pubDate) ? parseDate(pubDate, ['MM月DD日 HH:mm', 'YYYY年MM月DD日 HH:mm']) : parseRelativeDate(pubDate);
+                    item.pubDate = /\d+月\d+日/.test(pubDate) ? parseDate(pubDate, ['YYYY年MM月DD日 HH:mm', 'MM月DD日 HH:mm']) : parseRelativeDate(pubDate);
                 }
 
-                item.pubDate = timezone(item.pubDate, +8);
+                item.pubDate = timezone(item.pubDate, 8);
                 item.comments = commentResponse.data?.length() ?? 0;
 
                 return item;
@@ -123,8 +124,8 @@ async function handler(ctx) {
         title: `${title} - ${proma ? columns[proma].title : defaultTitle}`,
         link: currentUrl,
         description: $('div.logo-txt').first().text(),
-        language: 'zh-cn',
-        image: new URL($('div.logo-txt img').prop('src'), rootUrl).href,
+        language: 'zh-CN',
+        image: new URL($('div.logo-txt img').prop('src')!, rootUrl).href,
         icon,
         logo: icon,
         author: title,

@@ -1,10 +1,11 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
 import { load } from 'cheerio';
 import iconv from 'iconv-lite';
-import timezone from '@/utils/timezone';
+
+import type { DataItem, Route } from '@/types';
+import cache from '@/utils/cache';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 export const route: Route = {
     path: '/user/:id',
@@ -31,6 +32,7 @@ export const route: Route = {
 
 async function handler(ctx) {
     const id = ctx.req.param('id');
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50;
 
     const rootUrl = 'https://blog.sciencenet.cn';
     const currentUrl = `${rootUrl}/u/${id}`;
@@ -51,20 +53,21 @@ async function handler(ctx) {
     $ = load(response.data);
 
     let items = $('item')
-        .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50)
+        .slice(-limit)
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .toReversed()
+        .map((item): DataItem => {
+            const $item = $(item);
 
             return {
-                title: item.find('title').text(),
-                link: item.find('guid').text(),
+                title: $item.find('title').text(),
+                link: $item.find('guid').text(),
             };
         });
 
     items = await Promise.all(
         items.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
@@ -75,7 +78,7 @@ async function handler(ctx) {
 
                 item.author = content('.xs2').text();
                 item.description = content('#blog_article').html();
-                item.pubDate = timezone(parseDate(content('.xg1').eq(5).text()), +8);
+                item.pubDate = timezone(parseDate(content('.xg1').eq(5).text()), 8);
 
                 return item;
             })

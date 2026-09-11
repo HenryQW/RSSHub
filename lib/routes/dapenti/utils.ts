@@ -1,7 +1,8 @@
+import { type CheerioOptions, load } from 'cheerio';
+import iconv from 'iconv-lite';
+
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -23,7 +24,7 @@ export default {
         const data = iconv.decode(listRes.data, 'gb2312');
         const $ = load(data);
         // 只取最近的三个，取全文rss
-        const list = $('li', 'ul').slice(0, 3).get();
+        const list = $('li', 'ul').slice(0, 3).toArray();
 
         const result_item = await Promise.all(
             list.map((item) =>
@@ -41,7 +42,7 @@ export default {
                     const convert_data = iconv.decode(original_data.data, 'gbk');
                     const description = load(convert_data, {
                         decodeEntities: false,
-                    })('body > table > tbody > tr > td.oblog_t_2 > div > table > tbody > tr:nth-child(2) > td');
+                    } as CheerioOptions)('body > table > tbody > tr > td.oblog_t_2 > div > table > tbody > tr:nth-child(2) > td');
                     const pubInfo = description.find('span span.oblog_text').text().split('发布于');
                     description.find('table, .adsbygoogle').remove();
 
@@ -59,7 +60,7 @@ export default {
                         title: el.text(),
                         author: pubInfo[0].trim(),
                         description: description.html(),
-                        pubDate: timezone(parseDate(pubInfo[1]?.trim()), +8),
+                        pubDate: timezone(parseDate(pubInfo[1]?.trim()), 8),
                         link: url,
                     };
                     return single;

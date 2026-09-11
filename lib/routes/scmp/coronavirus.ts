@@ -1,4 +1,5 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
+
 export const route: Route = {
     path: '/coronavirus',
     categories: ['other'],
@@ -18,5 +19,6 @@ export const route: Route = {
 };
 
 function handler(ctx) {
-    ctx.redirect('/scmp/topics/coronavirus-pandemic-all-stories');
+    ctx.set('redirect', '/scmp/topics/coronavirus-pandemic-all-stories');
+    return null;
 }

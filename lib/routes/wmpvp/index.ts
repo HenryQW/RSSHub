@@ -1,4 +1,4 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
@@ -20,8 +20,8 @@ export const route: Route = {
     maintainers: ['tssujt'],
     handler,
     description: `| DOTA2 | CS2 |
-  | ----- | --- |
-  | 1     | 2   |`,
+| ----- | --- |
+| 1     | 2   |`,
 };
 
 const TYPE_MAP = {
@@ -63,7 +63,7 @@ async function handler(ctx) {
 
     return {
         title: `完美世界电竞 - ${TYPE_MAP[type]} 资讯`,
-        link: `https://news.wmpvp.com/`,
+        link: 'https://news.wmpvp.com/',
         item: items,
     };
 }

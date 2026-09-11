@@ -1,12 +1,16 @@
-import { Route } from '@/types';
+import { config } from '@/config';
+import type { Route } from '@/types';
 import got from '@/utils/got';
-import utils from './utils';
+import { parseDuration } from '@/utils/helpers';
+
+import cache from './cache';
+import utils, { getVideoUrl } from './utils';
 
 export const route: Route = {
-    path: '/weekly/:disableEmbed?',
+    path: '/weekly/:embed?',
     categories: ['social-media'],
     example: '/bilibili/weekly',
-    parameters: { disableEmbed: '默认为开启内嵌视频, 任意值为关闭' },
+    parameters: { embed: '默认为开启内嵌视频, 任意值为关闭' },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -21,7 +25,8 @@ export const route: Route = {
 };
 
 async function handler(ctx) {
-    const disableEmbed = ctx.req.param('disableEmbed');
+    const isJsonFeed = ctx.req.query('format') === 'json';
+    const embed = !ctx.req.param('embed');
 
     const status_response = await got({
         method: 'get',
@@ -46,15 +51,25 @@ async function handler(ctx) {
         title: 'B站每周必看',
         link: 'https://www.bilibili.com/h5/weekly-recommend',
         description: 'B站每周必看',
-        item: data.map((item) => ({
-            title: item.title,
-            // description: `${weekly_name} ${item.title}<br>${item.rcmd_reason}<br>${!disableEmbed ? `${utils.iframe(item.param)}` : ''}<img src="${item.cover}">`,
-            description: `
-                ${weekly_name} ${item.title}<br>
-                ${item.rcmd_reason}<br>
-                ${disableEmbed ? '' : utils.iframe(item.param)}<img src="${item.cover}">
-            `,
-            link: weekly_number > 60 && item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.param}`,
-        })),
+        item: await Promise.all(
+            data.map(async (item) => {
+                const subtitles = isJsonFeed && !config.bilibili.excludeSubtitles && item.bvid ? await cache.getVideoSubtitleAttachment(item.bvid) : [];
+                return {
+                    title: item.title,
+                    description: utils.renderUGCDescription(embed, item.cover, `${weekly_name} ${item.title} - ${item.rcmd_reason}`, item.param, undefined, item.bvid),
+                    link: weekly_number > 60 && item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.param}`,
+                    attachments: item.bvid
+                        ? [
+                              {
+                                  url: getVideoUrl(item.bvid),
+                                  mime_type: 'text/html',
+                                  duration_in_seconds: parseDuration(item.cover_right_text_1),
+                              },
+                              ...subtitles,
+                          ]
+                        : undefined,
+                };
+            })
+        ),
     };
 }

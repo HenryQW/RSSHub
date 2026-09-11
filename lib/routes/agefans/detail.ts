@@ -1,6 +1,8 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
+
 import { rootUrl } from './utils';
 
 export const route: Route = {
@@ -37,14 +39,14 @@ async function handler(ctx) {
         .find('li')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a');
+            const $item = $(item);
+            const a = $item.find('a');
             return {
                 title: a.text(),
-                link: a.attr('href').replace('http://', 'https://'),
+                link: a.attr('href')!.replace('http://', 'https://'),
             };
         })
-        .reverse();
+        .toReversed();
 
     return {
         title: `AGE动漫 - ${ldJson.name}`,

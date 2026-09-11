@@ -1,7 +1,9 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
+
 const baseUrl = 'https://www.rccp.pku.edu.cn/mzyt/';
 
 export const route: Route = {
@@ -37,12 +39,12 @@ async function handler() {
         link: baseUrl,
         description: $('meta[name="description"]').attr('content'),
         item: $('li.list')
-            .map((index, item) => ({
+            .toArray()
+            .map((item) => ({
                 title: $(item).find('a').text().trim(),
                 description: '',
                 pubDate: parseDate($(item).find('span').first().text(), '[YYYY-MM-DD]'),
                 link: baseUrl + $(item).find('a').attr('href'),
-            }))
-            .get(),
+            })),
     };
 }

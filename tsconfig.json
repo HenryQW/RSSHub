@@ -13,11 +13,12 @@
         "noImplicitAny": false,
         "outDir": "./dist",
         "skipLibCheck": true,
+        "types": ["node"],
         "noEmit": true,
         "incremental": true,
         "resolveJsonModule": true,
         "isolatedModules": true
     },
-    "include": ["./lib/**/*", "./api/vercel.ts"],
+    "include": ["./lib/**/*"],
     "exclude": ["node_modules", "*.test.*"]
 }

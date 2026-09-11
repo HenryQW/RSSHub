@@ -1,5 +1,8 @@
-import { Route } from '@/types';
-import { TITLE, HOST } from './const';
+import type { Context } from 'hono';
+
+import type { Data, Route } from '@/types';
+
+import { HOST, TITLE } from './const';
 import { fetchActivityList, fetchDictionary } from './service';
 
 export const route: Route = {
@@ -15,19 +18,21 @@ export const route: Route = {
         supportPodcast: false,
         supportScihub: false,
     },
-    name: '演出更新',
+    name: '按城市 - 演出更新',
     maintainers: ['lchtao26'],
     handler,
-    description: `:::tip
--   演出城市 \`cityCode\` 查询: \`/showstart/search/city/:keyword\`, 如: [https://rsshub.app/showstart/search/city/ 杭州](https://rsshub.app/showstart/search/city/杭州)
+    description: `::: tip
 
--   演出风格 \`showStyle\` 查询: \`/showstart/search/style/:keyword\`，如: [https://rsshub.app/showstart/search/style/ 摇滚](https://rsshub.app/showstart/search/style/摇滚)
+- 演出城市 \`cityCode\` 查询: \`/showstart/search/city/:keyword\`, 如: [https://rsshub.app/showstart/search/city/ 杭州](https://rsshub.app/showstart/search/city/杭州)
+
+- 演出风格 \`showStyle\` 查询: \`/showstart/search/style/:keyword\`，如: [https://rsshub.app/showstart/search/style/ 摇滚](https://rsshub.app/showstart/search/style/摇滚)
+
 :::`,
 };
 
-async function handler(ctx) {
-    const cityCode = Number.parseInt(ctx.req.param('cityCode'));
-    const showStyle = Number.parseInt(ctx.req.param('showStyle'));
+async function handler(ctx: Context): Promise<Data> {
+    const cityCode = Number.parseInt(ctx.req.param('cityCode')!).toString();
+    const showStyle = Number.parseInt(ctx.req.param('showStyle')!).toString();
     const items = await fetchActivityList({
         cityCode,
         showStyle,

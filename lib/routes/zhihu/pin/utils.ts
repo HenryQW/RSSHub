@@ -1,7 +1,7 @@
 import { parseDate } from '@/utils/parse-date';
 
-const generateDescription = (target, init) =>
-    target.content.reduce((description, item) => {
+const generateDescription = (target, description = '') => {
+    for (const item of target.content) {
         switch (item.type) {
             case 'text':
                 description += `<div>${item.content}</div>`;
@@ -38,9 +38,9 @@ const generateDescription = (target, init) =>
             default:
                 description += '未知类型，请点击<a href="https://github.com/DIYgod/RSSHub/issues">链接</a>提交issue';
         }
-
-        return description;
-    }, init);
+    }
+    return description;
+};
 
 const generateData = (data) =>
     data.map((item) => {
@@ -54,7 +54,7 @@ const generateData = (data) =>
             const t = target.origin_pin;
             const origin_link = `<a href="https://www.zhihu.com/pin/${t.id}">转发原文</a>：`;
             const origin_description = generateDescription(t, `<a href="https://www.zhihu.com${t.author.url}">${t.author.name}</a>：`);
-            description = `${description} ${origin_link} ${origin_description}`;
+            description += ` ${origin_link} ${origin_description}`;
         }
         return {
             title,

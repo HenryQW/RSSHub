@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
@@ -38,12 +39,12 @@ export const route: Route = {
     maintainers: ['KingJem'],
     handler,
     description: `| 推荐    | TMT | 金融    | 地产   | 消费    | 医药  | 酒业 | IPO 观察 |
-  | ------- | --- | ------- | ------ | ------- | ----- | ---- | -------- |
-  | tuijian | TMT | jinrong | dichan | xiaofei | yiyao | wine | IPO      |
+| ------- | --- | ------- | ------ | ------- | ----- | ---- | -------- |
+| tuijian | TMT | jinrong | dichan | xiaofei | yiyao | wine | IPO      |
 
-  > Note: The default news num is \`30\`.
+> Note: The default news num is \`30\`.
 
-  > 注意：默认新闻条数是 \`30\`。`,
+> 注意：默认新闻条数是 \`30\`。`,
 };
 
 async function handler(ctx) {
@@ -55,28 +56,28 @@ async function handler(ctx) {
     const $ = load(data);
     const categoryTitle = $('.list-hd strong').text();
     const listCategory = `中华网-财经-${categoryTitle}新闻`;
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const limit = ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 30;
     const detailsUrls = $('.item-con-inner')
-        .map((_, item) => {
-            item = $(item);
+        .toArray()
+        .map((item) => {
+            const $item = $(item);
             return {
-                link: item.find('.tit>a').attr('href'),
+                link: $item.find('.tit>a').attr('href'),
             };
         })
-        .get()
         .filter((item) => item.link !== void 0)
         .slice(0, limit);
 
     const items = await Promise.all(
         detailsUrls.map((item) =>
-            cache.tryGet(item.link, async () => {
+            cache.tryGet(item.link!, async () => {
                 const detailsResponse = await got(item.link);
                 const $d = load(detailsResponse.data);
                 return {
                     title: $d('.article_title').text(),
                     link: item.link,
                     description: $d('#js_article_content').html(),
-                    pubDate: timezone(parseDate($d('.article_info>span.time').text()), +8),
+                    pubDate: timezone(parseDate($d('.article_info>span.time').text()), 8),
                     author: $d(' div.article_info > span.source').text(),
                     category: listCategory,
                 };

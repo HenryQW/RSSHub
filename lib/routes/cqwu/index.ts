@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import cache from '@/utils/cache';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
@@ -31,8 +32,8 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     description: `| 通知公告 | 学术活动公告 |
-  | -------- | ------------ |
-  | notify   | academiceve  |`,
+| -------- | ------------ |
+| notify   | academiceve  |`,
 };
 
 async function handler(ctx) {

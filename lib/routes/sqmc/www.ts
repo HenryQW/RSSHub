@@ -1,9 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
+import timezone from '@/utils/timezone';
 
 export const route: Route = {
     path: '/www/:category?',
@@ -27,8 +28,8 @@ export const route: Route = {
     maintainers: ['nyaShine'],
     handler,
     description: `| 学校要闻 | 通知 | 学术讲座 | 基层风采书院 | 基层风采院系 | 外媒报道 | 三全学院报 |
-  | -------- | ---- | -------- | ------------ | ------------ | -------- | ---------- |
-  | 3157     | 3187 | 3188     | 3185         | 3186         | 3199     | 3200       |`,
+| -------- | ---- | -------- | ------------ | ------------ | -------- | ---------- |
+| 3157     | 3187 | 3188     | 3185         | 3186         | 3199     | 3200       |`,
 };
 
 async function handler(ctx) {
@@ -43,17 +44,17 @@ async function handler(ctx) {
     });
 
     const $ = load(response.data);
-    const list = $('div#wp_news_w9 ul li').get();
+    const list = $('div#wp_news_w9 ul li').toArray();
 
     return {
         title: `新乡医学院三全学院官网信息${$('title').text()}`,
         link: currentUrl,
         item: await Promise.all(
             list.map(async (item) => {
-                item = $(item);
+                const $item = $(item);
 
-                const link = new URL(item.find('dt a').attr('href'), rootUrl).href;
-                const pubDate = parseDate(item.find('dd').eq(0).text(), 'YYYY-MM-DD');
+                const link = new URL($item.find('dt a').attr('href')!, rootUrl).href;
+                const pubDate = parseDate($item.find('dd').eq(0).text(), 'YYYY-MM-DD');
 
                 const cacheIn = await cache.tryGet(link, async () => {
                     const detailResponse = await got({
@@ -63,10 +64,10 @@ async function handler(ctx) {
                     const content = load(detailResponse.data);
 
                     return {
-                        title: item.find('dt a').text(),
+                        title: $item.find('dt a').text(),
                         description: content('div.Tr_Detail').html(),
                         link,
-                        pubDate: timezone(pubDate, +8),
+                        pubDate: timezone(pubDate, 8),
                     };
                 });
 

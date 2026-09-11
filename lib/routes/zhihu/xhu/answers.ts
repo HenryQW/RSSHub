@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import got from '@/utils/got';
-import auth from './auth';
 import { parseDate } from '@/utils/parse-date';
+
+import auth from './auth';
 
 export const route: Route = {
     path: '/xhu/people/answers/:hexId',
@@ -28,7 +29,7 @@ export const route: Route = {
 };
 
 async function handler(ctx) {
-    const xhuCookie = await auth.getCookie(ctx);
+    const xhuCookie = await auth.getCookie();
     const hexId = ctx.req.param('hexId');
     const link = `https://www.zhihu.com/people/${hexId}/answers`;
     const url = `https://api.zhihuvvv.workers.dev/people/${hexId}/answers?limit=20&offset=0`;

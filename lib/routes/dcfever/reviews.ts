@@ -1,6 +1,8 @@
-import { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import ofetch from '@/utils/ofetch';
+
 import { baseUrl, parseItem } from './utils';
 
 export const route: Route = {
@@ -18,8 +20,8 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     description: `| 相機及鏡頭 | 手機平板 | 試車報告 |
-  | ---------- | -------- | -------- |
-  | cameras    | phones   | cars     |`,
+| ---------- | -------- | -------- |
+| cameras    | phones   | cars     |`,
 };
 
 async function handler(ctx) {
@@ -32,12 +34,13 @@ async function handler(ctx) {
     const list = $('.col-md-left .title a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            const $item = $(item);
             return {
-                title: item.text(),
-                link: new URL(item.attr('href'), link).href,
+                title: $item.text(),
+                link: new URL($item.attr('href')!, link).href,
             };
-        });
+        })
+        .filter((item, index, arr) => arr.findIndex((i) => i.link === item.link) === index);
 
     const items = await Promise.all(list.map((item) => parseItem(item)));
 

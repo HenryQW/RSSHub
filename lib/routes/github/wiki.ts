@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 const baseUrl = 'https://github.com';
@@ -32,7 +33,15 @@ export const route: Route = {
 async function handler(ctx) {
     const { user, repo, page } = ctx.req.param();
 
-    const url = `${baseUrl}/${user}/${repo}/wiki${page ? `/${page}` : ''}/_history`;
+    let url = `${baseUrl}/${user}/${repo}/wiki${page ? `/${page}` : ''}/_history`;
+
+    // Fetch page slug. History fetched with no page specified has no <a> tag for commit.
+    if (!page) {
+        const { data } = await got(`${baseUrl}/${user}/${repo}/wiki`);
+        const $ = load(data);
+
+        url = `${baseUrl}${$('a[href$=_history]').attr('href')}`;
+    }
 
     const { data } = await got(url);
     const $ = load(data);
@@ -40,12 +49,12 @@ async function handler(ctx) {
     const items = $('.js-wiki-history-revision')
         .toArray()
         .map((item) => {
-            item = $(item);
+            const $item = $(item);
             return {
-                title: item.find('.h5').text(),
-                author: item.find('.mt-1 a').text(),
-                pubDate: parseDate(item.find('relative-time').attr('datetime')),
-                link: `${baseUrl}${item.find('.text-mono a').attr('href')}`,
+                title: $item.find('.h5').text(),
+                author: $item.find('.mt-1 a').text(),
+                pubDate: parseDate($item.find('relative-time').attr('datetime')!),
+                link: `${baseUrl}${$item.find('.text-mono a').attr('href')}`,
             };
         });
 

@@ -1,9 +1,12 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
+
+import { getFullText } from '../utils';
 
 export const route: Route = {
     path: '/web/:id?',
@@ -37,36 +40,15 @@ async function handler(ctx) {
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 10)
         .toArray()
         .map((item) => {
-            item = $(item);
+            const $item = $(item);
             return {
-                title: item.text(),
-                link: new URL(item.parents('a').attr('href'), 'https://www.cna.com.tw').href,
-                pubDate: timezone(parseDate(item.next().text()), +8),
+                title: $item.text(),
+                link: new URL($item.parents('a').attr('href')!, 'https://www.cna.com.tw').href,
+                pubDate: timezone(parseDate($item.next().text()), 8),
             };
         });
 
-    const items = await Promise.all(
-        list.map((item) =>
-            cache.tryGet(item.link, async () => {
-                const detailResponse = await got({
-                    method: 'get',
-                    url: item.link,
-                });
-                const content = load(detailResponse.data);
-                const topImage = content('.fullPic').html();
-
-                item.description = (topImage === null ? '' : topImage) + content('.paragraph').eq(0).html();
-                item.category = [
-                    ...content("meta[property='article:tag']")
-                        .get()
-                        .map((e) => e.attribs.content),
-                    content('.active > a').text(),
-                ];
-
-                return item;
-            })
-        )
-    );
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, async () => await getFullText(item))));
 
     return {
         title: $('title').text(),

@@ -1,11 +1,14 @@
-import { Route } from '@/types';
-import utils from './utils';
-import got from '@/utils/got';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
+import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
+
+import utils from './utils';
 
 export const route: Route = {
     path: '/playlist/:id',
     categories: ['multimedia'],
+    view: ViewType.Audios,
     example: '/spotify/playlist/4UBVy1LttvodwivPUuwJk2',
     parameters: { id: 'Playlist ID' },
     features: {
@@ -25,6 +28,9 @@ export const route: Route = {
         supportPodcast: false,
         supportScihub: false,
     },
+    description: `::: warning
+Due to [limitations by Spotify](https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api), this endpoint is unable to access "Algorithmic and Spotify-owned editorial playlists".
+:::`,
     radar: [
         {
             source: ['open.spotify.com/playlist/:id'],
@@ -38,13 +44,12 @@ export const route: Route = {
 async function handler(ctx) {
     const token = await utils.getPublicToken();
     const id = ctx.req.param('id');
-    const meta = await got
-        .get(`https://api.spotify.com/v1/playlists/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
-        .json();
+    const meta = await ofetch(`https://api.spotify.com/v1/playlists/${id}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
     const tracks = meta.tracks.items;
 
     return {

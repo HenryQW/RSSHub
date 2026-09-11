@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 const host = 'http://www.cmse.sdu.edu.cn/';
@@ -25,8 +26,8 @@ export const route: Route = {
     maintainers: ['Ji4n1ng'],
     handler,
     description: `| 通知公告 | 学院新闻 | 本科生教育 | 研究生教育 | 学术动态 |
-  | -------- | -------- | ---------- | ---------- | -------- |
-  | 0        | 1        | 2          | 3          | 4        |`,
+| -------- | -------- | ---------- | ---------- | -------- |
+| 0        | 1        | 2          | 3          | 4        |`,
 };
 
 async function handler(ctx) {
@@ -37,22 +38,22 @@ async function handler(ctx) {
     const $ = load(response.data);
 
     let item = $('.article_list li')
-        .map((_, e) => {
-            e = $(e);
-            const a = e.find('a');
+        .toArray()
+        .map((e): DataItem => {
+            const $e = $(e);
+            const a = $e.find('a');
             return {
                 title: a.text().trim(),
                 link: a.attr('href'),
-                pubDate: parseDate(e.find('.date').text(), 'YYYY/MM/DD'),
+                pubDate: parseDate($e.find('.date').text(), 'YYYY/MM/DD'),
             };
-        })
-        .get();
+        });
 
     item = await Promise.all(
         item
-            .filter((e) => e.link.startsWith('../info'))
+            .filter((e) => e.link!.startsWith('../info'))
             .map((item) => {
-                item.link = new URL(item.link.slice('3'), host).href;
+                item.link = new URL(item.link!.slice(3), host).href;
                 return cache.tryGet(item.link, async () => {
                     const response = await got(item.link);
                     const $ = load(response.data);
@@ -64,7 +65,7 @@ async function handler(ctx) {
                             .eq(1)
                             .text()
                             .trim()
-                            .match(/作者：(.*)/)[1] || '山东大学材料科学与工程学院';
+                            .match(/作者：(.*)/)![1] || '山东大学材料科学与工程学院';
                     $('.contentTitle, .contentTitle2').remove();
                     item.description = $('.content_detail').html();
 

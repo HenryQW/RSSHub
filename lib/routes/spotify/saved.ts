@@ -1,7 +1,8 @@
-import { Route } from '@/types';
-import utils from './utils';
-import got from '@/utils/got';
+import type { Route } from '@/types';
+import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
+
+import utils from './utils';
 
 export const route: Route = {
     path: '/saved/:limit?',
@@ -45,15 +46,14 @@ async function handler(ctx) {
     const token = await utils.getPrivateToken();
 
     const limit = ctx.req.param('limit');
-    const pageSize = isNaN(Number.parseInt(limit)) ? 50 : Number.parseInt(limit);
+    const pageSize = Number.isNaN(Number.parseInt(limit)) ? 50 : Number.parseInt(limit);
 
-    const itemsResponse = await got
-        .get(`https://api.spotify.com/v1/me/tracks?limit=${pageSize}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
-        .json();
+    const itemsResponse = await ofetch(`https://api.spotify.com/v1/me/tracks?limit=${pageSize}`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
     const tracks = itemsResponse.items;
 
     return {

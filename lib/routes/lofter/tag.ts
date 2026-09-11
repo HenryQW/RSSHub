@@ -1,8 +1,11 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import { config } from '@/config';
+import ConfigNotFoundError from '@/errors/types/config-not-found';
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
-import { JSDOM } from 'jsdom';
+import { parseScriptCallback } from '@/utils/parse-script-data';
 
 export const route: Route = {
     path: '/tag/:name?/:type?',
@@ -10,7 +13,16 @@ export const route: Route = {
     example: '/lofter/tag/cosplay/date',
     parameters: { name: 'tag name, such as `名侦探柯南`, `摄影` by default', type: 'ranking type, see below, new by default' },
     features: {
-        requireConfig: false,
+        requireConfig: [
+            {
+                name: 'LOFTER_COOKIE',
+                description: `LOFTER_COOKIE: 用于搜索标签相关内容，获取方式：
+    1.  登录 Lofter 并搜索任一标签，进入页面 https://www.lofter.com/tag/*
+    2.  打开控制台，切换到 Network 面板，刷新
+    3.  点击 TagBean.seach.dwr 请求，找到 Cookie
+    4.  获取最新标签内容只要求 \`LOFTER_SESS\` 开始的字段`,
+            },
+        ],
         requirePuppeteer: false,
         antiCrawler: false,
         supportBT: false,
@@ -20,9 +32,13 @@ export const route: Route = {
     name: 'Tag',
     maintainers: ['hoilc', 'nczitzk', 'LucunJi'],
     handler,
-    description: `| new  | date | week | month | total |
-  | ---- | ---- | ---- | ----- | ----- |
-  | 最新 | 日榜 | 周榜 | 月榜  | 总榜  |`,
+    description: `::: warning
+搜索标签下的最新内容需要 Lofter 登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
+:::
+
+| new  | date | week | month | total |
+| ---- | ---- | ---- | ----- | ----- |
+| 最新 | 日榜 | 周榜 | 月榜  | 总榜  |`,
 };
 
 async function handler(ctx) {
@@ -33,13 +49,18 @@ async function handler(ctx) {
 
     const rootUrl = 'https://www.lofter.com';
     const linkUrl = `${rootUrl}/tag/${name}/${type}`;
-    const apiUrl = `${rootUrl}/dwr/call/plaincall/TagBean.getCommonTagExcellentAuthors.dwr`;
+    const apiUrl = `${rootUrl}/dwr/call/plaincall/TagBean.search.dwr`;
+
+    const cookie = config.lofter.cookies;
+    if (cookie === undefined) {
+        throw new ConfigNotFoundError('Lofter 用户登录后的 Cookie 值');
+    }
 
     const response = await got({
         method: 'post',
         url: apiUrl,
         body: new URLSearchParams({
-            callCount: 1,
+            callCount: '1',
             scriptSessionId: '${scriptSessionId}187',
             httpSessionId: '',
             'c0-scriptName': 'TagBean',
@@ -54,22 +75,15 @@ async function handler(ctx) {
             'c0-param6': `number:${pageSize}`,
             'c0-param7': `number:${startingIndex}`,
             'c0-param8': 'number:0',
-            batchId: 493053,
+            batchId: '493053',
         }),
+        headers: {
+            Referer: `https://www.lofter.com/tag/${encodeURI(name)}`,
+            Cookie: cookie,
+        },
     });
 
-    const dom = new JSDOM(
-        `<script>if (dwr == null) var dwr = {};
-        if (dwr.engine == null) dwr.engine = {};
-        dwr.engine._remoteHandleCallback = function () {
-            this.data = arguments;
-        };
-        ${response.data}</script>`,
-        {
-            runScripts: 'dangerously',
-        }
-    );
-    const data = dom.window.dwr.engine.data[2];
+    const data = parseScriptCallback<any[]>(response.data, 'dwr.engine._remoteHandleCallback');
 
     const title =
         {
@@ -92,7 +106,9 @@ async function handler(ctx) {
         }
 
         const images = post.photoLinks
-            ? JSON.parse(post.photoLinks).reduce((accumulator, currentValue) => accumulator + `<img src="${currentValue.orign}"/>`, '') // small | middle | orign
+            ? JSON.parse(post.photoLinks)
+                  .map((currentValue) => `<img src="${currentValue.orign}"/>`) // small | middle | orign
+                  .join('')
             : '';
 
         const digest = load(post.digest);

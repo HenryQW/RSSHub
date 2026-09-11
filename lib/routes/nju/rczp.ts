@@ -1,8 +1,8 @@
-import { Route } from '@/types';
+import { config } from '@/config';
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
-import { config } from '@/config';
 
 export const route: Route = {
     path: '/rczp/:type',
@@ -26,8 +26,8 @@ export const route: Route = {
     maintainers: ['ret-1'],
     handler,
     description: `| 信息发布 | 教研类岗位 | 管理岗位及其他 |
-  | -------- | ---------- | -------------- |
-  | xxfb     | jylgw      | gllgw          |`,
+| -------- | ---------- | -------------- |
+| xxfb     | jylgw      | gllgw          |`,
 };
 
 async function handler(ctx) {

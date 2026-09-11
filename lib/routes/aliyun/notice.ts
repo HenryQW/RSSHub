@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -13,10 +14,6 @@ const typeMap = {
     4: '9222707',
 };
 
-/**
- *
- * @param ctx {import('koa').Context}
- */
 export const route: Route = {
     path: '/notice/:type?',
     categories: ['programming'],
@@ -34,12 +31,12 @@ export const route: Route = {
     maintainers: ['muzea'],
     handler,
     description: `| 类型     | type |
-  | -------- | ---- |
-  | 全部     |      |
-  | 升级公告 | 1    |
-  | 安全公告 | 2    |
-  | 备案公告 | 3    |
-  | 其他     | 4    |`,
+| -------- | ---- |
+| 全部     |      |
+| 升级公告 | 1    |
+| 安全公告 | 2    |
+| 备案公告 | 3    |
+| 其他     | 4    |`,
 };
 
 async function handler(ctx) {
@@ -48,27 +45,27 @@ async function handler(ctx) {
     const response = await got({ method: 'get', url });
     const $ = load(response.data);
     const list = $('ul > li.notice-li')
-        .map((i, e) => {
+        .toArray()
+        .map((e) => {
             const element = $(e);
             const title = element.find('a').text().trim();
-            const link = 'https://help.aliyun.com' + element.find('a').attr('href').trim();
+            const link = 'https://help.aliyun.com' + element.find('a').attr('href')!.trim();
             const date = element.find('.y-right').text();
-            const pubDate = timezone(parseDate(date), +8);
+            const pubDate = timezone(parseDate(date), 8);
             return {
                 title,
                 description: '',
                 link,
                 pubDate,
             };
-        })
-        .get();
+        });
 
     const result = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 const itemReponse = await got(item.link);
                 const itemElement = load(itemReponse.data);
-                item.description = itemElement('#se-knowledge').html();
+                item.description = itemElement('#se-knowledge').html() ?? '';
 
                 return item;
             })

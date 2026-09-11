@@ -1,20 +1,21 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+import iconv from 'iconv-lite';
+
+import InvalidParameterError from '@/errors/types/invalid-parameter';
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
-import timezone from '@/utils/timezone';
 import { parseDate } from '@/utils/parse-date';
-import iconv from 'iconv-lite';
+import timezone from '@/utils/timezone';
 import { isValidHost } from '@/utils/valid-host';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
 
-const setCookie = function (cookieName, cookieValue, seconds, path, domain, secure) {
-    let expires = null;
+const setCookie = function (cookieName, cookieValue, seconds, path, domain, secure?) {
+    let expires: Date | null = null;
     if (seconds !== -1) {
         expires = new Date();
         expires.setTime(expires.getTime() + seconds);
     }
-    return [encodeURI(cookieName), '=', encodeURI(cookieValue), expires ? '; expires=' + expires.toGMTString() : '', path ? '; path=' + path : '/', domain ? '; domain=' + domain : '', secure ? '; secure' : ''].join('');
+    return [encodeURI(cookieName), '=', encodeURI(cookieValue), expires ? '; expires=' + expires.toUTCString() : '', path ? '; path=' + path : '/', domain ? '; domain=' + domain : '', secure ? '; secure' : ''].join('');
 };
 
 export const route: Route = {
@@ -34,20 +35,20 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `| 杭州 | 台州    | 嘉兴    | 宁波   | 湖州   |
-  | ---- | ------- | ------- | ------ | ------ |
-  | www  | taizhou | jiaxing | ningbo | huzhou |
+| ---- | ------- | ------- | ------ | ------ |
+| www  | taizhou | jiaxing | ningbo | huzhou |
 
-  | 绍兴     | 湖州   | 温州    | 金华   | 舟山     |
-  | -------- | ------ | ------- | ------ | -------- |
-  | shaoxing | huzhou | wenzhou | jinhua | zhoushan |
+| 绍兴     | 湖州   | 温州    | 金华   | 舟山     |
+| -------- | ------ | ------- | ------ | -------- |
+| shaoxing | huzhou | wenzhou | jinhua | zhoushan |
 
-  | 衢州   | 丽水   | 义乌 | 萧山     | 余杭   |
-  | ------ | ------ | ---- | -------- | ------ |
-  | quzhou | lishui | yiwu | xiaoshan | yuhang |
+| 衢州   | 丽水   | 义乌 | 萧山     | 余杭   |
+| ------ | ------ | ---- | -------- | ------ |
+| quzhou | lishui | yiwu | xiaoshan | yuhang |
 
-  | 临安  | 富阳   | 桐庐   | 建德   | 淳安   |
-  | ----- | ------ | ------ | ------ | ------ |
-  | linan | fuyang | tonglu | jiande | chunan |`,
+| 临安  | 富阳   | 桐庐   | 建德   | 淳安   |
+| ----- | ------ | ------ | ------ | ------ |
+| linan | fuyang | tonglu | jiande | chunan |`,
 };
 
 async function handler(ctx) {
@@ -71,12 +72,12 @@ async function handler(ctx) {
     let items = $('.center-center-jiazi')
         .find('a[title]')
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .map((item): DataItem & { link: string } => {
+            const $item = $(item);
 
             return {
-                title: item.attr('title'),
-                link: `https:${item.attr('href')}`,
+                title: $item.attr('title')!,
+                link: `https:${$item.attr('href')}`,
             };
         });
 
@@ -99,7 +100,7 @@ async function handler(ctx) {
 
                 item.author = content('.uname, .user-name').first().text();
                 item.description = content('.post-cont').first().html() || content('.thread-cont').html();
-                item.pubDate = timezone(parseDate(content('.cont-top-left meta').first().attr('content')), +8);
+                item.pubDate = timezone(parseDate(content('.cont-top-left meta').attr('content')!), 8);
 
                 return item;
             })
@@ -107,7 +108,7 @@ async function handler(ctx) {
     );
 
     return {
-        title: $('title').text().split('-')[0],
+        title: $('title').text().split('-', 1)[0],
         link: rootUrl,
         item: items,
     };

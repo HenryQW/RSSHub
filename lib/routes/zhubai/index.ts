@@ -1,5 +1,5 @@
 import InvalidParameterError from '@/errors/types/invalid-parameter';
-import { Route } from '@/types';
+import type { Route } from '@/types';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import { isValidHost } from '@/utils/valid-host';
@@ -20,9 +20,9 @@ export const route: Route = {
     name: '文章',
     maintainers: ['naixy28'],
     handler,
-    description: `:::tip
-  在路由末尾处加上 \`?limit=限制获取数目\` 来限制获取条目数量，默认值为\`20\`
-  :::`,
+    description: `::: tip
+在路由末尾处加上 \`?limit=限制获取数目\` 来限制获取条目数量，默认值为\`20\`
+:::`,
 };
 
 async function handler(ctx) {

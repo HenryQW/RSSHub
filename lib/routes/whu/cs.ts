@@ -1,9 +1,10 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
-import { load } from 'cheerio';
 
 const baseUrl = 'https://cs.whu.edu.cn';
 
@@ -24,8 +25,8 @@ export const route: Route = {
     maintainers: ['ttyfly'],
     handler,
     description: `| 公告类型 | 学院新闻 | 学术交流 | 通知公告 | 科研进展 |
-  | -------- | -------- | -------- | -------- | -------- |
-  | 参数     | 0        | 1        | 2        | 3        |`,
+| -------- | -------- | -------- | -------- | -------- |
+| 参数     | 0        | 1        | 2        | 3        |`,
 };
 
 async function handler(ctx) {
@@ -62,19 +63,25 @@ async function handler(ctx) {
 
     const list = $('div.study ul li')
         .toArray()
-        .map((item) => {
-            item = $(item);
+        .map((item): DataItem & { link: string } => {
+            const $item = $(item);
             return {
-                title: item.find('a p').text().trim(),
-                pubDate: parseDate(item.find('span').text()),
-                link: new URL(item.find('a').attr('href'), link).href,
+                title: $item.find('a p').text().trim(),
+                pubDate: parseDate($item.find('span').text()),
+                link: new URL($item.find('a').attr('href')!, link).href,
             };
         });
 
-    const items = await Promise.all(
+    const results = (await Promise.all(
         list.map((item) =>
-            cache.tryGet(item.link, async () => {
-                const response = await got(item.link);
+            cache.tryGet(item.link, async (): Promise<any> => {
+                let response;
+                try {
+                    // 实测发现有些链接无法访问
+                    response = await got(item.link);
+                } catch {
+                    return null;
+                }
                 const $ = load(response.data);
 
                 if ($('.prompt').length) {
@@ -85,24 +92,26 @@ async function handler(ctx) {
                 const content = $('.content');
 
                 content.find('img').each((_, e) => {
-                    e = $(e);
-                    if (e.attr('orisrc')) {
-                        e.attr('src', new URL(e.attr('orisrc'), response.url).href);
-                        e.removeAttr('orisrc');
-                        e.removeAttr('vurl');
+                    const $e = $(e);
+                    if ($e.attr('orisrc')) {
+                        const newUrl = new URL($e.attr('orisrc')!, 'https://cs.whu.edu.cn');
+                        $e.attr('src', newUrl.href);
+                        $e.removeAttr('orisrc');
+                        $e.removeAttr('vurl');
                     }
                 });
 
                 item.description = content.html();
-                item.pubDate = $('meta[name="PubDate"]').length ? timezone(parseDate($('meta[name="PubDate"]').attr('content')), +8) : item.pubDate;
+                item.pubDate = $('meta[name="PubDate"]').length ? timezone(parseDate($('meta[name="PubDate"]').attr('content')!), 8) : item.pubDate;
 
                 return item;
             })
         )
-    );
+    )) as Array<DataItem | null>;
+    const items = results.filter((item) => item !== null);
 
     return {
-        title: $('title').first().text(),
+        title: $('title').text(),
         link,
         item: items,
     };

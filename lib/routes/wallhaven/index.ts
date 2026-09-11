@@ -1,7 +1,8 @@
-import { Route } from '@/types';
+import { load } from 'cheerio';
+
+import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
-import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 const rootUrl = 'https://wallhaven.cc';
@@ -28,11 +29,11 @@ export const route: Route = {
     maintainers: ['nczitzk', 'Fatpandac'],
     handler,
     url: 'wallhaven.cc/',
-    description: `:::tip
-  Subscribe pages starting with \`https://wallhaven.cc/search\`, fill the text after \`?\` as \`filter\` in the route. The following is an example:
+    description: `::: tip
+Subscribe pages starting with \`https://wallhaven.cc/search\`, fill the text after \`?\` as \`filter\` in the route. The following is an example:
 
-  The text after \`?\` is \`q=id%3A711&sorting=random&ref=fp&seed=8g0dgd\` for [Wallpaper Search: #landscape - wallhaven.cc](https://wallhaven.cc/search?q=id%3A711\&sorting=random\&ref=fp\&seed=8g0dgd), so the route is [/wallhaven/q=id%3A711\&sorting=random\&ref=fp\&seed=8g0dgd](https://rsshub.app/wallhaven/q=id%3A711\&sorting=random\&ref=fp\&seed=8g0dgd)
-  :::`,
+The text after \`?\` is \`q=id%3A711&sorting=random&ref=fp&seed=8g0dgd\` for [Wallpaper Search: #landscape - wallhaven.cc](https://wallhaven.cc/search?q=id%3A711\\&sorting=random\\&ref=fp\\&seed=8g0dgd), so the route is [/wallhaven/q=id%3A711\\&sorting=random\\&ref=fp\\&seed=8g0dgd](https://rsshub.app/wallhaven/q=id%3A711\\&sorting=random\\&ref=fp\\&seed=8g0dgd)
+:::`,
 };
 
 async function handler(ctx) {
@@ -45,18 +46,18 @@ async function handler(ctx) {
 
     let items = $('li > figure.thumb')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 24)
-        .map((_, item) => ({
-            title: $(item).find('img.lazyload').attr('data-src').split('/').pop(),
+        .toArray()
+        .map((item): DataItem => ({
+            title: $(item).find('img.lazyload').attr('data-src')!.split('/').pop()!,
             description: $(item)
-                .html()
-                .match(/<img.*?>/)[0],
+                .html()!
+                .match(/<img.*?>/)![0],
             link: $(item).find('a.preview').attr('href'),
-        }))
-        .get();
+        }));
     if (needDetails) {
         items = await Promise.all(
             items.map((item) =>
-                cache.tryGet(item.link, async () => {
+                cache.tryGet(item.link!, async () => {
                     const detailResponse = await got({
                         method: 'get',
                         url: item.link,
@@ -64,13 +65,13 @@ async function handler(ctx) {
 
                     const content = load(detailResponse.data);
 
-                    item.title = content('meta[name="title"]').attr('content');
+                    item.title = content('meta[name="title"]').attr('content')!;
                     item.author = content('.username').text();
-                    item.pubDate = parseDate(content('time').attr('datetime'));
+                    item.pubDate = parseDate(content('time').attr('datetime')!);
                     item.category = content('.tagname')
                         .toArray()
                         .map((tag) => content(tag).text());
-                    item.description = content('div.scrollbox').html();
+                    item.description = content('div.scrollbox').html() ?? '';
 
                     return item;
                 })

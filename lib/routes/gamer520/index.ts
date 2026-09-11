@@ -1,8 +1,9 @@
-import { Data, DataItem, Route } from '@/types';
+import type { Context } from 'hono';
+
+import type { Data, DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
 import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
-import { Context } from 'hono';
 
 export const route: Route = {
     path: '/:category?/:order?',
@@ -21,9 +22,9 @@ export const route: Route = {
     url: 'www.gamer520.com/',
     description: `分类
 
-  | 所有 | Switch 游戏下载 | 金手指     | 3A 巨作 | switch 主题 | PC 游戏 |
-  | ---- | --------------- | ---------- | ------- | ----------- | ------- |
-  | all  | switchyouxi     | jinshouzhi | 3ajuzuo | zhuti       | pcgame  |`,
+| 所有 | Switch 游戏下载 | 金手指     | 3A 巨作 | switch 主题 | PC 游戏 |
+| ---- | --------------- | ---------- | ------- | ----------- | ------- |
+| all  | switchyouxi     | jinshouzhi | 3ajuzuo | zhuti       | pcgame  |`,
 };
 
 interface Post {
@@ -43,11 +44,11 @@ interface Category {
     slug: string;
 }
 
-async function getCategories(baseUrl: string): Promise<Category[]> {
-    return (await cache.tryGet('gamer520:categories', async () => {
+function getCategories(baseUrl: string): Promise<Category[]> {
+    return cache.tryGet('gamer520:categories', async () => {
         const { data } = await got(`${baseUrl}/wp-json/wp/v2/categories`);
         return data.map((category) => ({ slug: category.slug, id: category.id, name: category.name, link: category.link }));
-    })) as Category[];
+    });
 }
 
 async function handler(ctx: Context): Promise<Data> {
@@ -58,13 +59,14 @@ async function handler(ctx: Context): Promise<Data> {
     const order = ctx.req.param('order');
     const categoryId = categories.find((c) => c.slug === category)?.id;
 
-    const { data } = (await got(`${baseUrl}/wp-json/wp/v2/posts`, {
+    const limit = ctx.req.query('limit');
+    const { data }: { data: Post[] } = await got(`${baseUrl}/wp-json/wp/v2/posts`, {
         searchParams: {
             categories: categoryId,
             orderby: order,
-            per_page: ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit') as string) : undefined,
+            per_page: limit ? Number.parseInt(limit) : undefined,
         },
-    })) as unknown as { data: Post[] };
+    });
 
     const items: DataItem[] = data.map((item) => ({
         guid: `gamer520:${item.id}`,

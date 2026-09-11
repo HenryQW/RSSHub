@@ -1,6 +1,8 @@
-import { Route } from '@/types';
+import type { Route } from '@/types';
+import { ViewType } from '@/types';
 import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
+
 import { EXP_LEVELS, EXP_LEVELS_QUERY_KEY, JOB_TYPES, JOB_TYPES_QUERY_KEY, KEYWORDS_QUERY_KEY, parseJobSearch, parseParamsToSearchParams, parseParamsToString, parseRouteParam } from './utils';
 
 const BASE_URL = 'https://www.linkedin.com/';
@@ -9,6 +11,7 @@ const JOB_SEARCH_PATH = '/jobs-guest/jobs/api/seeMoreJobPostings/search';
 export const route: Route = {
     path: '/jobs/:job_types/:exp_levels/:keywords?/:routeParams?',
     categories: ['social-media'],
+    view: ViewType.Notifications,
     example: '/linkedin/jobs/C-P/1/software engineer',
     parameters: {
         job_types: "See the following table for details, use '-' as delimiter",
@@ -36,7 +39,7 @@ export const route: Route = {
 
                 const newSearchParams = new URLSearchParams();
                 // Copy non-existent key-value pairs from searchParams to newSearchParams
-                for (const [key, value] of searchParams.entries()) {
+                for (const [key, value] of searchParams) {
                     if (!['f_JT', 'f_E', 'keywords'].includes(key)) {
                         newSearchParams.append(key, value);
                     }
@@ -50,46 +53,46 @@ export const route: Route = {
     handler,
     description: `#### \`job_types\` list
 
-  | Full Time | Part Time | Contractor | All |
-  | --------- | --------- | ---------- | --- |
-  | F         | P         | C          | all |
+| Full Time | Part Time | Contractor | All |
+| --------- | --------- | ---------- | --- |
+| F         | P         | C          | all |
 
-  #### \`exp_levels\` list
+#### \`exp_levels\` list
 
-  | Intership | Entry Level | Associate | Mid-Senior Level | Director | All |
-  | --------- | ----------- | --------- | ---------------- | -------- | --- |
-  | 1         | 2           | 3         | 4                | 5        | all |
+| Intership | Entry Level | Associate | Mid-Senior Level | Director | All |
+| --------- | ----------- | --------- | ---------------- | -------- | --- |
+| 1         | 2           | 3         | 4                | 5        | all |
 
-  #### \`routeParams\` additional query parameters
+#### \`routeParams\` additional query parameters
 
-  ##### \`f_WT\` list
+##### \`f_WT\` list
 
-  | Onsite | Remote | Hybrid |
-  | ------ | ------- | ------ |
-  |    1   |    2    |   3    |
+| Onsite | Remote | Hybrid |
+| ------ | ------ | ------ |
+| 1      | 2      | 3      |
 
-  ##### \`geoId\`
+##### \`geoId\`
 
-  Geographic location ID. You can find this ID in the URL of a LinkedIn job search page that is filtered by location.
+Geographic location ID. You can find this ID in the URL of a LinkedIn job search page that is filtered by location.
 
-  For example:
-  91000012 is the ID of East Asia.
+For example:
+91000012 is the ID of East Asia.
 
-  ##### \`f_TPR\`
+##### \`f_TPR\`
 
-  Time posted range. Here are some possible values:
+Time posted range. Here are some possible values:
 
-  *   \`r86400\`: Past 24 hours
-  *   \`r604800\`: Past week
-  *   \`r2592000\`: Past month
+- \`r86400\`: Past 24 hours
+- \`r604800\`: Past week
+- \`r2592000\`: Past month
 
-  For example:
+For example:
 
-  1.  If we want to search software engineer jobs of all levels and all job types, use \`/linkedin/jobs/all/all/software engineer\`
-  2.  If we want to search all entry level contractor/part time software engineer jobs, use \`/linkedin/jobs/P-C/2/software engineer\`
-  3.  If we want to search remote mid-senior level software engineer jobs in APAC posted within the last month, use \`/linkedin/jobs/F/4/software%20engineer/f_WT=2&geoId=91000003&f_TPR=r2592000\`
+1. If we want to search software engineer jobs of all levels and all job types, use \`/linkedin/jobs/all/all/software engineer\`
+2. If we want to search all entry level contractor/part time software engineer jobs, use \`/linkedin/jobs/P-C/2/software engineer\`
+3. If we want to search remote mid-senior level software engineer jobs in APAC posted within the last month, use \`/linkedin/jobs/F/4/software%20engineer/f_WT=2&geoId=91000003&f_TPR=r2592000\`
 
-  **To make it easier, the recommended way is to start a search on [LinkedIn](https://www.linkedin.com/jobs/search) and use [RSSHub Radar](https://github.com/DIYgod/RSSHub-Radar) to load the specific feed.**`,
+**To make it easier, the recommended way is to start a search on [LinkedIn](https://www.linkedin.com/jobs/search) and use [RSSHub Radar](https://github.com/DIYgod/RSSHub-Radar) to load the specific feed.**`,
 };
 
 async function handler(ctx) {
@@ -97,7 +100,7 @@ async function handler(ctx) {
     const expLevelsParam = parseParamsToSearchParams(ctx.req.param('exp_levels'), EXP_LEVELS);
     const routeParams = new URLSearchParams(ctx.req.param('routeParams'));
 
-    let url = new URL(JOB_SEARCH_PATH, BASE_URL);
+    const url = new URL(JOB_SEARCH_PATH, BASE_URL);
 
     // keep for backward compatibility
     url.searchParams.append(KEYWORDS_QUERY_KEY, ctx.req.param('keywords') || '');
@@ -110,10 +113,10 @@ async function handler(ctx) {
             url.searchParams.append(key, value);
         }
     }
-    url = url.toString();
+    const searchUrl = url.href;
 
     // Parse job search page
-    const response = await ofetch(url);
+    const response = await ofetch(searchUrl);
     const jobs = parseJobSearch(response);
 
     const jobTypes = parseParamsToString(ctx.req.param('job_types'), JOB_TYPES);
@@ -122,7 +125,7 @@ async function handler(ctx) {
 
     return {
         title: feedTitle,
-        link: url,
+        link: searchUrl,
         description: 'This feed gets LinkedIn job posts',
         item: jobs.map((job) => {
             const title = `${job.company} is hiring ${job.title}`;
@@ -131,7 +134,7 @@ async function handler(ctx) {
             return {
                 title, // item title
                 description, // job description
-                pubDate: parseDate(job.pubDate), // data publish date
+                pubDate: job.pubDate ? parseDate(job.pubDate) : undefined, // data publish date
                 link: job.link, // job source link
             };
         }),

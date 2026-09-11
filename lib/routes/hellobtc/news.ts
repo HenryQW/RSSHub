@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
@@ -37,17 +38,17 @@ async function handler() {
     const $ = load(response.data);
     const items = $('nav.js-nav')
         .find('div.item')
-        .map((_, item) => ({
+        .toArray()
+        .map((item) => ({
             title: $(item).find('h2').text(),
             link: $(item).find('a').attr('href'),
             description: $(item).find('div.sub').text(),
-            pubDate: timezone(parseDate($(item).find('span.date').text(), 'MM-DD HH:mm'), +8),
+            pubDate: timezone(parseDate($(item).find('span.date').text(), 'MM-DD HH:mm'), 8),
         }))
-        .filter(Boolean)
-        .get();
+        .filter(Boolean);
 
     return {
-        title: `白话区块链 - 快讯`,
+        title: '白话区块链 - 快讯',
         link: url,
         item: items,
     };

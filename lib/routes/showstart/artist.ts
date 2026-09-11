@@ -1,5 +1,8 @@
-import { Route } from '@/types';
-import { TITLE, HOST } from './const';
+import type { Context } from 'hono';
+
+import type { Data, Route } from '@/types';
+
+import { HOST, TITLE } from './const';
 import { fetchPerformerInfo } from './service';
 
 export const route: Route = {
@@ -20,23 +23,24 @@ export const route: Route = {
             source: ['www.showstart.com/artist/:id'],
         },
     ],
-    name: '音乐人 - 演出更新',
+    name: '按音乐人 - 演出更新',
     maintainers: ['lchtao26'],
     handler,
-    description: `:::tip
+    description: `::: tip
 音乐人 ID 查询: \`/showstart/search/artist/:keyword\`，如: [https://rsshub.app/showstart/search/artist/ 周杰伦](https://rsshub.app/showstart/search/artist/周杰伦)
 :::`,
 };
 
-async function handler(ctx) {
+async function handler(ctx: Context): Promise<Data> {
     const id = ctx.req.param('id');
     const artist = await fetchPerformerInfo({
-        performerId: id,
+        performerId: id!,
     });
     return {
         title: `${TITLE} - ${artist.name}`,
         description: artist.content,
         link: `${HOST}/artist/${artist.id}`,
         item: artist.activityList,
+        allowEmpty: true,
     };
 }
